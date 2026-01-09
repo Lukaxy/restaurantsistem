@@ -1,0 +1,95 @@
+/* ======== ESTILO GERAL ======== */
+body {
+  font-family: "Poppins", Arial, sans-serif;
+  background: linear-gradient(135deg, #181818, #0e0e0e);
+  color: #fff;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  height: 100vh;
+  margin: 0;
+}
+
+/* ======== CONTAINER ======== */
+.login-box {
+  background: #1c1c1c;
+  padding: 32px;
+  border-radius: 12px;
+  box-shadow: 0 0 14px rgba(0, 0, 0, 0.5);
+  width: 90%;
+  max-width: 360px;
+  text-align: center;
+  transition: transform 0.2s ease, box-shadow 0.3s ease;
+}
+
+.login-box:hover {
+  transform: scale(1.02);
+  box-shadow: 0 0 20px rgba(255, 107, 0, 0.2);
+}
+
+/* ======== TÍTULO ======== */
+.login-box h1 {
+  font-size: 22px;
+  font-weight: 600;
+  color: #ff6b00;
+  margin-bottom: 20px;
+}
+
+/* ======== CAMPOS ======== */
+.login-box input {
+  width: 100%;
+  padding: 12px;
+  margin-bottom: 14px;
+  border: none;
+  border-radius: 8px;
+  background: #2a2a2a;
+  color: #fff;
+  font-size: 15px;
+  transition: background 0.2s, box-shadow 0.2s;
+}
+
+.login-box input:focus {
+  outline: none;
+  background: #333;
+  box-shadow: 0 0 0 2px #ff6b00;
+}
+
+/* ======== BOTÃO ======== */
+.login-box button {
+  width: 100%;
+  padding: 12px;
+  background: #ff6b00;
+  color: #fff;
+  border: none;
+  border-radius: 8px;
+  font-weight: 600;
+  font-size: 15px;
+  cursor: pointer;
+  transition: background 0.25s ease, transform 0.1s ease;
+}
+
+.login-box button:hover {
+  background: #e65b00;
+  transform: scale(1.03);
+}
+
+/* ======== MENSAGEM ======== */
+#msg {
+  margin-top: 12px;
+  font-size: 14px;
+  color: #ff6b00;
+  font-weight: 500;
+}
+
+/* ======== RESPONSIVIDADE ======== */
+@media (max-width: 420px) {
+  .login-box {
+    padding: 24px;
+    max-width: 300px;
+  }
+
+  .login-box h1 {
+    font-size: 20px;
+  }
+}
+

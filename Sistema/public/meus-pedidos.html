@@ -1,0 +1,208 @@
+<!doctype html>
+<html lang="pt-br">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>🧾 Meus Pedidos</title>
+  <link rel="stylesheet" href="css/meus-pedidos.css" />
+  <style>
+    body {
+      background: #111;
+      color: #fff;
+      font-family: "Poppins", Arial, sans-serif;
+      margin: 0;
+      padding: 0;
+    }
+
+    main { padding: 12px; }
+
+    .pedido {
+      background: #1b1b1b;
+      border: 1px solid #2b2b2b;
+      border-radius: 10px;
+      padding: 12px 14px;
+      margin-bottom: 10px;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.4);
+      transition: transform 0.2s, border 0.2s;
+    }
+    .pedido:hover {
+      transform: scale(1.02);
+      border-color: #ffb347;
+    }
+    .pedido.novo { border-left: 5px solid #ff6b00; }
+    .pedido.em\ preparo { border-left: 5px solid #ffa500; }
+    .pedido.pronto { border-left: 5px solid #28a745; }
+    .pedido.cancelado { border-left: 5px solid #c00; opacity: 0.6; }
+
+    .pedido b {
+      color: #ffb347;
+      font-size: 1rem;
+    }
+    .pedido small { color: #bbb; }
+    .pedido pre {
+      background: #151515;
+      padding: 6px 8px;
+      border-radius: 6px;
+      color: #eee;
+      font-size: 0.95em;
+      white-space: pre-line;
+      margin-top: 6px;
+      border: 1px solid #222;
+    }
+    .pedido .status {
+      text-align: right;
+      font-size: 0.9em;
+      color: #ccc;
+      margin-top: 5px;
+    }
+    .pedido .status b { color: #ffb347; }
+    .pedido .obs {
+      background: #202020;
+      border-radius: 6px;
+      padding: 6px 8px;
+      margin-top: 6px;
+      color: #bbb;
+      font-style: italic;
+      border: 1px solid #333;
+    }
+  </style>
+</head>
+<body>
+
+<script src="js/auth.js"></script>
+
+<header>
+  <div class="menu-wrapper">
+    <button class="menu-button" onclick="toggleMenu()">⋮</button>
+    <div id="menuDropdown" class="menu-dropdown">
+      <div onclick="window.location.href='index.html'">📙 Cardápio</div>
+      <div onclick="window.location.href='cozinha.html'">👨‍🍳 Cozinha</div>
+      <div onclick="window.location.href='relatorio.html'">📈 Relatório</div>
+      <div onclick="window.location.href='configuracoes.html'">⚙️ Configurações</div>
+      <div onclick="window.location.href='company-admin.html'">🏢 Painel da Empresa</div>
+    </div>
+  </div>
+  <div class="header-title">🧾 Meus Pedidos</div>
+</header>
+
+<main>
+  <div id="pedidosList">Carregando pedidos...</div>
+</main>
+
+<!-- === SCRIPT PRINCIPAL ATUALIZADO === -->
+<script>
+document.addEventListener("DOMContentLoaded", () => {
+  const lista = document.getElementById("pedidosList");
+  const user = JSON.parse(localStorage.getItem("user") || "{}");
+  const company_id = user.company_id;
+  const TEMPO_OCULTAR_PRONTO = 5 * 60 * 1000; // 5 minutos
+  let pedidos = [];
+
+  if (!company_id) {
+    lista.innerHTML = "<p style='color:red;'>Erro: company_id não encontrado (faça login novamente).</p>";
+    return;
+  }
+
+  function parseItems(data) {
+    if (!data) return [];
+    if (typeof data === "string") {
+      try { return JSON.parse(data); } catch { return []; }
+    }
+    if (Array.isArray(data)) return data;
+    return [];
+  }
+
+  function renderizar() {
+    if (pedidos.length === 0) {
+      lista.innerHTML = "<p style='text-align:center;margin-top:20px;color:#aaa;'>Nenhum pedido realizado ainda 🧺</p>";
+      return;
+    }
+
+    lista.innerHTML = pedidos.map(p => {
+      const items = parseItems(p.items);
+      const hora = new Date(p.created_at).toLocaleTimeString("pt-BR", {hour:"2-digit",minute:"2-digit"});
+      const statusTxt =
+        p.status === "novo" ? "🕒 Aguardando preparo" :
+        p.status === "em preparo" ? "🍳 Em preparo" :
+        p.status === "pronto" ? "✅ Pronto" :
+        p.status === "cancelado" ? "❌ Cancelado" :
+        p.status;
+
+      // 🆕 nome e mesa
+      const mesa = p.table_name ? `Mesa ${p.table_name}` : "Mesa não informada";
+      const nomeCliente = p.notes && p.notes.includes("Cliente:")
+        ? p.notes.split("Cliente:")[1].trim()
+        : "";
+
+      return `
+        <div class="pedido ${p.status}">
+          <div>
+            <b>Pedido #${p.id}</b> <small>(${hora})</small><br>
+            <small>${mesa}${nomeCliente ? " — " + nomeCliente : ""}</small>
+          </div>
+          <pre>${items.map(i => `${i.qty}x ${i.name}`).join("\n")}</pre>
+          ${p.notes ? `<div class="obs">Obs: ${p.notes}</div>` : ""}
+          <div class="status">${statusTxt}</div>
+        </div>
+      `;
+    }).join("");
+  }
+
+  function removerPedidosAntigos() {
+    const agora = Date.now();
+    pedidos = pedidos.filter(p => {
+      if (p.status !== "pronto") return true;
+      const atualizado = new Date(p.status_updated_at || p.created_at).getTime();
+      return agora - atualizado < TEMPO_OCULTAR_PRONTO;
+    });
+    renderizar();
+  }
+
+  async function carregarPedidos() {
+    try {
+      const res = await fetch(`/api/orders?company_id=${company_id}`);
+      const text = await res.text();
+      if (text.trim().startsWith("<"))
+        throw new Error("Servidor retornou HTML — verifique rota /api/orders.");
+
+      const data = JSON.parse(text);
+      if (!data.ok) throw new Error(data.error || "Erro ao carregar pedidos.");
+
+      const agora = Date.now();
+      pedidos = data.pedidos.filter(p => {
+        if (p.status === "cancelado") return false;
+        if (p.status === "pronto") {
+          const atualizado = new Date(p.status_updated_at || p.created_at).getTime();
+          return agora - atualizado < TEMPO_OCULTAR_PRONTO;
+        }
+        return true;
+      });
+
+      renderizar();
+    } catch (err) {
+      console.error("Erro ao carregar pedidos:", err);
+      lista.innerHTML = `<p style="color:red;">${err.message}</p>`;
+    }
+  }
+
+  carregarPedidos();
+  setInterval(carregarPedidos, 5000);
+  setInterval(removerPedidosAntigos, 60000);
+});
+</script>
+
+<script>
+function toggleMenu() {
+  const menu = document.getElementById("menuDropdown");
+  menu.classList.toggle("show");
+}
+document.addEventListener("click", e => {
+  if (!e.target.closest(".menu-wrapper")) {
+    document.getElementById("menuDropdown").classList.remove("show");
+  }
+});
+</script>
+
+</body>
+</html>
+

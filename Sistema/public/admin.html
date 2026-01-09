@@ -1,0 +1,166 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>👑 Painel Master - Empresas</title>
+  <link rel="stylesheet" href="css/admin.css" />
+
+  <!-- Proteção de acesso -->
+  <script src="js/auth.js"></script>
+</head>
+
+<body>
+  <header>
+    Painel Master — Gerenciar Empresas
+    <span class="logout" onclick="logout()">Sair</span>
+  </header>
+
+  <main>
+    <section>
+      <h2>🏢 Cadastrar nova empresa</h2>
+      <input id="nome" placeholder="Nome da empresa" />
+      <input id="email" placeholder="E-mail do administrador" type="email" />
+      <input id="senha" placeholder="Senha do administrador" type="password" />
+      <button onclick="criarEmpresa()">Cadastrar Empresa</button>
+      <p id="msg"></p>
+    </section>
+
+    <section>
+      <h2>📋 Empresas cadastradas</h2>
+      <div id="empresas-list">Carregando...</div>
+    </section>
+  </main>
+
+  <!-- ================== SCRIPT TYPE="MODULE" — AGORA NO FINAL ================== -->
+  <script type="module">
+    import { api } from "./js/http.js";
+
+    // ================== VERIFICA LOGIN MASTER ==================
+    const user = JSON.parse(localStorage.getItem("user") || "{}");
+
+    if (!user || user.role !== "master") {
+      alert("Acesso negado. Apenas o administrador master pode entrar.");
+      localStorage.clear();
+      window.location.href = "admin-login.html";
+    }
+
+    // ================== LISTAR EMPRESAS ==================
+    async function carregarEmpresas() {
+      const div = document.getElementById("empresas-list");
+      div.innerHTML = "Carregando...";
+
+      try {
+        const data = await api("/api/empresas");
+
+        if (!data.ok) throw new Error(data.error || "Erro ao buscar empresas.");
+        if (!data.empresas.length) {
+          div.innerHTML = "<p style='color:#bbb;'>Nenhuma empresa cadastrada.</p>";
+          return;
+        }
+
+        div.innerHTML = data.empresas
+          .map(
+            (e) => `
+          <div class="empresa">
+            <b>${e.name}</b><br>
+            <small>${e.email_admin}</small><br>
+            <small style="color:#999;">
+              Criada em ${new Date(e.created_at).toLocaleDateString("pt-BR")}
+            </small><br>
+            <small>Plano:
+              <select onchange="alterarPlano(${e.id}, this.value)">
+                <option value="basic" ${e.plano === "basic" ? "selected" : ""}>Basic</option>
+                <option value="plus" ${e.plano === "plus" ? "selected" : ""}>Plus</option>
+                <option value="pro" ${e.plano === "pro" ? "selected" : ""}>Pro</option>
+              </select>
+            </small><br>
+            <button onclick="excluirEmpresa(${e.id})" style="margin-top:6px;">🗑️ Excluir</button>
+          </div>
+        `
+          )
+          .join("");
+      } catch (err) {
+        console.error("Erro ao carregar empresas:", err);
+        div.innerHTML = `<p style="color:red;">${err.message}</p>`;
+      }
+    }
+
+    // ================== CRIAR EMPRESA ==================
+    async function criarEmpresa() {
+      const nome = document.getElementById("nome").value.trim();
+      const email = document.getElementById("email").value.trim();
+      const senha = document.getElementById("senha").value.trim();
+      const msg = document.getElementById("msg");
+      msg.textContent = "";
+
+      if (!nome || !email || !senha) {
+        msg.textContent = "Preencha todos os campos.";
+        msg.style.color = "red";
+        return;
+      }
+
+      try {
+        const data = await api("/api/register-company", {
+          method: "POST",
+          body: JSON.stringify({ name: nome, email, senha }),
+        });
+
+        if (!data.ok) throw new Error(data.error || "Erro ao criar empresa.");
+
+        msg.style.color = "lightgreen";
+        msg.textContent = "✅ Empresa criada com sucesso!";
+        document.getElementById("nome").value = "";
+        document.getElementById("email").value = "";
+        document.getElementById("senha").value = "";
+
+        carregarEmpresas();
+      } catch (err) {
+        msg.style.color = "red";
+        msg.textContent = err.message;
+      }
+    }
+
+    // ================== ALTERAR PLANO ==================
+    async function alterarPlano(id, plano) {
+      try {
+        const data = await api(`/api/empresas/${id}/plano`, {
+          method: "POST",
+          body: JSON.stringify({ plano }),
+        });
+        if (!data.ok) throw new Error(data.error || "Erro ao atualizar plano.");
+        alert("Plano atualizado!");
+      } catch (err) {
+        alert("Erro: " + err.message);
+      }
+    }
+
+    // ================== EXCLUIR EMPRESA ==================
+    async function excluirEmpresa(id) {
+      if (!confirm("Deseja realmente excluir esta empresa?")) return;
+      try {
+        const data = await api(`/api/empresas/${id}`, { method: "DELETE" });
+        if (!data.ok) throw new Error(data.error || "Erro ao excluir empresa.");
+        alert("Empresa excluída com sucesso!");
+        carregarEmpresas();
+      } catch (err) {
+        alert(err.message);
+      }
+    }
+
+    // ================== LOGOUT ==================
+    window.logout = function logout() {
+      localStorage.clear();
+      window.location.href = "admin-login.html";
+    };
+
+    // ================== EVENTOS ==================
+    document.addEventListener("DOMContentLoaded", carregarEmpresas);
+    window.criarEmpresa = criarEmpresa;
+    window.excluirEmpresa = excluirEmpresa;
+    window.alterarPlano = alterarPlano;
+  </script>
+
+</body>
+</html>
+

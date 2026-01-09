@@ -1,0 +1,216 @@
+<!doctype html>
+<html lang="pt-br">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>📊 Relatório de Vendas</title>
+  <link rel="stylesheet" href="css/relatorio.css" />
+  <style>
+    body {
+      background: #111;
+      color: #fff;
+      font-family: Arial, sans-serif;
+      margin: 0;
+      padding: 0;
+    }
+    header {
+      background: #1e1e1e;
+      padding: 12px;
+      font-weight: bold;
+      text-align: center;
+      box-shadow: 0 2px 6px rgba(0,0,0,0.4);
+    }
+    main {
+      padding: 12px;
+    }
+    .dia-group {
+      background: #1b1b1b;
+      border-radius: 10px;
+      margin-bottom: 10px;
+      overflow: hidden;
+      border: 1px solid #333;
+      transition: all 0.3s;
+    }
+    .dia-header {
+      background: linear-gradient(90deg, #222, #2c2c2c);
+      padding: 10px 14px;
+      font-weight: bold;
+      cursor: pointer;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      color: #ffb347;
+    }
+    .dia-header:hover {
+      background: #2f2f2f;
+    }
+    .dia-content {
+      display: none;
+      padding: 12px;
+      background: #141414;
+      border-top: 1px solid #333;
+      animation: expand 0.25s ease;
+    }
+    @keyframes expand {
+      from {opacity: 0; transform: scaleY(0.95);}
+      to {opacity: 1; transform: scaleY(1);}
+    }
+    .pedido {
+      background: #1a1a1a;
+      padding: 10px;
+      margin-bottom: 8px;
+      border-radius: 8px;
+      border-left: 4px solid #ffb347;
+    }
+    .pedido-header {
+      font-weight: bold;
+      color: #ffa94d;
+      margin-bottom: 6px;
+    }
+    .pedido-itens {
+      color: #ddd;
+      margin-bottom: 5px;
+    }
+    .obs {
+      color: #aaa;
+      font-style: italic;
+      font-size: 0.9em;
+    }
+    .box-resumo {
+      background: #1e1e1e;
+      border-radius: 8px;
+      padding: 10px;
+      margin-bottom: 12px;
+      border: 1px solid #333;
+    }
+  </style>
+</head>
+<body>
+
+  <header>
+    <div class="menu-wrapper">
+      <button class="menu-button" onclick="toggleMenu()">⋮</button>
+      <div id="menuDropdown" class="menu-dropdown">
+        <div onclick="window.location.href='index.html'">📙 Cardápio</div>
+        <div onclick="window.location.href='meus-pedidos.html'">🧾 Meus pedidos</div>
+        <div onclick="window.location.href='cozinha.html'">👨‍🍳 Cozinha</div>
+        <div onclick="window.location.href='configuracoes.html'">⚙️ Configurações</div>
+      </div>
+    </div>
+    📊 Relatório de Vendas
+  </header>
+
+  <main>
+    <section class="resumo" id="resumo">Carregando resumo...</section>
+    <section id="listaPedidos">Carregando pedidos...</section>
+  </main>
+
+  <!-- ===================== SCRIPT PRINCIPAL ===================== -->
+  <script>
+  document.addEventListener("DOMContentLoaded", async () => {
+    const user = JSON.parse(localStorage.getItem("user") || "{}");
+    const company_id = user.company_id;
+    const resumoEl = document.getElementById("resumo");
+    const listaEl = document.getElementById("listaPedidos");
+
+    if (!company_id) {
+      resumoEl.innerHTML = "<p style='color:red;'>Erro: empresa não identificada. Faça login novamente.</p>";
+      listaEl.innerHTML = "";
+      return;
+    }
+
+    try {
+      const res = await fetch(`/api/orders/history?company_id=${company_id}`);
+      const text = await res.text();
+
+      if (text.trim().startsWith("<")) {
+        throw new Error("Servidor retornou HTML — verifique se a rota /api/orders/history existe.");
+      }
+
+      const data = JSON.parse(text);
+      if (!data.ok) throw new Error(data.error || "Erro ao carregar histórico.");
+
+      const pedidos = data.pedidos || [];
+      if (pedidos.length === 0) {
+        resumoEl.innerHTML = "<p style='color:#bbb;'>Nenhum pedido finalizado ainda.</p>";
+        listaEl.innerHTML = "";
+        return;
+      }
+
+      // Agrupar por dia
+      const porDia = {};
+      pedidos.forEach(p => {
+        const dataDia = new Date(p.status_updated_at || p.created_at).toLocaleDateString("pt-BR");
+        if (!porDia[dataDia]) porDia[dataDia] = [];
+        porDia[dataDia].push(p);
+      });
+
+      // Resumo geral
+      const totalVendas = pedidos.reduce((s, p) => s + (Number(p.total) || 0), 0);
+      const totalPedidos = pedidos.length;
+      resumoEl.innerHTML = `
+        <div class="box-resumo">
+          <div><b>Total de pedidos:</b> ${totalPedidos}</div>
+          <div><b>Vendas totais:</b> R$ ${totalVendas.toFixed(2)}</div>
+        </div>
+      `;
+
+      // Renderizar por dia
+      listaEl.innerHTML = Object.keys(porDia)
+        .map(dia => {
+          const totalDia = porDia[dia].reduce((s, p) => s + (Number(p.total) || 0), 0);
+          const conteudo = porDia[dia].map(p => {
+            let items = [];
+            try { items = JSON.parse(p.items || "[]"); } catch {}
+            const quando = p.status_updated_at || p.created_at;
+            return `
+              <div class="pedido">
+                <div class="pedido-header">
+                  #${p.id} — ${p.status}
+                  <span style="float:right;color:#888;">${quando ? new Date(quando).toLocaleTimeString("pt-BR") : ""}</span>
+                </div>
+                <div class="pedido-itens">
+                  ${items.map(i => `${i.qty}x ${i.name}`).join("<br>")}
+                </div>
+                <div><b>Total:</b> R$ ${(Number(p.total)||0).toFixed(2)}</div>
+                ${p.table_name ? `<div><b>Mesa:</b> ${p.table_name}</div>` : ""}
+                ${p.notes ? `<div class="obs">Obs: ${p.notes}</div>` : ""}
+              </div>
+            `;
+          }).join("");
+
+          return `
+            <div class="dia-group">
+              <div class="dia-header" onclick="const c=this.nextElementSibling;
+                c.style.display=c.style.display==='block'?'none':'block';">
+                📅 ${dia} — R$ ${totalDia.toFixed(2)}
+                <span>⯆</span>
+              </div>
+              <div class="dia-content">${conteudo}</div>
+            </div>
+          `;
+        })
+        .join("");
+    } catch (err) {
+      console.error("Erro ao carregar relatório:", err);
+      resumoEl.innerHTML = `<p style="color:red;">${err.message}</p>`;
+      listaEl.innerHTML = "";
+    }
+  });
+  </script>
+
+  <!-- ===================== MENU DE 3 PONTOS ===================== -->
+  <script>
+  function toggleMenu() {
+    const menu = document.getElementById("menuDropdown");
+    menu.classList.toggle("show");
+  }
+  document.addEventListener("click", e => {
+    const inside = e.target.closest(".menu-wrapper");
+    if (!inside) document.getElementById("menuDropdown").classList.remove("show");
+  });
+  </script>
+
+</body>
+</html>
+

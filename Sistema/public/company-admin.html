@@ -1,0 +1,41 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>🏢 Painel da Empresa</title>
+  <link rel="stylesheet" href="css/admin.css">
+</head>
+
+<body>
+  <header>
+    <h1>🏢 Painel do Administrador da Empresa</h1>
+    <button onclick="logout()">Sair</button>
+  </header>
+
+  <main>
+    <section>
+      <h2>👥 Usuários da Empresa</h2>
+      <div id="users-list">Carregando...</div>
+    </section>
+
+    <section>
+      <h2>➕ Adicionar Usuário</h2>
+      <input id="name" placeholder="Nome" />
+      <input id="email" placeholder="E-mail" type="email" />
+      <input id="senha" placeholder="Senha" type="password" />
+      <select id="role">
+        <option value="atendente">Atendente</option>
+        <option value="cozinha">Cozinha</option>
+      </select>
+      <button onclick="addUser()">Adicionar</button>
+      <p id="msg" style="margin-top:10px;color:red;"></p>
+    </section>
+  </main>
+
+  <!-- === IMPORTANTE: scripts na ordem correta === -->
+  <script src="js/http.js" defer></script>
+  <script src="js/company-admin.js" defer></script>
+</body>
+</html>
+

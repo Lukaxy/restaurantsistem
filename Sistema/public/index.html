@@ -1,0 +1,169 @@
+<!doctype html>
+<html lang="pt-br">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>🍽️ Restaurante</title>
+
+  <!-- Autenticação -->
+  <script src="js/auth.js"></script>
+
+  <!-- Estilos -->
+  <link rel="stylesheet" href="css/index.css" />
+
+  <!-- Preload para desempenho -->
+  <link rel="preload" href="js/cardapio.js" as="script" />
+</head>
+<body>
+
+<!-- ===================== CABEÇALHO ===================== -->
+<header>
+  <div class="menu-wrapper">
+    <button class="menu-button" onclick="toggleMenu()">⋮</button>
+    <div id="menuDropdown" class="menu-dropdown">
+      <div onclick="window.location.href='meus-pedidos.html'">🧾 Meus pedidos</div>
+      <div onclick="window.location.href='relatorio.html'">📈 Relatório</div>
+      <div onclick="window.location.href='cozinha.html'">👨‍🍳 Cozinha</div>
+      <div onclick="window.location.href='configuracoes.html'">⚙️ Configurações</div>
+      <div onclick="abrirPainelEmpresa()">🏢 Painel da Empresa</div>
+    </div>
+  </div>
+  <div class="header-title">🍽️ Restaurante</div>
+</header>
+
+<!-- ===================== CONTEÚDO PRINCIPAL ===================== -->
+<main>
+  <div id="categories" class="categories">Carregando cardápio...</div>
+</main>
+
+<!-- ===================== BOTÃO DO CARRINHO ===================== -->
+<button class="cart" id="openCart">
+  🧺 Comanda <span id="cartCount" class="qty">0</span>
+</button>
+
+<!-- ===================== MODAL DO CARRINHO ===================== -->
+<div class="modal" id="cartModal">
+  <div class="box">
+    <h3>Pedido</h3>
+    <div id="cartList"></div>
+
+    <div class="pedido-form">
+      <input id="tableName" placeholder="Mesa / Nome do cliente" autocomplete="off" />
+      <textarea id="notes" placeholder="Observações (ex: sem cebola...)"></textarea>
+    </div>
+
+    <div class="pedido-actions">
+      <button class="btn" id="sendOrder">Enviar pedido</button>
+      <button class="btn cancel" id="closeCart">Fechar</button>
+    </div>
+  </div>
+</div>
+
+<!-- ===================== NOTIFICAÇÃO ===================== -->
+<div id="notification" class="notification"></div>
+
+<!-- ===================== MODAL DE DETALHES DO PRODUTO ===================== -->
+<div class="modal" id="productModal" style="display:none;">
+  <div class="box">
+    <h3 id="productName">Produto</h3>
+    <p id="productDescription" style="color:#ccc; line-height:1.4; margin:10px 0;"></p>
+    <div style="display:flex;justify-content:space-between;align-items:center;">
+      <span id="productPrice" style="font-weight:600;color:#ffb347;"></span>
+      <button id="addToCartBtn" class="btn">Adicionar à comanda</button>
+    </div>
+    <button class="btn cancel" id="closeProductModal" style="margin-top:12px;">Fechar</button>
+  </div>
+</div>
+
+<!-- ===================== SCRIPT PRINCIPAL DO CARDÁPIO ===================== -->
+<script src="js/cardapio.js" defer></script>
+
+<!-- ===================== SCRIPT DO POPUP DE PRODUTO ===================== -->
+<script>
+const productModal = document.getElementById("productModal");
+const productName = document.getElementById("productName");
+const productDescription = document.getElementById("productDescription");
+const productPrice = document.getElementById("productPrice");
+const addToCartBtn = document.getElementById("addToCartBtn");
+const closeProductModal = document.getElementById("closeProductModal");
+
+// Abre o popup de detalhes
+function abrirModalProduto(produto) {
+  productName.textContent = produto.name;
+  productDescription.textContent = produto.description || "Sem descrição disponível.";
+  productPrice.textContent = "R$ " + Number(produto.price).toFixed(2).replace(".", ",");
+  addToCartBtn.onclick = () => {
+    addToCart(produto.id); // usa a função do cardapio.js
+    fecharModalProduto();
+  };
+  productModal.style.display = "flex";
+}
+
+// Fecha o popup
+function fecharModalProduto() {
+  productModal.style.display = "none";
+}
+closeProductModal.onclick = fecharModalProduto;
+
+// Fecha clicando fora
+productModal.addEventListener("click", (e) => {
+  if (e.target === productModal) fecharModalProduto();
+});
+</script>
+
+<!-- ===================== FUNÇÃO DO PAINEL DA EMPRESA ===================== -->
+<script>
+function abrirPainelEmpresa() {
+  const user = JSON.parse(localStorage.getItem('user') || '{}');
+  if (user.role === 'admin') {
+    window.location.href = 'company-admin.html';
+  } else {
+    alert('Apenas o administrador da empresa pode acessar este painel.');
+  }
+}
+</script>
+
+<!-- ===================== MENU DE 3 PONTOS ===================== -->
+<script>
+function toggleMenu() {
+  const menu = document.getElementById('menuDropdown');
+  menu.classList.toggle('show');
+}
+
+document.addEventListener('click', function (event) {
+  const isClickInside = event.target.closest('.menu-wrapper');
+  if (!isClickInside) {
+    document.getElementById('menuDropdown').classList.remove('show');
+  }
+});
+</script>
+
+<!-- ===================== TRATAMENTO DE ERRO DE EXTENSÕES ===================== -->
+<script>
+window.onerror = function (msg, src, line, col, err) {
+  if (String(msg).includes('<path> attribute d: Expected number')) {
+    console.warn('⚠️ Erro SVG de extensão ignorado.');
+    return true; // ignora e evita travar outros scripts
+  }
+  return false;
+};
+</script>
+
+<!-- ===================== ESTILOS EXTRAS PARA O MODAL ===================== -->
+<style>
+.modal.show,
+.modal[style*="display: flex"] {
+  display: flex !important;
+  justify-content: center;
+  align-items: center;
+}
+.desc {
+  color: #aaa;
+  font-size: 0.9rem;
+  margin-top: 4px;
+}
+</style>
+
+</body>
+</html>
+

@@ -1,0 +1,56 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Registrar Empresa</title>
+  <link rel="stylesheet" href="css/login.css">
+</head>
+<body>
+  <div class="login-container">
+    <h2>🏢 Registrar Empresa</h2>
+
+    <input type="text" id="name" placeholder="Nome da empresa" />
+    <input type="email" id="email" placeholder="E-mail do administrador" />
+    <input type="password" id="senha" placeholder="Senha" />
+    <button onclick="register()">Criar Empresa</button>
+
+    <p style="margin-top:10px;">Já tem conta? <a href="login.html">Fazer login</a></p>
+    <p id="msg" style="color:red;margin-top:10px;"></p>
+  </div>
+
+  <script>
+    async function register() {
+      const name = document.getElementById('name').value.trim();
+      const email = document.getElementById('email').value.trim();
+      const senha = document.getElementById('senha').value.trim();
+      const msg = document.getElementById('msg');
+
+      msg.textContent = '';
+
+      if (!name || !email || !senha) {
+        msg.textContent = 'Preencha todos os campos.';
+        return;
+      }
+
+      try {
+        const res = await fetch('/api/register-company', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ name, email, senha })
+        });
+
+        const data = await res.json();
+        if (!data.ok) throw new Error(data.error || 'Erro ao registrar empresa.');
+
+        msg.style.color = 'green';
+        msg.textContent = 'Empresa criada com sucesso! Redirecionando...';
+        setTimeout(() => (window.location.href = 'login.html'), 1500);
+      } catch (err) {
+        msg.textContent = err.message;
+      }
+    }
+  </script>
+</body>
+</html>
+

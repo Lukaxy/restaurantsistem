@@ -1,0 +1,286 @@
+/* ======== CONFIGURAÇÕES - GERAL ======== */
+body {
+  font-family: "Poppins", Arial, sans-serif;
+  background: #111;
+  color: #eee;
+  margin: 0;
+  padding: 0;
+}
+
+header {
+  position: relative;
+  background: linear-gradient(135deg, #ff6b00, #d45500);
+  color: #fff;
+  padding: 16px 20px;
+  font-size: 18px;
+  font-weight: 600;
+  text-align: center;
+  border-bottom: 3px solid #cc4400;
+  box-shadow: 0 3px 6px rgba(0, 0, 0, 0.3);
+}
+
+.link-pedidos {
+  position: absolute;
+  right: 16px;
+  top: 50%;
+  transform: translateY(-50%);
+  cursor: pointer;
+  font-size: 15px;
+  background: rgba(255, 255, 255, 0.15);
+  padding: 6px 12px;
+  border-radius: 8px;
+  transition: background 0.3s;
+}
+
+.link-pedidos:hover {
+  background: rgba(255, 255, 255, 0.3);
+}
+
+/* ======== CONTAINER PRINCIPAL ======== */
+.categories {
+  max-width: 700px;
+  margin: 0 auto;
+  padding: 20px;
+}
+
+h3 {
+  color: #ffa94d;
+  margin-bottom: 12px;
+  font-size: 16px;
+}
+
+/* ======== FORM DE ADIÇÃO ======== */
+.form-linha {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+  margin-bottom: 20px;
+}
+
+.form-linha input {
+  padding: 10px;
+  border-radius: 6px;
+  border: 1px solid #333;
+  background: #222;
+  color: #fff;
+  outline: none;
+  transition: border 0.2s;
+}
+
+.form-linha input:focus {
+  border-color: #ff6b00;
+}
+
+#newName {
+  flex: 2;
+}
+
+#newPrice {
+  width: 100px;
+}
+
+#newCategory {
+  flex: 1;
+}
+
+/* ======== BOTÃO DE ADICIONAR ======== */
+.btn-adicionar {
+  background: linear-gradient(135deg, #ff8800, #ff6b00);
+  color: #fff;
+  border: none;
+  border-radius: 50px;
+  padding: 12px 20px;
+  font-size: 15px;
+  font-weight: 600;
+  cursor: pointer;
+  box-shadow: 0 6px 14px rgba(0, 0, 0, 0.2);
+  transition: all 0.3s ease;
+}
+
+.btn-adicionar:hover {
+  transform: scale(1.05);
+  box-shadow: 0 8px 18px rgba(0, 0, 0, 0.3);
+}
+
+.btn-adicionar:active {
+  transform: scale(0.95);
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+}
+
+/* ======== LISTA DE PRODUTOS ======== */
+#productList {
+  background: #1a1a1a;
+  padding: 16px;
+  border-radius: 12px;
+  box-shadow: 0 2px 10px rgba(0,0,0,0.2);
+}
+
+.produto-item {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  border-bottom: 1px solid #333;
+  padding: 10px 0;
+  color: #ddd;
+}
+
+.produto-item:last-child {
+  border-bottom: none;
+}
+
+.produto-info {
+  flex: 1;
+}
+
+.produto-info span {
+  display: block;
+  font-size: 14px;
+  color: #ffa94d;
+}
+
+.produto-acoes button {
+  margin-left: 6px;
+  padding: 6px 10px;
+  border-radius: 6px;
+  border: none;
+  cursor: pointer;
+  font-size: 13px;
+  font-weight: 600;
+  transition: all 0.2s;
+}
+
+.editar {
+  background: #2b8a3e;
+  color: white;
+}
+
+.editar:hover {
+  background: #34a145;
+}
+
+.remover {
+  background: #b30000;
+  color: white;
+}
+
+.remover:hover {
+  background: #e60000;
+}
+
+/* ======== BOTÃO SALVAR (EDIÇÃO) ======== */
+.btn-salvar {
+  background: linear-gradient(135deg, #ff8800, #ff6b00);
+  color: white;
+  border: none;
+  padding: 10px 16px;
+  border-radius: 8px;
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.25);
+}
+
+.btn-salvar:hover {
+  transform: scale(1.05);
+  box-shadow: 0 6px 16px rgba(0, 0, 0, 0.3);
+}
+
+.btn-salvar:active {
+  transform: scale(0.96);
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.2);
+}
+
+.menu-wrapper {
+  position: absolute;
+  left: 16px;
+  top: 50%;
+  transform: translateY(-50%);
+  z-index: 20;
+}
+
+.menu-button {
+  background: rgba(255, 255, 255, 0.2);
+  color: white;
+  border: none;
+  border-radius: 8px;
+  padding: 6px 10px;
+  font-size: 20px;
+  cursor: pointer;
+}
+
+.menu-dropdown {
+  position: absolute;
+  top: 38px;
+  left: 0;
+  background: white;
+  color: #333;
+  border-radius: 8px;
+  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.2);
+  display: none;
+  min-width: 180px;
+  z-index: 100;
+}
+
+.menu-dropdown.show {
+  display: block;
+}
+
+.menu-dropdown div {
+  padding: 10px 16px;
+  border-bottom: 1px solid #eee;
+  cursor: pointer;
+}
+
+.menu-dropdown div:hover {
+  background: #f6f6f6;
+}
+
+/* ======== MENU 3 PONTINHOS ======== */
+.menu-wrapper {
+  position: absolute;
+  left: 16px;
+  top: 50%;
+  transform: translateY(-50%);
+}
+
+.menu-button {
+  background: rgba(255, 255, 255, 0.2);
+  color: white;
+  border: none;
+  border-radius: 8px;
+  padding: 6px 10px;
+  font-size: 20px;
+  cursor: pointer;
+}
+
+.menu-dropdown {
+  position: absolute;
+  top: 38px;
+  left: 0;
+  background: white;
+  color: #333;
+  border-radius: 8px;
+  box-shadow: 0 4px 10px rgba(0,0,0,0.2);
+  display: none;
+  min-width: 180px;
+  z-index: 100;
+}
+
+.menu-dropdown.show {
+  display: block;
+}
+
+.menu-dropdown div {
+  padding: 10px 16px;
+  border-bottom: 1px solid #eee;
+  cursor: pointer;
+}
+
+.menu-dropdown div:hover {
+  background: #f6f6f6;
+}
+
+
+
+

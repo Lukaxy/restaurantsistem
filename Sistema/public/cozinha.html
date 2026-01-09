@@ -1,0 +1,132 @@
+<!doctype html>
+<html lang="pt-br">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>👨‍🍳 Painel da Cozinha</title>
+  <link rel="stylesheet" href="css/cozinha.css" />
+</head>
+<body>
+
+<!-- 🔐 AUTENTICAÇÃO E PERMISSÃO -->
+<script src="js/auth.js"></script>
+<script>
+  const user = verificarAuth(["admin", "cozinha"]);
+</script>
+
+<header>
+  <div class="menu-wrapper">
+    <button class="menu-button" onclick="toggleMenu()">⋮</button>
+    <div id="menuDropdown" class="menu-dropdown">
+      <div onclick="window.location.href='meus-pedidos.html'">🧾 Meus pedidos</div>
+      <div onclick="window.location.href='relatorio.html'">📈 Relatório</div>
+      <div onclick="window.location.href='cozinha.html'">👨‍🍳 Cozinha</div>
+      <div onclick="window.location.href='configuracoes.html'">⚙️ Configurações</div>
+      <div onclick="window.location.href='index.html'">📙 Cardápio</div>
+      <div onclick="abrirPainelEmpresa()">🏢 Painel da Empresa</div>
+    </div>
+  </div>
+  <div class="header-title">👨‍🍳 Painel da Cozinha</div>
+</header>
+
+<main>
+  <div id="orders">Carregando pedidos...</div>
+</main>
+
+<script>
+document.addEventListener("DOMContentLoaded", () => {
+  const lista = document.getElementById("orders");
+  const company_id = user.company_id;
+  let pedidos = [];
+
+  function parseItems(data) {
+    if (!data) return [];
+    if (typeof data === "string") {
+      try { return JSON.parse(data); } catch { return []; }
+    }
+    if (Array.isArray(data)) return data;
+    return [];
+  }
+
+  function renderizarPedidos() {
+    if (pedidos.length === 0) {
+      lista.innerHTML = "<p style='text-align:center;margin-top:20px;'>Nenhum pedido no momento 🍽️</p>";
+      return;
+    }
+
+    lista.innerHTML = pedidos.map(p => {
+      const items = parseItems(p.items);
+      return `
+        <div class="order ${p.status}">
+          <b>🧾 Pedido #${p.id}</b> — <span>${p.table_name || "Sem mesa"}</span><br>
+          <small>${new Date(p.created_at).toLocaleTimeString("pt-BR", {hour: "2-digit", minute: "2-digit"})}</small><br>
+          <pre>${items.map(i => `${i.qty}x ${i.name}`).join("\n")}</pre>
+          ${p.notes ? `<div><b>Obs:</b> ${p.notes}</div>` : ""}
+          <div class="controls">
+            ${p.status === "novo" ? `<button class="btn" onclick="atualizarStatus(${p.id}, 'em preparo')">🍳 Em preparo</button>` : ""}
+            ${p.status === "em preparo" ? `<button class="btn" onclick="atualizarStatus(${p.id}, 'pronto')">✅ Pronto</button>` : ""}
+            <button class="btn cancel" onclick="atualizarStatus(${p.id}, 'cancelado')">❌ Cancelar</button>
+          </div>
+          <div class="status">Status: <b>${p.status}</b></div>
+        </div>
+      `;
+    }).join("");
+  }
+
+  async function atualizarStatus(id, status) {
+    try {
+      const res = await fetch(`/api/orders/${id}/status`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ status })
+      });
+      const data = await res.json();
+      if (!data.ok) throw new Error(data.error || "Erro ao atualizar status.");
+      carregarPedidos();
+    } catch (err) {
+      alert("Erro ao atualizar status: " + err.message);
+    }
+  }
+
+  async function carregarPedidos() {
+    try {
+      const res = await fetch(`/api/orders?company_id=${company_id}`);
+      const data = await res.json();
+      if (!data.ok) throw new Error(data.error || "Erro ao carregar pedidos.");
+
+      pedidos = data.pedidos.filter(p => !["pronto", "cancelado"].includes(p.status));
+      renderizarPedidos();
+    } catch (err) {
+      lista.innerHTML = `<p style="color:red;">${err.message}</p>`;
+    }
+  }
+
+  carregarPedidos();
+  setInterval(carregarPedidos, 5000);
+  window.atualizarStatus = atualizarStatus;
+});
+</script>
+
+<script>
+function abrirPainelEmpresa() {
+  if (user.role === "admin") {
+    window.location.href = "company-admin.html";
+  } else {
+    alert("Apenas o administrador da empresa pode acessar este painel.");
+  }
+}
+
+function toggleMenu() {
+  document.getElementById("menuDropdown").classList.toggle("show");
+}
+
+document.addEventListener("click", e => {
+  if (!e.target.closest(".menu-wrapper")) {
+    document.getElementById("menuDropdown").classList.remove("show");
+  }
+});
+</script>
+
+</body>
+</html>
+
