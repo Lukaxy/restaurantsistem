@@ -349,17 +349,22 @@ app.post("/api/orders", (req, res) => {
   const itemsJson = JSON.stringify(items);
 
   db.run(
-    `INSERT INTO orders (company_id, items, total, table_name, notes, status, created_at, status_updated_at)
-     VALUES (?, ?, ?, ?, ?, 'novo', ?, ?)`,
-    [company_id, itemsJson, total, table_name, notes, created_at, status_updated_at],
-    function (err) {
-      if (err)
-        return res.status(500).json({ ok: false, error: "Erro ao salvar pedido." });
-      console.log(`🧾 Novo pedido criado (empresa ${company_id})`);
-      res.json({ ok: true, id: this.lastID });
+  `INSERT INTO orders (company_id, items, total, table_name, notes, status, created_at, status_updated_at)
+   VALUES (?, ?, ?, ?, ?, 'novo', ?, ?)`,
+  [company_id, itemsJson, total, table_name, notes, created_at, status_updated_at],
+  function (err) {
+    if (err) {
+      console.error("❌ Erro ao salvar pedido:", err.message);
+      return res.status(500).json({
+        ok: false,
+        error: err.message
+      });
     }
-  );
-});
+
+    console.log(`🧾 Novo pedido criado (empresa ${company_id})`);
+    return res.json({ ok: true, id: this.lastID });
+  }
+);
 
 app.get("/api/orders", (req, res) => {
   const { company_id, status } = req.query;
