@@ -24,7 +24,7 @@ function getHoraLocalISOString(offsetHoras = -3) {
 // =============================================================
 // 🧱 BANCO DE DADOS
 // =============================================================
-const DB_PATH = path.join(__dirname, "orders.db");
+const DB_PATH = path.join(process.cwd(), "orders.db");
 const db = new sqlite3.Database(DB_PATH);
 
 db.serialize(() => {
