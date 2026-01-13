@@ -40,9 +40,7 @@ function renderItems() {
         ${i.description ? `<p class="desc">${i.description}</p>` : ""}
       `;
 
-      // 👇 Evento para abrir popup ao clicar no card
       div.addEventListener('click', () => abrirModalProduto(i));
-
       itemsDiv.appendChild(div);
     });
 
@@ -105,7 +103,8 @@ function renderCart() {
 
   el.innerHTML = cart.map(i => `
     <div style="padding:6px 0;border-bottom:1px solid #eee">
-      <b>${i.name}</b> <span style="float:right">R$ ${(i.price * i.qty).toFixed(2)}</span><br>
+      <b>${i.name}</b>
+      <span style="float:right">R$ ${(i.price * i.qty).toFixed(2)}</span><br>
       <small>Qtd: ${i.qty}</small>
     </div>
   `).join('');
@@ -113,7 +112,7 @@ function renderCart() {
 
 /* ======== AO CARREGAR A PÁGINA ======== */
 document.addEventListener('DOMContentLoaded', async () => {
-  const user = verificarAuth(); // chama a função do auth.js
+  const user = verificarAuth();
   if (!user) return;
 
   const savedTable = localStorage.getItem("mesa_nome");
@@ -127,15 +126,19 @@ document.addEventListener('DOMContentLoaded', async () => {
       throw new Error("Servidor retornou HTML — verifique se a rota /api/products existe.");
     }
 
-    const produtos = JSON.parse(text);
-    if (!Array.isArray(produtos)) throw new Error('Formato inválido do cardápio.');
+    const json = JSON.parse(text);
 
-    menu = produtos;
+    if (!json.ok || !Array.isArray(json.products)) {
+      throw new Error("Formato inválido do cardápio.");
+    }
+
+    menu = json.products;
     renderItems();
 
   } catch (err) {
     console.error('Erro ao carregar cardápio:', err);
-    document.getElementById('categories').innerHTML = `<p style="color:red;">${err.message}</p>`;
+    document.getElementById('categories').innerHTML =
+      `<p style="color:red;">${err.message}</p>`;
   }
 
   // Eventos do carrinho
@@ -164,18 +167,33 @@ document.addEventListener('DOMContentLoaded', async () => {
 
     localStorage.setItem("mesa_nome", table_name.trim());
 
-    const items = cart.map(i => ({ id: i.id, name: i.name, qty: i.qty, price: i.price }));
+    const items = cart.map(i => ({
+      id: i.id,
+      name: i.name,
+      qty: i.qty,
+      price: i.price
+    }));
+
     const total = cart.reduce((s, i) => s + i.price * i.qty, 0);
 
     try {
       const res = await fetch('/api/orders', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ company_id: user.company_id, items, total, table_name, notes })
+        body: JSON.stringify({
+          company_id: user.company_id,
+          items,
+          total,
+          table_name,
+          notes
+        })
       });
 
       const text = await res.text();
-      if (text.trim().startsWith('<')) throw new Error("Servidor retornou HTML — verifique se a rota /api/orders existe.");
+      if (text.trim().startsWith('<')) {
+        throw new Error("Servidor retornou HTML — verifique se a rota /api/orders existe.");
+      }
+
       const j = JSON.parse(text);
 
       if (j.ok) {
@@ -184,7 +202,9 @@ document.addEventListener('DOMContentLoaded', async () => {
         document.getElementById('cartModal').style.display = 'none';
         showNotification("✅ Pedido enviado com sucesso!", "success");
         window.location.href = 'meus-pedidos.html';
-      } else throw new Error(j.error || 'Erro ao enviar pedido.');
+      } else {
+        throw new Error(j.error || 'Erro ao enviar pedido.');
+      }
 
     } catch (e) {
       console.error('Erro ao enviar pedido:', e);
@@ -202,4 +222,3 @@ function showNotification(message, type = "success") {
   setTimeout(() => notif.classList.add("show"), 10);
   setTimeout(() => notif.classList.remove("show"), 3000);
 }
-
