@@ -139,7 +139,7 @@ function authMaster(req, res, next) {
 // =============================================================
 // 🏢 REGISTRAR EMPRESA
 // =============================================================
-app.post("/api/register-company", async (req, res) => {
+app.post("/api/companies", async (req, res) => {
   const { name, email, senha } = req.body;
   const hash = await bcrypt.hash(senha, 10);
   const now = getHoraLocalISOString();
