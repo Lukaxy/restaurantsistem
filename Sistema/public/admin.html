@@ -51,7 +51,7 @@
       div.innerHTML = "Carregando...";
 
       try {
-        const data = await api("/api/companies");
+        const data = await api("/api/empresas");
 
         if (!data.ok) throw new Error(data.error || "Erro ao buscar empresas.");
         if (!data.empresas.length) {
@@ -101,7 +101,7 @@
       }
 
       try {
-        const data = await api("/api/companies", {
+        const data = await api("/api/register-company", {
           method: "POST",
           body: JSON.stringify({ name: nome, email, senha }),
         });
