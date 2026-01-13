@@ -6,7 +6,6 @@ const path = require("path");
 const bcrypt = require("bcryptjs");
 const jwt = require("jsonwebtoken");
 
-
 const MASTER_EMAIL = "admin@master.com";
 const MASTER_SENHA = "123456";
 const JWT_SECRET = process.env.JWT_SECRET || "master_secret_123";
@@ -52,7 +51,6 @@ db.serialize(() => {
     FOREIGN KEY(company_id) REFERENCES companies(id)
   )`);
 
-  // Cria conta master se não existir
   const hash = bcrypt.hashSync(MASTER_SENHA, 10);
   db.get(`SELECT * FROM users WHERE email = ?`, [MASTER_EMAIL], (err, row) => {
     if (!row) {
@@ -128,7 +126,7 @@ function authMaster(req, res, next) {
 }
 
 // =============================================================
-// 🏢 REGISTRAR EMPRESA (compatível com frontend antigo)
+// 🏢 REGISTRAR EMPRESA
 // =============================================================
 app.post("/api/register-company", (req, res) => {
   const { name, email, senha } = req.body;
@@ -153,7 +151,6 @@ app.post("/api/register-company", (req, res) => {
                 [companyId, "Administrador", email, hash, now],
                 (errUser) => {
                   if (errUser) return res.status(500).json({ ok: false, error: "Erro ao criar usuário admin." });
-                  // ✅ Retorna compatível com frontend antigo
                   res.json({ ok: true, id: companyId });
                 });
       });
@@ -170,13 +167,15 @@ app.get("/api/empresas", authMaster, (req, res) => {
 });
 
 // =============================================================
-// ❌ API SEMPRE JSON
-app.use("/api", (req, res) => {
+// ❌ CATCH-ALL API JSON
+// =============================================================
+app.use("/api/*", (req, res) => {
   res.status(404).json({ ok: false, error: "API não encontrada" });
 });
 
 // =============================================================
 // 🌐 FRONTEND
+// =============================================================
 app.use(express.static(path.join(__dirname, "public")));
 app.get("*", (_, res) => res.sendFile(path.join(__dirname, "public", "index.html")));
 
