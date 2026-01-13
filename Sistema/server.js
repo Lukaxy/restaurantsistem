@@ -30,7 +30,6 @@ const DB_PATH = path.join(__dirname, "orders.db");
 const db = new sqlite3.Database(DB_PATH);
 
 db.serialize(() => {
-  // Tabelas
   db.run(`CREATE TABLE IF NOT EXISTS companies (
     id INTEGER PRIMARY KEY AUTOINCREMENT,
     name TEXT NOT NULL,
@@ -67,7 +66,7 @@ db.serialize(() => {
 });
 
 // =============================================================
-// 🔐 LOGIN MASTER
+// 🔐 LOGIN MASTER (com JWT)
 // =============================================================
 app.post("/api/admin-login", (req, res) => {
   const { email, senha } = req.body;
@@ -79,12 +78,13 @@ app.post("/api/admin-login", (req, res) => {
     const valid = await bcrypt.compare(senha, user.senha_hash);
     if (!valid) return res.status(401).json({ ok: false, error: "Senha incorreta." });
 
-    res.json({ ok: true, user });
+    const token = jwt.sign({ id: user.id, role: "master" }, JWT_SECRET, { expiresIn: "12h" });
+    res.json({ ok: true, token, user: { id: user.id, email: user.email, name: user.name } });
   });
 });
 
 // =============================================================
-// 🔐 LOGIN NORMAL (ADMIN EMPRESA)
+// 🔐 LOGIN NORMAL (admin empresa)
 // =============================================================
 app.post("/api/login", (req, res) => {
   const { email, senha } = req.body;
@@ -103,54 +103,65 @@ app.post("/api/login", (req, res) => {
         company_id: user.company_id,
         name: user.name,
         email: user.email,
-        role: user.role,
-      },
+        role: user.role
+      }
     });
   });
 });
 
 // =============================================================
-// 🏢 REGISTRAR EMPRESA
+// 🔑 Middleware para autenticar Master com JWT
+// =============================================================
+function authMaster(req, res, next) {
+  const auth = req.headers.authorization;
+  if (!auth) return res.status(401).json({ ok: false, error: "Token não fornecido." });
+
+  const token = auth.split(" ")[1];
+  try {
+    const decoded = jwt.verify(token, JWT_SECRET);
+    if (decoded.role !== "master") throw new Error("Role inválido");
+    next();
+  } catch {
+    return res.status(401).json({ ok: false, error: "Token inválido ou expirado." });
+  }
+}
+
+// =============================================================
+// 🏢 REGISTRAR EMPRESA (compatível com frontend antigo)
 // =============================================================
 app.post("/api/register-company", (req, res) => {
   const { name, email, senha } = req.body;
-
   if (!name || !email || !senha) return res.status(400).json({ ok: false, error: "Campos obrigatórios." });
 
-  // Verifica se email já existe
   db.get(`SELECT * FROM companies WHERE email_admin = ?`, [email], async (err, row) => {
     if (err) return res.status(500).json({ ok: false, error: "Erro no banco." });
     if (row) return res.status(400).json({ ok: false, error: "E-mail já cadastrado." });
 
-    const senha_hash = await bcrypt.hash(senha, 10);
-    const created_at = getHoraLocalISOString();
+    const hash = await bcrypt.hash(senha, 10);
+    const now = getHoraLocalISOString();
 
-    db.run(
-      `INSERT INTO companies (name, email_admin, senha_hash, created_at)
-       VALUES (?, ?, ?, ?)`,
-      [name, email, senha_hash, created_at],
-      function (err) {
+    db.run(`INSERT INTO companies (name, email_admin, senha_hash, created_at) VALUES (?, ?, ?, ?)`,
+      [name, email, hash, now],
+      function(err) {
         if (err) return res.status(500).json({ ok: false, error: "Erro ao cadastrar empresa." });
 
         const companyId = this.lastID;
 
-        db.run(
-          `INSERT INTO users (company_id, name, email, senha_hash, role, created_at)
-           VALUES (?, ?, ?, ?, 'admin', ?)`,
-          [companyId, "Administrador", email, senha_hash, created_at],
-          (errUser) => {
-            if (errUser) return res.status(500).json({ ok: false, error: "Erro ao criar usuário admin." });
-            res.json({ ok: true, id: companyId });
-          }
-        );
-      }
-    );
+        db.run(`INSERT INTO users (company_id, name, email, senha_hash, role, created_at)
+                VALUES (?, ?, ?, ?, 'admin', ?)`,
+                [companyId, "Administrador", email, hash, now],
+                (errUser) => {
+                  if (errUser) return res.status(500).json({ ok: false, error: "Erro ao criar usuário admin." });
+                  // ✅ Retorna compatível com frontend antigo
+                  res.json({ ok: true, id: companyId });
+                });
+      });
   });
 });
 
 // =============================================================
-// 🏢 LISTAR EMPRESAS (MASTER)
-app.get("/api/empresas", (req, res) => {
+// 🏢 LISTAR EMPRESAS (apenas master)
+app.get("/api/empresas", authMaster, (req, res) => {
   db.all(`SELECT id, name, email_admin, plano, created_at FROM companies ORDER BY id DESC`, (err, rows) => {
     if (err) return res.status(500).json({ ok: false, error: "Erro ao listar empresas." });
     res.json({ ok: true, empresas: rows });
