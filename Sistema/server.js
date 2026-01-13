@@ -4,7 +4,6 @@ const sqlite3 = require("sqlite3").verbose();
 const cors = require("cors");
 const path = require("path");
 const bcrypt = require("bcryptjs");
-const jwt = require("jsonwebtoken");
 
 const MASTER_EMAIL = "admin@master.com";
 const MASTER_SENHA = "123456";
