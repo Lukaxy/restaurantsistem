@@ -1,4 +1,7 @@
-// ==================== PAINEL DA EMPRESA (SEM TOKEN) ====================
+// ==================== PAINEL DA EMPRESA ====================
+
+// URL base da API
+const API_URL = "https://restaurantsistem.onrender.com";
 
 const user = JSON.parse(localStorage.getItem("user") || "null");
 const msg = document.getElementById("msg");
@@ -15,7 +18,7 @@ async function carregarUsuarios() {
   list.innerHTML = "Carregando...";
 
   try {
-    const res = await fetch(`/api/users?company_id=${user.company_id}`);
+    const res = await fetch(`${API_URL}/api/users?company_id=${user.company_id}`);
     const text = await res.text();
 
     // 🔥 evita erro silencioso de HTML
@@ -63,7 +66,7 @@ async function addUser() {
   }
 
   try {
-    const res = await fetch("/api/users", {
+    const res = await fetch(`${API_URL}/api/users`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({
@@ -102,7 +105,7 @@ async function excluir(id) {
   if (!confirm("Deseja realmente excluir este camarada?")) return;
 
   try {
-    const res = await fetch(`/api/users/${id}`, { method: "DELETE" });
+    const res = await fetch(`${API_URL}/api/users/${id}`, { method: "DELETE" });
     const text = await res.text();
 
     if (text.trim().startsWith("<")) {
