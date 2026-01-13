@@ -8,7 +8,7 @@ const jwt = require("jsonwebtoken");
 
 const MASTER_EMAIL = "admin@master.com";
 const MASTER_SENHA = "123456";
-const JWT_SECRET = "master_secret_123";
+const JWT_SECRET = process.env.JWT_SECRET || "master_secret_123";
 
 const app = express();
 app.use(cors());
@@ -88,9 +88,9 @@ db.serialize(() => {
 });
 
 // =============================================================
-// 🔐 LOGIN MASTER (CORRIGIDO)
+// 🔐 LOGIN MASTER (GERA TOKEN)
 // =============================================================
-app.post("/api/admin-login", async (req, res) => {
+app.post("/api/admin-login", (req, res) => {
   const { email, senha } = req.body;
   if (!email || !senha) return res.status(400).json({ ok: false });
 
@@ -98,7 +98,7 @@ app.post("/api/admin-login", async (req, res) => {
     `SELECT * FROM users WHERE email = ? AND role = 'master'`,
     [email],
     async (err, user) => {
-      if (!user) return res.status(404).json({ ok: false });
+      if (!user) return res.status(401).json({ ok: false });
 
       const valid = await bcrypt.compare(senha, user.senha_hash);
       if (!valid) return res.status(401).json({ ok: false });
@@ -106,35 +106,44 @@ app.post("/api/admin-login", async (req, res) => {
       const token = jwt.sign(
         { id: user.id, role: "master" },
         JWT_SECRET,
-        { expiresIn: "8h" }
+        { expiresIn: "12h" }
       );
 
       res.json({
         ok: true,
         token,
-        user: { id: user.id, name: user.name, email: user.email }
+        user: {
+          id: user.id,
+          name: user.name,
+          email: user.email
+        }
       });
     }
   );
 });
 
 // =============================================================
-// 🔐 MIDDLEWARE MASTER
+// 🔐 MIDDLEWARE MASTER (CORRETO)
 // =============================================================
 function authMaster(req, res, next) {
-  const token = req.headers.authorization?.split(" ")[1];
+  const auth = req.headers.authorization;
+  if (!auth) return res.status(401).json({ ok: false });
+
+  const [, token] = auth.split(" ");
   if (!token) return res.status(401).json({ ok: false });
 
   try {
-    jwt.verify(token, JWT_SECRET);
+    const decoded = jwt.verify(token, JWT_SECRET);
+    if (decoded.role !== "master") throw new Error("forbidden");
+    req.master = decoded;
     next();
   } catch {
-    res.status(401).json({ ok: false });
+    return res.status(401).json({ ok: false });
   }
 }
 
 // =============================================================
-// 🏢 EMPRESAS — PAINEL MASTER (PROTEGIDO)
+// 🏢 EMPRESAS — PAINEL MASTER
 // =============================================================
 app.get("/api/companies", authMaster, (req, res) => {
   db.all(
@@ -159,7 +168,7 @@ app.get("/api/products", (req, res) => {
     [company_id],
     (err, rows) => {
       if (err) return res.status(500).json({ ok: false });
-      res.json(rows);
+      res.json(rows); // frontend espera array
     }
   );
 });
@@ -187,7 +196,7 @@ app.post("/api/orders", (req, res) => {
 });
 
 // =============================================================
-// ❌ BLOQUEIO TOTAL DE HTML PARA /api
+// ❌ API SEMPRE JSON (NUNCA HTML)
 // =============================================================
 app.use("/api", (req, res) => {
   res.status(404).json({ ok: false, error: "API não encontrada" });
