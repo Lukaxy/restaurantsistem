@@ -4,9 +4,11 @@ const sqlite3 = require("sqlite3").verbose();
 const cors = require("cors");
 const path = require("path");
 const bcrypt = require("bcryptjs");
+const jwt = require("jsonwebtoken");
 
 const MASTER_EMAIL = "admin@master.com";
 const MASTER_SENHA = "123456";
+const JWT_SECRET = "master_secret_123";
 
 const app = express();
 app.use(cors());
@@ -70,19 +72,23 @@ db.serialize(() => {
   )`);
 
   const hash = bcrypt.hashSync(MASTER_SENHA, 10);
-  db.get(`SELECT id FROM users WHERE email = ?`, [MASTER_EMAIL], (err, row) => {
-    if (!row) {
-      db.run(
-        `INSERT INTO users (name, email, senha_hash, role, created_at)
-         VALUES (?, ?, ?, 'master', ?)`,
-        ["Admin Master", MASTER_EMAIL, hash, getHoraLocalISOString()]
-      );
+  db.get(
+    `SELECT id FROM users WHERE email = ? AND role = 'master'`,
+    [MASTER_EMAIL],
+    (err, row) => {
+      if (!row) {
+        db.run(
+          `INSERT INTO users (name, email, senha_hash, role, created_at)
+           VALUES (?, ?, ?, 'master', ?)`,
+          ["Admin Master", MASTER_EMAIL, hash, getHoraLocalISOString()]
+        );
+      }
     }
-  });
+  );
 });
 
 // =============================================================
-// 🔐 LOGIN MASTER
+// 🔐 LOGIN MASTER (CORRIGIDO)
 // =============================================================
 app.post("/api/admin-login", async (req, res) => {
   const { email, senha } = req.body;
@@ -93,17 +99,44 @@ app.post("/api/admin-login", async (req, res) => {
     [email],
     async (err, user) => {
       if (!user) return res.status(404).json({ ok: false });
+
       const valid = await bcrypt.compare(senha, user.senha_hash);
       if (!valid) return res.status(401).json({ ok: false });
-      res.json({ ok: true, user });
+
+      const token = jwt.sign(
+        { id: user.id, role: "master" },
+        JWT_SECRET,
+        { expiresIn: "8h" }
+      );
+
+      res.json({
+        ok: true,
+        token,
+        user: { id: user.id, name: user.name, email: user.email }
+      });
     }
   );
 });
 
 // =============================================================
-// 🏢 EMPRESAS — PAINEL MASTER
+// 🔐 MIDDLEWARE MASTER
 // =============================================================
-app.get("/api/companies", (req, res) => {
+function authMaster(req, res, next) {
+  const token = req.headers.authorization?.split(" ")[1];
+  if (!token) return res.status(401).json({ ok: false });
+
+  try {
+    jwt.verify(token, JWT_SECRET);
+    next();
+  } catch {
+    res.status(401).json({ ok: false });
+  }
+}
+
+// =============================================================
+// 🏢 EMPRESAS — PAINEL MASTER (PROTEGIDO)
+// =============================================================
+app.get("/api/companies", authMaster, (req, res) => {
   db.all(
     `SELECT id, name, email_admin, plano, created_at FROM companies`,
     [],
@@ -126,7 +159,7 @@ app.get("/api/products", (req, res) => {
     [company_id],
     (err, rows) => {
       if (err) return res.status(500).json({ ok: false });
-      res.json(rows); // 👈 frontend espera ARRAY
+      res.json(rows);
     }
   );
 });
@@ -161,7 +194,7 @@ app.use("/api", (req, res) => {
 });
 
 // =============================================================
-// 🌐 FRONTEND (DEPOIS DAS APIs)
+// 🌐 FRONTEND
 // =============================================================
 const publicPath = path.join(__dirname, "public");
 app.use(express.static(publicPath));
