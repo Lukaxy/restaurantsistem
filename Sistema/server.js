@@ -167,6 +167,53 @@ app.get("/api/empresas", authMaster, (req, res) => {
 });
 
 // =============================================================
+// 🧑‍💼 ROTAS DE USUÁRIOS (ADMIN EMPRESA)
+// =============================================================
+
+// Listar usuários de uma empresa
+app.get("/api/users", (req, res) => {
+  const company_id = parseInt(req.query.company_id);
+  if (!company_id) return res.status(400).json({ ok: false, error: "company_id é obrigatório." });
+
+  db.all(`SELECT id, name, email, role, ativo, created_at FROM users WHERE company_id = ? ORDER BY id DESC`,
+    [company_id],
+    (err, rows) => {
+      if (err) return res.status(500).json({ ok: false, error: "Erro ao listar usuários." });
+      res.json({ ok: true, users: rows });
+    });
+});
+
+// Adicionar usuário
+app.post("/api/users", async (req, res) => {
+  const { name, email, senha, role, company_id } = req.body;
+  if (!name || !email || !senha || !role || !company_id) {
+    return res.status(400).json({ ok: false, error: "Campos obrigatórios ausentes." });
+  }
+
+  const hash = await bcrypt.hash(senha, 10);
+  const now = getHoraLocalISOString();
+
+  db.run(`INSERT INTO users (company_id, name, email, senha_hash, role, created_at) VALUES (?, ?, ?, ?, ?, ?)`,
+    [company_id, name, email, hash, role, now],
+    function(err) {
+      if (err) return res.status(500).json({ ok: false, error: "Erro ao criar usuário. Talvez o e-mail já exista." });
+      res.json({ ok: true, id: this.lastID });
+    });
+});
+
+// Excluir usuário
+app.delete("/api/users/:id", (req, res) => {
+  const id = parseInt(req.params.id);
+  if (!id) return res.status(400).json({ ok: false, error: "ID do usuário é obrigatório." });
+
+  db.run(`DELETE FROM users WHERE id = ?`, [id], function(err) {
+    if (err) return res.status(500).json({ ok: false, error: "Erro ao excluir usuário." });
+    if (this.changes === 0) return res.status(404).json({ ok: false, error: "Usuário não encontrado." });
+    res.json({ ok: true });
+  });
+});
+
+// =============================================================
 // ❌ CATCH-ALL API JSON
 // =============================================================
 app.use("/api/*", (req, res) => {
@@ -181,6 +228,7 @@ app.get("*", (_, res) => res.sendFile(path.join(__dirname, "public", "index.html
 
 // =============================================================
 // 🚀 INICIAR SERVIDOR
+// =============================================================
 app.listen(process.env.PORT || 3000, () => {
   console.log("✅ Servidor rodando em http://0.0.0.0:3000");
 });
