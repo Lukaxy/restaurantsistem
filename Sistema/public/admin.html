@@ -124,7 +124,7 @@
     // ================== ALTERAR PLANO ==================
     async function alterarPlano(id, plano) {
       try {
-        const data = await api(`/api/companies/${id}/plano`, {
+        const data = await api(`/api/empresas/${id}/plano`, {
           method: "POST",
           body: JSON.stringify({ plano }),
         });
@@ -139,7 +139,7 @@
     async function excluirEmpresa(id) {
       if (!confirm("Deseja realmente excluir esta empresa?")) return;
       try {
-        const data = await api(`/api/companies/${id}`, { method: "DELETE" });
+        const data = await api(`/api/empresas/${id}`, { method: "DELETE" });
         if (!data.ok) throw new Error(data.error || "Erro ao excluir empresa.");
         alert("Empresa excluída com sucesso!");
         carregarEmpresas();
