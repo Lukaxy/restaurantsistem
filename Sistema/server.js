@@ -18,22 +18,24 @@ app.use(bodyParser.json({ limit: "2mb" }));
 // 🕒 HORA LOCAL
 // =============================================================
 function getHoraLocalISOString(offsetHoras = -3) {
-  const d = new Date();
-  d.setHours(d.getHours() + offsetHoras);
-  return d.toISOString();
+  const date = new Date();
+  date.setHours(date.getHours() + offsetHoras);
+  return date.toISOString();
 }
 
 // =============================================================
-// 🧱 BANCO
+// 🧱 BANCO DE DADOS
 // =============================================================
-const db = new sqlite3.Database(path.join(process.cwd(), "orders.db"));
+const DB_PATH = path.join(__dirname, "orders.db");
+const db = new sqlite3.Database(DB_PATH);
 
 db.serialize(() => {
+  // Tabelas
   db.run(`CREATE TABLE IF NOT EXISTS companies (
     id INTEGER PRIMARY KEY AUTOINCREMENT,
-    name TEXT,
+    name TEXT NOT NULL,
     email_admin TEXT UNIQUE,
-    senha_hash TEXT,
+    senha_hash TEXT NOT NULL,
     plano TEXT DEFAULT 'basic',
     created_at DATETIME
   )`);
@@ -44,24 +46,24 @@ db.serialize(() => {
     name TEXT,
     email TEXT UNIQUE,
     senha_hash TEXT,
-    role TEXT,
-    created_at DATETIME
+    role TEXT DEFAULT 'atendente',
+    ativo INTEGER DEFAULT 1,
+    created_at DATETIME,
+    FOREIGN KEY(company_id) REFERENCES companies(id)
   )`);
 
+  // Cria conta master se não existir
   const hash = bcrypt.hashSync(MASTER_SENHA, 10);
-  db.get(
-    `SELECT id FROM users WHERE email = ? AND role = 'master'`,
-    [MASTER_EMAIL],
-    (err, row) => {
-      if (!row) {
-        db.run(
-          `INSERT INTO users (name, email, senha_hash, role, created_at)
-           VALUES (?, ?, ?, 'master', ?)`,
-          ["Admin Master", MASTER_EMAIL, hash, getHoraLocalISOString()]
-        );
-      }
+  db.get(`SELECT * FROM users WHERE email = ?`, [MASTER_EMAIL], (err, row) => {
+    if (!row) {
+      db.run(
+        `INSERT INTO users (name, email, senha_hash, role, created_at)
+         VALUES (?, ?, ?, 'master', ?)`,
+        ["Admin Master", MASTER_EMAIL, hash, getHoraLocalISOString()],
+        () => console.log("✅ Conta master criada:", MASTER_EMAIL, "senha:", MASTER_SENHA)
+      );
     }
-  );
+  });
 });
 
 // =============================================================
@@ -70,121 +72,104 @@ db.serialize(() => {
 app.post("/api/admin-login", (req, res) => {
   const { email, senha } = req.body;
 
-  db.get(
-    `SELECT * FROM users WHERE email = ? AND role = 'master'`,
-    [email],
-    async (_, user) => {
-      if (!user) return res.status(401).json({ ok: false });
+  db.get(`SELECT * FROM users WHERE email = ? AND role = 'master'`, [email], async (err, user) => {
+    if (err) return res.status(500).json({ ok: false, error: "Erro no banco." });
+    if (!user) return res.status(404).json({ ok: false, error: "Usuário master não encontrado." });
 
-      const valid = await bcrypt.compare(senha, user.senha_hash);
-      if (!valid) return res.status(401).json({ ok: false });
+    const valid = await bcrypt.compare(senha, user.senha_hash);
+    if (!valid) return res.status(401).json({ ok: false, error: "Senha incorreta." });
 
-      const token = jwt.sign(
-        { id: user.id, role: "master" },
-        JWT_SECRET,
-        { expiresIn: "12h" }
-      );
-
-      res.json({ ok: true, token });
-    }
-  );
+    res.json({ ok: true, user });
+  });
 });
 
 // =============================================================
-// 🔐 LOGIN NORMAL (EMPRESA)  ✅ FALTAVA ISSO
+// 🔐 LOGIN NORMAL (ADMIN EMPRESA)
 // =============================================================
 app.post("/api/login", (req, res) => {
   const { email, senha } = req.body;
 
-  db.get(
-    `SELECT * FROM users WHERE email = ? AND role = 'admin'`,
-    [email],
-    async (_, user) => {
-      if (!user) return res.status(401).json({ ok: false });
+  db.get(`SELECT * FROM users WHERE email = ? AND role = 'admin'`, [email], async (err, user) => {
+    if (err) return res.status(500).json({ ok: false, error: "Erro no banco." });
+    if (!user) return res.status(404).json({ ok: false, error: "Usuário não encontrado." });
 
-      const valid = await bcrypt.compare(senha, user.senha_hash);
-      if (!valid) return res.status(401).json({ ok: false });
+    const valid = await bcrypt.compare(senha, user.senha_hash);
+    if (!valid) return res.status(401).json({ ok: false, error: "Senha incorreta." });
 
-      res.json({
-        ok: true,
-        user: {
-          id: user.id,
-          name: user.name,
-          email: user.email,
-          role: user.role,
-          company_id: user.company_id
-        }
-      });
-    }
-  );
+    res.json({
+      ok: true,
+      user: {
+        id: user.id,
+        company_id: user.company_id,
+        name: user.name,
+        email: user.email,
+        role: user.role,
+      },
+    });
+  });
 });
-
-// =============================================================
-// 🔐 AUTH MASTER
-// =============================================================
-function authMaster(req, res, next) {
-  const auth = req.headers.authorization;
-  if (!auth) return res.status(401).json({ ok: false });
-
-  const token = auth.split(" ")[1];
-  try {
-    const decoded = jwt.verify(token, JWT_SECRET);
-    if (decoded.role !== "master") throw "err";
-    next();
-  } catch {
-    res.status(401).json({ ok: false });
-  }
-}
 
 // =============================================================
 // 🏢 REGISTRAR EMPRESA
 // =============================================================
-app.post("/api/companies", async (req, res) => {
+app.post("/api/register-company", (req, res) => {
   const { name, email, senha } = req.body;
-  const hash = await bcrypt.hash(senha, 10);
-  const now = getHoraLocalISOString();
 
-  db.run(
-    `INSERT INTO companies (name, email_admin, senha_hash, created_at)
-     VALUES (?, ?, ?, ?)`,
-    [name, email, hash, now],
-    function (err) {
-      if (err) return res.status(400).json({ ok: false });
+  if (!name || !email || !senha) return res.status(400).json({ ok: false, error: "Campos obrigatórios." });
 
-      db.run(
-        `INSERT INTO users (company_id, name, email, senha_hash, role, created_at)
-         VALUES (?, ?, ?, ?, 'admin', ?)`,
-        [this.lastID, "Administrador", email, hash, now]
-      );
+  // Verifica se email já existe
+  db.get(`SELECT * FROM companies WHERE email_admin = ?`, [email], async (err, row) => {
+    if (err) return res.status(500).json({ ok: false, error: "Erro no banco." });
+    if (row) return res.status(400).json({ ok: false, error: "E-mail já cadastrado." });
 
-      res.json({ ok: true });
-    }
-  );
+    const senha_hash = await bcrypt.hash(senha, 10);
+    const created_at = getHoraLocalISOString();
+
+    db.run(
+      `INSERT INTO companies (name, email_admin, senha_hash, created_at)
+       VALUES (?, ?, ?, ?)`,
+      [name, email, senha_hash, created_at],
+      function (err) {
+        if (err) return res.status(500).json({ ok: false, error: "Erro ao cadastrar empresa." });
+
+        const companyId = this.lastID;
+
+        db.run(
+          `INSERT INTO users (company_id, name, email, senha_hash, role, created_at)
+           VALUES (?, ?, ?, ?, 'admin', ?)`,
+          [companyId, "Administrador", email, senha_hash, created_at],
+          (errUser) => {
+            if (errUser) return res.status(500).json({ ok: false, error: "Erro ao criar usuário admin." });
+            res.json({ ok: true, id: companyId });
+          }
+        );
+      }
+    );
+  });
 });
 
 // =============================================================
-// 🏢 EMPRESAS — MASTER
-// =============================================================
-app.get("/api/companies", authMaster, (req, res) => {
-  db.all(`SELECT * FROM companies`, [], (_, rows) => {
-    res.json({ ok: true, companies: rows });
+// 🏢 LISTAR EMPRESAS (MASTER)
+app.get("/api/empresas", (req, res) => {
+  db.all(`SELECT id, name, email_admin, plano, created_at FROM companies ORDER BY id DESC`, (err, rows) => {
+    if (err) return res.status(500).json({ ok: false, error: "Erro ao listar empresas." });
+    res.json({ ok: true, empresas: rows });
   });
 });
 
 // =============================================================
 // ❌ API SEMPRE JSON
-// =============================================================
 app.use("/api", (req, res) => {
   res.status(404).json({ ok: false, error: "API não encontrada" });
 });
 
 // =============================================================
 // 🌐 FRONTEND
-// =============================================================
 app.use(express.static(path.join(__dirname, "public")));
-app.get("*", (_, res) =>
-  res.sendFile(path.join(__dirname, "public", "index.html"))
-);
+app.get("*", (_, res) => res.sendFile(path.join(__dirname, "public", "index.html")));
 
 // =============================================================
-app.listen(process.env.PORT || 3000);
+// 🚀 INICIAR SERVIDOR
+app.listen(process.env.PORT || 3000, () => {
+  console.log("✅ Servidor rodando em http://0.0.0.0:3000");
+});
