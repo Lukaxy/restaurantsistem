@@ -1,41 +1,33 @@
-// auth.js — autenticação + autorização por página
+// js/http.js
+export async function api(url, options = {}) {
+  const token =
+    localStorage.getItem("master_token") ||
+    localStorage.getItem("token"); // fallback futuro
 
-function verificarAuth(rolesPermitidos = []) {
-  const user = JSON.parse(localStorage.getItem("user") || "null");
+  const headers = {
+    "Content-Type": "application/json",
+    ...(options.headers || {})
+  };
 
-  if (!user || !user.id || !user.role) {
-    alert("Você precisa fazer login.");
-    window.location.href = "login.html";
-    return null;
+  if (token) {
+    headers.Authorization = "Bearer " + token;
   }
 
-  // Master acessa tudo
-  if (user.role === "master") return user;
+  const res = await fetch(url, {
+    ...options,
+    headers
+  });
 
-  // Se a página exige roles específicos
-  if (rolesPermitidos.length > 0) {
-    if (!rolesPermitidos.includes(user.role)) {
-      alert("Você não tem permissão para acessar esta página.");
-      window.location.href = "index.html";
-      return null;
-    }
+  let data;
+  try {
+    data = await res.json();
+  } catch {
+    throw new Error("Resposta inválida do servidor.");
   }
 
-  // Usuários comuns precisam de empresa
-  if (!user.company_id) {
-    alert("Sessão inválida. Faça login novamente.");
-    window.location.href = "login.html";
-    return null;
+  if (!res.ok) {
+    throw new Error(data?.error || "Erro na API.");
   }
 
-  return user;
+  return data;
 }
-
-function logout() {
-  localStorage.clear();
-  window.location.href = "login.html";
-}
-
-window.verificarAuth = verificarAuth;
-window.logout = logout;
-
