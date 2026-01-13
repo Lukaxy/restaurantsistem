@@ -22,7 +22,7 @@ function getHoraLocalISOString(offsetHoras = -3) {
 }
 
 // =============================================================
-// 🧱 BANCO DE DADOS
+// 🧱 BANCO
 // =============================================================
 const DB_PATH = path.join(process.cwd(), "orders.db");
 const db = new sqlite3.Database(DB_PATH);
@@ -57,8 +57,7 @@ db.serialize(() => {
     notes TEXT,
     status TEXT DEFAULT 'novo',
     created_at DATETIME,
-    status_updated_at DATETIME,
-    payment_method TEXT
+    status_updated_at DATETIME
   )`);
 
   db.run(`CREATE TABLE IF NOT EXISTS products (
@@ -71,7 +70,7 @@ db.serialize(() => {
   )`);
 
   const hash = bcrypt.hashSync(MASTER_SENHA, 10);
-  db.get(`SELECT * FROM users WHERE email = ?`, [MASTER_EMAIL], (err, row) => {
+  db.get(`SELECT id FROM users WHERE email = ?`, [MASTER_EMAIL], (err, row) => {
     if (!row) {
       db.run(
         `INSERT INTO users (name, email, senha_hash, role, created_at)
@@ -85,7 +84,7 @@ db.serialize(() => {
 // =============================================================
 // 🔐 LOGIN MASTER
 // =============================================================
-app.post("/api/admin-login", (req, res) => {
+app.post("/api/admin-login", async (req, res) => {
   const { email, senha } = req.body;
   if (!email || !senha) return res.status(400).json({ ok: false });
 
@@ -102,118 +101,7 @@ app.post("/api/admin-login", (req, res) => {
 });
 
 // =============================================================
-// 👥 USUÁRIOS (PAINEL EMPRESA)
-// =============================================================
-app.get("/api/users", (req, res) => {
-  const { company_id } = req.query;
-  if (!company_id) return res.status(400).json({ ok: false });
-
-  db.all(
-    `SELECT id, name, email, role FROM users WHERE company_id = ?`,
-    [company_id],
-    (err, rows) => {
-      if (err) return res.status(500).json({ ok: false });
-      res.json({ ok: true, users: rows });
-    }
-  );
-});
-
-app.post("/api/users", async (req, res) => {
-  const { name, email, senha, role, company_id } = req.body;
-  if (!name || !email || !senha || !company_id)
-    return res.status(400).json({ ok: false });
-
-  const hash = await bcrypt.hash(senha, 10);
-
-  db.run(
-    `INSERT INTO users (name, email, senha_hash, role, company_id, created_at)
-     VALUES (?, ?, ?, ?, ?, ?)`,
-    [name, email, hash, role || "atendente", company_id, getHoraLocalISOString()],
-    function (err) {
-      if (err) return res.status(500).json({ ok: false, error: "Email já existe" });
-      res.json({ ok: true, id: this.lastID });
-    }
-  );
-});
-
-app.delete("/api/users/:id", (req, res) => {
-  const { id } = req.params;
-
-  db.run(`DELETE FROM users WHERE id = ?`, [id], function (err) {
-    if (err) return res.status(500).json({ ok: false });
-    res.json({ ok: true });
-  });
-});
-
-// =============================================================
-// 🧾 PEDIDOS
-// =============================================================
-app.post("/api/orders", (req, res) => {
-  const { company_id, items, total, table_name, notes } = req.body;
-  if (!company_id || !Array.isArray(items))
-    return res.status(400).json({ ok: false });
-
-  const now = getHoraLocalISOString();
-  db.run(
-    `INSERT INTO orders
-     (company_id, items, total, table_name, notes, created_at, status_updated_at)
-     VALUES (?, ?, ?, ?, ?, ?, ?)`,
-    [company_id, JSON.stringify(items), total, table_name, notes, now, now],
-    function (err) {
-      if (err) return res.status(500).json({ ok: false });
-      res.json({ ok: true, id: this.lastID });
-    }
-  );
-});
-
-app.get("/api/orders", (req, res) => {
-  const { company_id } = req.query;
-
-  db.all(
-    `SELECT * FROM orders WHERE company_id = ? ORDER BY id DESC`,
-    [company_id],
-    (err, rows) => {
-      if (err) return res.status(500).json({ ok: false });
-      rows.forEach(r => (r.items = JSON.parse(r.items || "[]")));
-      res.json({ ok: true, pedidos: rows });
-    }
-  );
-});
-
-// =============================================================
-// 📦 PRODUTOS (RETORNA ARRAY DIRETO)
-// =============================================================
-app.get("/api/products", (req, res) => {
-  const { company_id } = req.query;
-  if (!company_id) return res.status(400).json([]);
-
-  db.all(
-    `SELECT * FROM products WHERE company_id = ?`,
-    [company_id],
-    (err, rows) => {
-      if (err) return res.status(500).json([]);
-      res.json(rows); // 👈 IMPORTANTÍSSIMO
-    }
-  );
-});
-
-app.post("/api/products", (req, res) => {
-  const { company_id, name, description, price, category } = req.body;
-  if (!company_id || !name) return res.status(400).json({ ok: false });
-
-  db.run(
-    `INSERT INTO products (company_id, name, description, price, category)
-     VALUES (?, ?, ?, ?, ?)`,
-    [company_id, name, description, price, category],
-    function (err) {
-      if (err) return res.status(500).json({ ok: false });
-      res.json({ ok: true, id: this.lastID });
-    }
-  );
-});
-
-// =============================================================
-// 🏢 EMPRESAS (PAINEL MASTER)
+// 🏢 EMPRESAS — PAINEL MASTER
 // =============================================================
 app.get("/api/companies", (req, res) => {
   db.all(
@@ -227,15 +115,65 @@ app.get("/api/companies", (req, res) => {
 });
 
 // =============================================================
-// 🌐 ARQUIVOS ESTÁTICOS (SEMPRE POR ÚLTIMO)
+// 📦 PRODUTOS
+// =============================================================
+app.get("/api/products", (req, res) => {
+  const { company_id } = req.query;
+  if (!company_id) return res.status(400).json({ ok: false });
+
+  db.all(
+    `SELECT * FROM products WHERE company_id = ?`,
+    [company_id],
+    (err, rows) => {
+      if (err) return res.status(500).json({ ok: false });
+      res.json(rows); // 👈 frontend espera ARRAY
+    }
+  );
+});
+
+// =============================================================
+// 🧾 PEDIDOS
+// =============================================================
+app.post("/api/orders", (req, res) => {
+  const { company_id, items, total, table_name, notes } = req.body;
+  if (!company_id || !Array.isArray(items)) {
+    return res.status(400).json({ ok: false });
+  }
+
+  const now = getHoraLocalISOString();
+  db.run(
+    `INSERT INTO orders 
+     (company_id, items, total, table_name, notes, created_at, status_updated_at)
+     VALUES (?, ?, ?, ?, ?, ?, ?)`,
+    [company_id, JSON.stringify(items), total, table_name, notes, now, now],
+    function (err) {
+      if (err) return res.status(500).json({ ok: false });
+      res.json({ ok: true, id: this.lastID });
+    }
+  );
+});
+
+// =============================================================
+// ❌ BLOQUEIO TOTAL DE HTML PARA /api
+// =============================================================
+app.use("/api", (req, res) => {
+  res.status(404).json({ ok: false, error: "API não encontrada" });
+});
+
+// =============================================================
+// 🌐 FRONTEND (DEPOIS DAS APIs)
 // =============================================================
 const publicPath = path.join(__dirname, "public");
 app.use(express.static(publicPath));
+
+app.get("*", (req, res) => {
+  res.sendFile(path.join(publicPath, "index.html"));
+});
 
 // =============================================================
 // 🚀 START
 // =============================================================
 const PORT = process.env.PORT || 3000;
 app.listen(PORT, "0.0.0.0", () => {
-  console.log(`✅ Servidor rodando na porta ${PORT}`);
+  console.log("✅ Servidor rodando na porta", PORT);
 });
