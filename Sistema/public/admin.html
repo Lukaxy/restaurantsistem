@@ -51,7 +51,7 @@
       div.innerHTML = "Carregando...";
 
       try {
-        const data = await api("/api/empresas");
+        const data = await api("/api/companies");
 
         if (!data.ok) throw new Error(data.error || "Erro ao buscar empresas.");
         if (!data.empresas.length) {
