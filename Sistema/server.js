@@ -71,6 +71,7 @@ db.serialize(() => {
     category TEXT
   )`);
 
+  // cria master se não existir
   const hash = bcrypt.hashSync(MASTER_SENHA, 10);
   db.get(
     `SELECT id FROM users WHERE email = ? AND role = 'master'`,
@@ -88,7 +89,7 @@ db.serialize(() => {
 });
 
 // =============================================================
-// 🔐 LOGIN MASTER (GERA TOKEN)
+// 🔐 LOGIN MASTER
 // =============================================================
 app.post("/api/admin-login", (req, res) => {
   const { email, senha } = req.body;
@@ -123,7 +124,7 @@ app.post("/api/admin-login", (req, res) => {
 });
 
 // =============================================================
-// 🔐 MIDDLEWARE MASTER (CORRETO)
+// 🔐 MIDDLEWARE MASTER
 // =============================================================
 function authMaster(req, res, next) {
   const auth = req.headers.authorization;
@@ -134,13 +135,52 @@ function authMaster(req, res, next) {
 
   try {
     const decoded = jwt.verify(token, JWT_SECRET);
-    if (decoded.role !== "master") throw new Error("forbidden");
+    if (decoded.role !== "master") throw new Error();
     req.master = decoded;
     next();
   } catch {
     return res.status(401).json({ ok: false });
   }
 }
+
+// =============================================================
+// 🏢 REGISTRAR EMPRESA (NOVA ROTA)
+// =============================================================
+app.post("/api/register-company", async (req, res) => {
+  const { name, email, senha } = req.body;
+  if (!name || !email || !senha) {
+    return res.status(400).json({ ok: false, error: "Dados incompletos" });
+  }
+
+  const senhaHash = await bcrypt.hash(senha, 10);
+  const now = getHoraLocalISOString();
+
+  db.run(
+    `INSERT INTO companies (name, email_admin, senha_hash, created_at)
+     VALUES (?, ?, ?, ?)`,
+    [name, email, senhaHash, now],
+    function (err) {
+      if (err) {
+        if (err.message.includes("UNIQUE")) {
+          return res.status(409).json({
+            ok: false,
+            error: "E-mail já cadastrado"
+          });
+        }
+        return res.status(500).json({ ok: false });
+      }
+
+      // cria admin da empresa
+      db.run(
+        `INSERT INTO users (company_id, name, email, senha_hash, role, created_at)
+         VALUES (?, ?, ?, ?, 'admin', ?)`,
+        [this.lastID, "Administrador", email, senhaHash, now]
+      );
+
+      res.json({ ok: true });
+    }
+  );
+});
 
 // =============================================================
 // 🏢 EMPRESAS — PAINEL MASTER
@@ -168,7 +208,7 @@ app.get("/api/products", (req, res) => {
     [company_id],
     (err, rows) => {
       if (err) return res.status(500).json({ ok: false });
-      res.json(rows); // frontend espera array
+      res.json(rows);
     }
   );
 });
@@ -196,7 +236,7 @@ app.post("/api/orders", (req, res) => {
 });
 
 // =============================================================
-// ❌ API SEMPRE JSON (NUNCA HTML)
+// ❌ API SEMPRE JSON
 // =============================================================
 app.use("/api", (req, res) => {
   res.status(404).json({ ok: false, error: "API não encontrada" });
