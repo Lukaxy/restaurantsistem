@@ -45,8 +45,7 @@ db.serialize(() => {
     senha_hash TEXT,
     role TEXT DEFAULT 'atendente',
     ativo INTEGER DEFAULT 1,
-    created_at DATETIME,
-    FOREIGN KEY(company_id) REFERENCES companies(id)
+    created_at DATETIME
   )`);
 
   db.run(`CREATE TABLE IF NOT EXISTS orders (
@@ -59,37 +58,25 @@ db.serialize(() => {
     status TEXT DEFAULT 'novo',
     created_at DATETIME,
     status_updated_at DATETIME,
-    payment_method TEXT,
-    FOREIGN KEY(company_id) REFERENCES companies(id)
+    payment_method TEXT
   )`);
 
   db.run(`CREATE TABLE IF NOT EXISTS products (
     id INTEGER PRIMARY KEY AUTOINCREMENT,
     company_id INTEGER,
     name TEXT,
+    description TEXT,
     price REAL,
-    category TEXT,
-    FOREIGN KEY(company_id) REFERENCES companies(id)
+    category TEXT
   )`);
 
-  // Garante coluna description
-  db.all(`PRAGMA table_info(products)`, (err, cols) => {
-    if (err) return console.error(err);
-    const temDescription = cols.some(c => c.name === "description");
-    if (!temDescription) {
-      db.run(`ALTER TABLE products ADD COLUMN description TEXT`);
-    }
-  });
-
-  // Conta master
   const hash = bcrypt.hashSync(MASTER_SENHA, 10);
   db.get(`SELECT * FROM users WHERE email = ?`, [MASTER_EMAIL], (err, row) => {
     if (!row) {
       db.run(
         `INSERT INTO users (name, email, senha_hash, role, created_at)
          VALUES (?, ?, ?, 'master', ?)`,
-        ["Admin Master", MASTER_EMAIL, hash, getHoraLocalISOString()],
-        () => console.log("✅ Conta master criada")
+        ["Admin Master", MASTER_EMAIL, hash, getHoraLocalISOString()]
       );
     }
   });
@@ -114,66 +101,85 @@ app.post("/api/admin-login", async (req, res) => {
   );
 });
 
-app.post("/api/login", (req, res) => {
-  const { email, senha } = req.body;
-
-  db.get(`SELECT * FROM users WHERE email = ?`, [email], async (err, user) => {
-    if (!user) return res.status(404).json({ ok: false });
-    const valid = await bcrypt.compare(senha, user.senha_hash);
-    if (!valid) return res.status(401).json({ ok: false });
-
-    res.json({
-      ok: true,
-      user: {
-        id: user.id,
-        company_id: user.company_id,
-        name: user.name,
-        email: user.email,
-        role: user.role,
-      },
-    });
-  });
-});
-
 // =============================================================
 // 🧾 PEDIDOS
 // =============================================================
 app.post("/api/orders", (req, res) => {
   const { company_id, items, total, table_name, notes } = req.body;
-
-  if (!company_id || !Array.isArray(items) || items.length === 0) {
+  if (!company_id || !Array.isArray(items)) {
     return res.status(400).json({ ok: false });
   }
 
-  const created_at = getHoraLocalISOString();
-  const itemsJson = JSON.stringify(items);
-
+  const now = getHoraLocalISOString();
   db.run(
     `INSERT INTO orders 
-     (company_id, items, total, table_name, notes, status, created_at, status_updated_at)
-     VALUES (?, ?, ?, ?, ?, 'novo', ?, ?)`,
-    [company_id, itemsJson, total, table_name, notes, created_at, created_at],
+     (company_id, items, total, table_name, notes, created_at, status_updated_at)
+     VALUES (?, ?, ?, ?, ?, ?, ?)`,
+    [company_id, JSON.stringify(items), total, table_name, notes, now, now],
     function (err) {
       if (err) return res.status(500).json({ ok: false });
       res.json({ ok: true, id: this.lastID });
     }
   );
-}); // ✅ FECHAMENTO QUE FALTAVA
+});
 
 app.get("/api/orders", (req, res) => {
   const { company_id } = req.query;
 
-  let query = `
-    SELECT * FROM orders 
-    WHERE company_id = ?
-    AND (status != 'pronto' OR datetime(status_updated_at) > datetime('now', '-5 minutes'))
-    ORDER BY id DESC
-  `;
+  db.all(
+    `SELECT * FROM orders WHERE company_id = ? ORDER BY id DESC`,
+    [company_id],
+    (err, rows) => {
+      rows.forEach(r => (r.items = JSON.parse(r.items || "[]")));
+      res.json({ ok: true, pedidos: rows });
+    }
+  );
+});
 
-  db.all(query, [company_id], (err, rows) => {
-    rows.forEach(r => r.items = JSON.parse(r.items || "[]"));
-    res.json({ ok: true, pedidos: rows });
-  });
+// =============================================================
+// 📦 PRODUTOS
+// =============================================================
+app.get("/api/products", (req, res) => {
+  const { company_id } = req.query;
+  if (!company_id) return res.status(400).json({ ok: false });
+
+  db.all(
+    `SELECT * FROM products WHERE company_id = ?`,
+    [company_id],
+    (err, rows) => {
+      if (err) return res.status(500).json({ ok: false });
+      res.json({ ok: true, products: rows });
+    }
+  );
+});
+
+app.post("/api/products", (req, res) => {
+  const { company_id, name, description, price, category } = req.body;
+  if (!company_id || !name) return res.status(400).json({ ok: false });
+
+  db.run(
+    `INSERT INTO products (company_id, name, description, price, category)
+     VALUES (?, ?, ?, ?, ?)`,
+    [company_id, name, description, price, category],
+    function (err) {
+      if (err) return res.status(500).json({ ok: false });
+      res.json({ ok: true, id: this.lastID });
+    }
+  );
+});
+
+// =============================================================
+// 🏢 EMPRESAS (PAINEL MASTER)
+// =============================================================
+app.get("/api/companies", (req, res) => {
+  db.all(
+    `SELECT id, name, email_admin, plano, created_at FROM companies`,
+    [],
+    (err, rows) => {
+      if (err) return res.status(500).json({ ok: false });
+      res.json({ ok: true, companies: rows });
+    }
+  );
 });
 
 // =============================================================
