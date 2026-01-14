@@ -1,44 +1,37 @@
-// http.js — versão corrigida
-export async function api(endpoint, options = {}) {
-  const baseURL = window.location.origin; // pega o domínio atual
-  const token = localStorage.getItem("token");
+// ==========================================================
+// 🌐 http.js — Wrapper simples para requisições ao servidor
+// ==========================================================
 
-  // ================== HEADERS ==================
+export async function api(url, opts = {}) {
   const headers = {
     "Content-Type": "application/json",
-    ...(token ? { Authorization: `Bearer ${token}` } : {}),
-    ...(options.headers || {}),
+    ...(opts.headers || {}),
   };
 
-  // ================== BODY ==================
-  if (options.body && typeof options.body !== "string") {
-    options.body = JSON.stringify(options.body);
-  }
-
-  options.headers = headers;
-
   try {
-    const res = await fetch(baseURL + endpoint, options);
+    const res = await fetch(url, { ...opts, headers });
     const text = await res.text();
 
-    // caso o servidor retorne HTML, normalmente erro 404 ou redirecionamento
+    // 🚨 Se o backend devolveu HTML, algo está errado
     if (text.trim().startsWith("<")) {
-      return { ok: false, error: "Servidor retornou HTML." };
+      throw new Error(`Servidor retornou HTML — verifique se a rota ${url} existe.`);
     }
 
-    // tenta converter para JSON
     let data;
     try {
-      data = JSON.parse(text);
+      data = text ? JSON.parse(text) : {};
     } catch {
-      return { ok: false, error: "Resposta do servidor inválida." };
+      throw new Error(`JSON inválido retornado de ${url}.`);
     }
 
-    // garante que sempre exista a propriedade ok
-    if (typeof data.ok === "undefined") data.ok = res.ok;
+    if (res.status >= 400 || data.ok === false) {
+      throw new Error(data.error || `Erro ${res.status}`);
+    }
 
     return data;
   } catch (err) {
-    return { ok: false, error: "Falha de comunicação." };
+    console.error("Erro na requisição:", err.message);
+    return { ok: false, error: err.message };
   }
 }
+
