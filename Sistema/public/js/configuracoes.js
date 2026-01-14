@@ -1,6 +1,12 @@
-// ==================== SEGURANÇA ====================
-const user = exigirAdmin(); // 🔒 BLOQUEIA NÃO-ADMIN
+let user;
 
+document.addEventListener("DOMContentLoaded", () => {
+  // 🔒 Segurança
+  user = exigirAdmin();
+
+  // ✅ Só depois disso o resto do código roda
+  carregarProdutos();
+});
 // ==================== PAINEL DA EMPRESA - SEM TOKEN ====================
 
 const user = JSON.parse(localStorage.getItem("user") || "null");
