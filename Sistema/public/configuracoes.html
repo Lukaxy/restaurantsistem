@@ -12,7 +12,7 @@
     try {
       const user = JSON.parse(localStorage.getItem("user"));
       if (!user || user.role !== "admin") {
-        alert("Acesso restrito ao administrador.");
+        alert("Apenas o administrador da empresa pode acessar este painel.");
         window.location.replace("index.html");
       }
     } catch {
