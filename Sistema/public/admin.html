@@ -5,44 +5,23 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>👑 Painel Master - Empresas</title>
   <link rel="stylesheet" href="css/admin.css" />
-</head>
 
-<body>
-  <header>
-    Painel Master — Gerenciar Empresas
-    <span class="logout" onclick="logout()">Sair</span>
-  </header>
-
-  <main>
-    <!-- CADASTRAR NOVA EMPRESA -->
-    <section>
-      <h2>🏢 Cadastrar nova empresa</h2>
-      <input id="nome" placeholder="Nome da empresa" />
-      <input id="email" placeholder="E-mail do administrador" type="email" />
-      <input id="senha" placeholder="Senha do administrador" type="password" />
-      <button onclick="criarEmpresa()">Cadastrar Empresa</button>
-      <p id="msg" style="margin-top:6px;"></p>
-    </section>
-
-    <!-- LISTAR EMPRESAS -->
-    <section>
-      <h2>📋 Empresas cadastradas</h2>
-      <div id="empresas-list">Carregando...</div>
-    </section>
-  </main>
+  <!-- Proteção de acesso -->
+  <script src="js/auth.js"></script>
 
   <script type="module">
     import { api } from "./js/http.js";
 
     // ================== VERIFICA LOGIN MASTER ==================
     const user = JSON.parse(localStorage.getItem("user") || "{}");
+
     if (!user || user.role !== "master") {
       alert("Acesso negado. Apenas o administrador master pode entrar.");
       localStorage.clear();
       window.location.href = "admin-login.html";
     }
 
-    // ================== CARREGAR EMPRESAS ==================
+    // ================== LISTAR EMPRESAS ==================
     async function carregarEmpresas() {
       const div = document.getElementById("empresas-list");
       div.innerHTML = "Carregando...";
@@ -51,7 +30,7 @@
         const data = await api("/api/empresas");
 
         if (!data.ok) throw new Error(data.error || "Erro ao buscar empresas.");
-        if (!data.empresas || !data.empresas.length) {
+        if (!data.empresas.length) {
           div.innerHTML = "<p style='color:#bbb;'>Nenhuma empresa cadastrada.</p>";
           return;
         }
@@ -77,7 +56,6 @@
         `
           )
           .join("");
-
       } catch (err) {
         console.error("Erro ao carregar empresas:", err);
         div.innerHTML = `<p style="color:red;">${err.message}</p>`;
@@ -93,15 +71,15 @@
       msg.textContent = "";
 
       if (!nome || !email || !senha) {
-        msg.style.color = "red";
         msg.textContent = "Preencha todos os campos.";
+        msg.style.color = "red";
         return;
       }
 
       try {
         const data = await api("/api/register-company", {
           method: "POST",
-          body: { name: nome, email, senha },
+          body: JSON.stringify({ name: nome, email, senha }),
         });
 
         if (!data.ok) throw new Error(data.error || "Erro ao criar empresa.");
@@ -124,7 +102,7 @@
       try {
         const data = await api(`/api/empresas/${id}/plano`, {
           method: "POST",
-          body: { plano },
+          body: JSON.stringify({ plano }),
         });
         if (!data.ok) throw new Error(data.error || "Erro ao atualizar plano.");
         alert("Plano atualizado!");
@@ -136,7 +114,6 @@
     // ================== EXCLUIR EMPRESA ==================
     async function excluirEmpresa(id) {
       if (!confirm("Deseja realmente excluir esta empresa?")) return;
-
       try {
         const data = await api(`/api/empresas/${id}`, { method: "DELETE" });
         if (!data.ok) throw new Error(data.error || "Erro ao excluir empresa.");
@@ -154,10 +131,34 @@
     };
 
     // ================== EVENTOS ==================
+    document.addEventListener("DOMContentLoaded", carregarEmpresas);
     window.criarEmpresa = criarEmpresa;
     window.excluirEmpresa = excluirEmpresa;
     window.alterarPlano = alterarPlano;
-    document.addEventListener("DOMContentLoaded", carregarEmpresas);
   </script>
+</head>
+
+<body>
+  <header>
+    Painel Master — Gerenciar Empresas
+    <span class="logout" onclick="logout()">Sair</span>
+  </header>
+
+  <main>
+    <section>
+      <h2>🏢 Cadastrar nova empresa</h2>
+      <input id="nome" placeholder="Nome da empresa" />
+      <input id="email" placeholder="E-mail do administrador" type="email" />
+      <input id="senha" placeholder="Senha do administrador" type="password" />
+      <button onclick="criarEmpresa()">Cadastrar Empresa</button>
+      <p id="msg"></p>
+    </section>
+
+    <section>
+      <h2>📋 Empresas cadastradas</h2>
+      <div id="empresas-list">Carregando...</div>
+    </section>
+  </main>
 </body>
 </html>
+
