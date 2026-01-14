@@ -7,6 +7,20 @@
 
   <link rel="stylesheet" href="css/configuracoes.css" />
 
+  <script>
+  (function () {
+    try {
+      const user = JSON.parse(localStorage.getItem("user"));
+      if (!user || user.role !== "admin") {
+        alert("Acesso restrito ao administrador.");
+        window.location.replace("index.html");
+      }
+    } catch {
+      window.location.replace("index.html");
+    }
+  })();
+</script>
+
   <style>
     body {
       background: #111;
