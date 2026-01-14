@@ -1,33 +1,38 @@
-// js/http.js
-export async function api(url, options = {}) {
-  const token =
-    localStorage.getItem("master_token") ||
-    localStorage.getItem("token"); // fallback futuro
+// http.js — comunicação simplificada com o backend
+export async function api(endpoint, options = {}) {
+  const baseURL = window.location.origin;
+  const headers = { "Content-Type": "application/json" };
 
-  const headers = {
-    "Content-Type": "application/json",
-    ...(options.headers || {})
-  };
+  // ✅ Mescla cabeçalhos (sem token)
+  options.headers = { ...headers, ...(options.headers || {}) };
 
-  if (token) {
-    headers.Authorization = "Bearer " + token;
-  }
-
-  const res = await fetch(url, {
-    ...options,
-    headers
-  });
-
-  let data;
   try {
-    data = await res.json();
-  } catch {
-    throw new Error("Resposta inválida do servidor.");
-  }
+    const res = await fetch(baseURL + endpoint, options);
+    const text = await res.text();
 
-  if (!res.ok) {
-    throw new Error(data?.error || "Erro na API.");
-  }
+    // Detecta resposta HTML acidental (ex: erro 404 servindo index.html)
+    if (text.trim().startsWith("<")) {
+      console.error("❌ HTML recebido em vez de JSON em", endpoint);
+      return { ok: false, error: "Servidor retornou HTML em vez de JSON." };
+    }
 
-  return data;
+    let data;
+    try {
+      data = JSON.parse(text);
+    } catch (err) {
+      console.error("❌ Erro ao converter JSON:", err, text);
+      return { ok: false, error: "Resposta inválida do servidor." };
+    }
+
+    // Garante que sempre tenha campo ok
+    if (typeof data.ok === "undefined") {
+      data.ok = res.ok;
+    }
+
+    return data;
+  } catch (err) {
+    console.error("❌ Erro geral em fetch:", err);
+    return { ok: false, error: "Falha na comunicação com o servidor." };
+  }
 }
+
