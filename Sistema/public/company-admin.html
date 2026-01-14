@@ -5,6 +5,123 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>🏢 Painel da Empresa</title>
   <link rel="stylesheet" href="css/admin.css">
+
+  <script type="module">
+    import { api } from "./js/http.js";
+
+    // ======== DADOS DO USUÁRIO LOGADO ========
+    const token = localStorage.getItem("token");
+    const user = JSON.parse(localStorage.getItem("user") || "{}");
+    const msg = document.getElementById("msg");
+    const list = document.getElementById("users-list");
+
+    // ======== BLOQUEIA NÃO-ADMINS ========
+    if (!user || !user.role || user.role !== "admin") {
+      alert("Acesso negado. Apenas o administrador da empresa pode entrar.");
+      window.location.href = "login.html";
+    }
+
+    // ======== LISTAR USUÁRIOS ========
+    async function carregarUsuarios() {
+      list.innerHTML = "Carregando...";
+
+      try {
+        const data = await api(`/api/users?company_id=${user.company_id}`);
+        if (!data.ok) throw new Error(data.error || "Erro ao carregar usuários");
+
+        if (!data.users || data.users.length === 0) {
+          list.innerHTML = "<p>Nenhum usuário encontrado.</p>";
+          return;
+        }
+
+        list.innerHTML = data.users.map(u => `
+          <div class="user">
+            <b>${u.name}</b> — ${u.email} <small>(${u.role})</small>
+            ${u.role !== "admin" ? `<button onclick="excluir(${u.id})">🗑️</button>` : ""}
+          </div>
+        `).join("");
+
+      } catch (err) {
+        console.error("Erro ao listar usuários:", err);
+        list.innerHTML = `<p style="color:red;">${err.message}</p>`;
+      }
+    }
+
+    // ======== ADICIONAR USUÁRIO ========
+    async function addUser() {
+      const name = document.getElementById("name").value.trim();
+      const email = document.getElementById("email").value.trim();
+      const senha = document.getElementById("senha").value.trim();
+      const role = document.getElementById("role").value;
+
+      msg.textContent = "";
+      msg.style.color = "red";
+
+      if (!name || !email || !senha) {
+        msg.textContent = "Preencha todos os campos.";
+        return;
+      }
+
+      try {
+        const data = await api("/api/users", {
+          method: "POST",
+          body: JSON.stringify({
+            company_id: user.company_id,
+            name,
+            email,
+            senha,
+            role
+          }),
+        });
+
+        if (!data.ok) throw new Error(data.error || "Erro ao adicionar usuário.");
+
+        msg.style.color = "green";
+        msg.textContent = "✅ Usuário adicionado com sucesso!";
+
+        document.getElementById("name").value = "";
+        document.getElementById("email").value = "";
+        document.getElementById("senha").value = "";
+
+        carregarUsuarios();
+
+      } catch (err) {
+        console.error("Erro ao adicionar usuário:", err);
+        msg.style.color = "red";
+        msg.textContent = err.message;
+      }
+    }
+
+    // ======== EXCLUIR USUÁRIO ========
+    async function excluir(id) {
+      if (!confirm("Deseja realmente excluir este usuário?")) return;
+
+      try {
+        const data = await api(`/api/users/${id}`, { method: "DELETE" });
+        if (!data.ok) throw new Error(data.error || "Erro ao excluir usuário.");
+
+        carregarUsuarios();
+
+      } catch (err) {
+        alert("Erro: " + err.message);
+      }
+    }
+
+    // ======== LOGOUT ========
+    function logout() {
+      localStorage.removeItem("token");
+      localStorage.removeItem("user");
+      window.location.href = "login.html";
+    }
+
+    // ======== INICIALIZAÇÃO ========
+    document.addEventListener("DOMContentLoaded", carregarUsuarios);
+
+    // ======== EXPOE FUNÇÕES GLOBAIS ========
+    window.addUser = addUser;
+    window.excluir = excluir;
+    window.logout = logout;
+  </script>
 </head>
 
 <body>
@@ -32,10 +149,6 @@
       <p id="msg" style="margin-top:10px;color:red;"></p>
     </section>
   </main>
-
-  <!-- === IMPORTANTE: scripts na ordem correta === -->
-  <script src="js/http.js" defer></script>
-  <script src="js/company-admin.js" defer></script>
 </body>
 </html>
 
