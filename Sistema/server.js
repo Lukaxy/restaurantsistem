@@ -83,12 +83,12 @@ app.post("/api/admin-login", (req, res) => {
 });
 
 // =============================================================
-// 🔐 LOGIN NORMAL (admin empresa)
+// 🔐 LOGIN NORMAL (TODOS FUNCIONÁRIOS)
 // =============================================================
 app.post("/api/login", (req, res) => {
   const { email, senha } = req.body;
 
-  db.get(`SELECT * FROM users WHERE email = ? AND role = 'admin'`, [email], async (err, user) => {
+  db.get(`SELECT * FROM users WHERE email = ?`, [email], async (err, user) => {
     if (err) return res.status(500).json({ ok: false, error: "Erro no banco." });
     if (!user) return res.status(404).json({ ok: false, error: "Usuário não encontrado." });
 
