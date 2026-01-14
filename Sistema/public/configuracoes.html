@@ -4,7 +4,9 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width,initial-scale=1.0" />
   <title>⚙️ Configurações - Cardápio</title>
+
   <link rel="stylesheet" href="css/configuracoes.css" />
+
   <style>
     body {
       background: #111;
@@ -100,10 +102,8 @@
     }
   </style>
 </head>
-<body>
 
-<!-- Proteção de autenticação -->
-<script src="js/auth.js"></script>
+<body>
 
 <header>
   <div class="menu-wrapper">
@@ -129,8 +129,8 @@
     <input type="text" id="newCategory" placeholder="Categoria" class="form-input flex-1" />
   </div>
 
-  <textarea id="newDescription" placeholder="Descrição do produto (ex: pão, carne, queijo, salada...)" class="form-input form-textarea"></textarea>
-  
+  <textarea id="newDescription" placeholder="Descrição do produto" class="form-input form-textarea"></textarea>
+
   <div style="margin-top:8px;">
     <button onclick="addProduct()" class="btn-salvar">Adicionar Produto</button>
   </div>
@@ -139,10 +139,13 @@
   <div id="productList">Carregando produtos...</div>
 </main>
 
-<!-- Script principal -->
+<!-- 🔒 Auth SEM chamada direta -->
+<script src="js/auth.js"></script>
+
+<!-- Script da página (a segurança fica AQUI) -->
 <script src="js/configuracoes.js"></script>
 
-<!-- ===================== PAINEL DA EMPRESA ===================== -->
+<!-- Painel da empresa -->
 <script>
 function abrirPainelEmpresa() {
   const user = JSON.parse(localStorage.getItem('user') || '{}');
@@ -154,16 +157,14 @@ function abrirPainelEmpresa() {
 }
 </script>
 
-<!-- ===================== MENU DE TRÊS PONTOS ===================== -->
+<!-- Menu -->
 <script>
 function toggleMenu() {
-  const menu = document.getElementById('menuDropdown');
-  menu.classList.toggle('show');
+  document.getElementById('menuDropdown').classList.toggle('show');
 }
 
-document.addEventListener('click', event => {
-  const isClickInside = event.target.closest('.menu-wrapper');
-  if (!isClickInside) {
+document.addEventListener('click', e => {
+  if (!e.target.closest('.menu-wrapper')) {
     document.getElementById('menuDropdown').classList.remove('show');
   }
 });
@@ -171,4 +172,3 @@ document.addEventListener('click', event => {
 
 </body>
 </html>
-
