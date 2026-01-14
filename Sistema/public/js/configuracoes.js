@@ -1,3 +1,6 @@
+// ==================== SEGURANÇA ====================
+const user = exigirAdmin(); // 🔒 BLOQUEIA NÃO-ADMIN
+
 // ==================== PAINEL DA EMPRESA - SEM TOKEN ====================
 
 const user = JSON.parse(localStorage.getItem("user") || "null");
