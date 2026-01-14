@@ -1,3 +1,7 @@
+// =============================================================
+// 🌟 SERVER COMPLETO AJUSTADO PARA ADMIN.HTML (MASTER)
+// =============================================================
+
 const express = require("express");
 const bodyParser = require("body-parser");
 const sqlite3 = require("sqlite3").verbose();
@@ -16,7 +20,6 @@ app.use(bodyParser.json({ limit: "2mb" }));
 
 // =============================================================
 // 🕒 HORA LOCAL
-// =============================================================
 function getHoraLocalISOString(offsetHoras = -3) {
   const date = new Date();
   date.setHours(date.getHours() + offsetHoras);
@@ -25,7 +28,6 @@ function getHoraLocalISOString(offsetHoras = -3) {
 
 // =============================================================
 // 🧱 BANCO DE DADOS
-// =============================================================
 const DB_PATH = path.join(__dirname, "orders.db");
 const db = new sqlite3.Database(DB_PATH);
 
@@ -51,6 +53,7 @@ db.serialize(() => {
     FOREIGN KEY(company_id) REFERENCES companies(id)
   )`);
 
+  // Cria master se não existir
   const hash = bcrypt.hashSync(MASTER_SENHA, 10);
   db.get(`SELECT * FROM users WHERE email = ?`, [MASTER_EMAIL], (err, row) => {
     if (!row) {
@@ -65,11 +68,9 @@ db.serialize(() => {
 });
 
 // =============================================================
-// 🔐 LOGIN MASTER (com JWT)
-// =============================================================
+// 🔐 LOGIN MASTER
 app.post("/api/admin-login", (req, res) => {
   const { email, senha } = req.body;
-
   db.get(`SELECT * FROM users WHERE email = ? AND role = 'master'`, [email], async (err, user) => {
     if (err) return res.status(500).json({ ok: false, error: "Erro no banco." });
     if (!user) return res.status(404).json({ ok: false, error: "Usuário master não encontrado." });
@@ -82,12 +83,9 @@ app.post("/api/admin-login", (req, res) => {
   });
 });
 
-// =============================================================
-// 🔐 LOGIN NORMAL (TODOS FUNCIONÁRIOS)
-// =============================================================
+// 🔐 LOGIN NORMAL
 app.post("/api/login", (req, res) => {
   const { email, senha } = req.body;
-
   db.get(`SELECT * FROM users WHERE email = ?`, [email], async (err, user) => {
     if (err) return res.status(500).json({ ok: false, error: "Erro no banco." });
     if (!user) return res.status(404).json({ ok: false, error: "Usuário não encontrado." });
@@ -109,8 +107,7 @@ app.post("/api/login", (req, res) => {
 });
 
 // =============================================================
-// 🔑 Middleware para autenticar Master com JWT
-// =============================================================
+// 🔑 Middleware JWT MASTER
 function authMaster(req, res, next) {
   const auth = req.headers.authorization;
   if (!auth) return res.status(401).json({ ok: false, error: "Token não fornecido." });
@@ -126,9 +123,18 @@ function authMaster(req, res, next) {
 }
 
 // =============================================================
-// 🏢 REGISTRAR EMPRESA
-// =============================================================
-app.post("/api/register-company", (req, res) => {
+// 🏢 ROTAS MASTER
+
+// Listar empresas
+app.get("/api/empresas", authMaster, (req, res) => {
+  db.all(`SELECT id, name, email_admin, plano, created_at FROM companies ORDER BY id DESC`, (err, rows) => {
+    if (err) return res.status(500).json({ ok: false, error: "Erro ao listar empresas." });
+    res.json({ ok: true, empresas: rows });
+  });
+});
+
+// Criar empresa
+app.post("/api/register-company", authMaster, (req, res) => {
   const { name, email, senha } = req.body;
   if (!name || !email || !senha) return res.status(400).json({ ok: false, error: "Campos obrigatórios." });
 
@@ -157,20 +163,32 @@ app.post("/api/register-company", (req, res) => {
   });
 });
 
-// =============================================================
-// 🏢 LISTAR EMPRESAS (apenas master)
-app.get("/api/empresas", authMaster, (req, res) => {
-  db.all(`SELECT id, name, email_admin, plano, created_at FROM companies ORDER BY id DESC`, (err, rows) => {
-    if (err) return res.status(500).json({ ok: false, error: "Erro ao listar empresas." });
-    res.json({ ok: true, empresas: rows });
+// Alterar plano
+app.post("/api/empresas/:id/plano", authMaster, (req, res) => {
+  const { id } = req.params;
+  const { plano } = req.body;
+  if (!["basic","plus","pro"].includes(plano)) return res.status(400).json({ ok: false, error: "Plano inválido." });
+
+  db.run(`UPDATE companies SET plano = ? WHERE id = ?`, [plano, id], function(err){
+    if (err) return res.status(500).json({ ok: false, error: "Erro ao atualizar plano." });
+    res.json({ ok: true });
+  });
+});
+
+// Excluir empresa
+app.delete("/api/empresas/:id", authMaster, (req, res) => {
+  const { id } = req.params;
+  db.run(`DELETE FROM companies WHERE id = ?`, [id], function(err){
+    if (err) return res.status(500).json({ ok: false, error: "Erro ao excluir empresa." });
+    db.run(`DELETE FROM users WHERE company_id = ?`, [id]);
+    res.json({ ok: true });
   });
 });
 
 // =============================================================
 // 🧑‍💼 ROTAS DE USUÁRIOS (ADMIN EMPRESA)
-// =============================================================
 
-// Listar usuários de uma empresa
+// Listar usuários
 app.get("/api/users", (req, res) => {
   const company_id = parseInt(req.query.company_id);
   if (!company_id) return res.status(400).json({ ok: false, error: "company_id é obrigatório." });
@@ -215,20 +233,17 @@ app.delete("/api/users/:id", (req, res) => {
 
 // =============================================================
 // ❌ CATCH-ALL API JSON
-// =============================================================
 app.use("/api/*", (req, res) => {
   res.status(404).json({ ok: false, error: "API não encontrada" });
 });
 
 // =============================================================
 // 🌐 FRONTEND
-// =============================================================
 app.use(express.static(path.join(__dirname, "public")));
 app.get("*", (_, res) => res.sendFile(path.join(__dirname, "public", "index.html")));
 
 // =============================================================
 // 🚀 INICIAR SERVIDOR
-// =============================================================
 app.listen(process.env.PORT || 3000, () => {
   console.log("✅ Servidor rodando em http://0.0.0.0:3000");
 });
