@@ -1,4 +1,13 @@
 // ==================== SEGURANÇA ====================
+let user;
+
+document.addEventListener("DOMContentLoaded", () => {
+  // 🔒 Segurança
+  user = exigirAdmin();
+
+  // ✅ Só depois disso o resto do código roda
+  carregarProdutos();
+});
 
 // ==================== PAINEL DA EMPRESA - SEM TOKEN ====================
 
