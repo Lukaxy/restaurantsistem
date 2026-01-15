@@ -126,14 +126,14 @@ document.addEventListener('DOMContentLoaded', async () => {
       throw new Error("Servidor retornou HTML — verifique se a rota /api/products existe.");
     }
 
-    const json = JSON.parse(text);
+    const produtos = JSON.parse(text);
 
-    if (!json.ok || !Array.isArray(json.products)) {
-      throw new Error("Formato inválido do cardápio.");
-    }
+if (!Array.isArray(produtos)) {
+  throw new Error("Formato inválido do cardápio.");
+}
 
-    menu = json.products;
-    renderItems();
+menu = produtos;
+renderItems();
 
   } catch (err) {
     console.error('Erro ao carregar cardápio:', err);
