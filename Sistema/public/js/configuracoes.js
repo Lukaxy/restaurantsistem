@@ -1,13 +1,5 @@
-let user;
-
-document.addEventListener("DOMContentLoaded", () => {
-  // 🔒 Segurança
-  user = exigirAdmin();
-
-  // ✅ Só depois disso o resto do código roda
-  carregarProdutos();
-});
-
+// ==================== SEGURANÇA ====================
+const user = exigirAdmin(); // 🔒 só admin entra
 
 // ==================== VARIÁVEIS ====================
 const token = localStorage.getItem('token');
