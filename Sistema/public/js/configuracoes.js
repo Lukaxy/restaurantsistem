@@ -1,5 +1,16 @@
 // ==================== SEGURANÇA ====================
-const user = exigirAdmin(); // 🔒 só admin entra
+
+// ==================== PAINEL DA EMPRESA - SEM TOKEN ====================
+
+const user = JSON.parse(localStorage.getItem("user") || "null");
+const msg = document.getElementById("msg");
+const list = document.getElementById("users-list");
+
+// 🔒 Garante que apenas o admin da empresa acesse
+if (!user || user.role !== "admin") {
+  alert("Acesso negado. Apenas o administrador da empresa pode entrar.");
+  window.location.href = "login.html";
+}
 
 // ==================== VARIÁVEIS ====================
 const token = localStorage.getItem('token');
