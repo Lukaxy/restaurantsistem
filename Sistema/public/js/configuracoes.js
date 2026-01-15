@@ -1,43 +1,15 @@
 // ==================== SEGURANÇA ====================
-let user;
-
-document.addEventListener("DOMContentLoaded", () => {
-  // 🔒 Segurança
-  user = exigirAdmin();
-
-  // ✅ Só depois disso o resto do código roda
-  carregarProdutos();
-});
-
-// ==================== PAINEL DA EMPRESA - SEM TOKEN ====================
-
-const user = JSON.parse(localStorage.getItem("user") || "null");
-const msg = document.getElementById("msg");
-const list = document.getElementById("users-list");
-
-// 🔒 Garante que apenas o admin da empresa acesse
-if (!user || user.role !== "admin") {
-  alert("Acesso negado. Apenas o administrador da empresa pode entrar.");
-  window.location.href = "login.html";
-}
+const user = exigirAdmin(); // 🔒 só admin entra
 
 // ==================== VARIÁVEIS ====================
-const token = localStorage.getItem('token');
-const user = JSON.parse(localStorage.getItem('user') || '{}');
 const list = document.getElementById('productList');
 const msgEl = document.createElement('p');
 msgEl.style.marginTop = '8px';
 msgEl.style.fontWeight = '500';
 
-// ==================== VERIFICA LOGIN ====================
-if (!user || !user.company_id) {
-  alert('⚠️ Você precisa estar logado para acessar esta página.');
-  window.location.href = 'login.html';
-}
-
 // ==================== CARREGAR PRODUTOS ====================
 async function carregarProdutos() {
-  if (!user.company_id) {
+  if (!user || !user.company_id) {
     list.innerHTML = '<p style="color:red;">ID da empresa não encontrado.</p>';
     return;
   }
@@ -79,7 +51,7 @@ async function addProduct() {
   const name = document.getElementById('newName').value.trim();
   const price = parseFloat(document.getElementById('newPrice').value.trim());
   const category = document.getElementById('newCategory').value.trim();
-  const description = document.getElementById('newDescription').value.trim(); // 🆕 campo novo
+  const description = document.getElementById('newDescription').value.trim();
 
   if (!name || isNaN(price)) {
     alert('Preencha o nome e o preço corretamente.');
@@ -89,15 +61,13 @@ async function addProduct() {
   try {
     const res = await fetch('/api/products', {
       method: 'POST',
-      headers: {
-        'Content-Type': 'application/json'
-      },
+      headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
         company_id: user.company_id,
         name,
         price,
         category,
-        description // 🆕 envia descrição
+        description
       })
     });
 
@@ -110,11 +80,10 @@ async function addProduct() {
     const data = JSON.parse(text);
     if (!data.ok) throw new Error(data.error || 'Erro ao adicionar produto.');
 
-    // limpa campos
     document.getElementById('newName').value = '';
     document.getElementById('newPrice').value = '';
     document.getElementById('newCategory').value = '';
-    document.getElementById('newDescription').value = ''; // 🧹 limpa também descrição
+    document.getElementById('newDescription').value = '';
 
     await carregarProdutos();
     showMensagem('✅ Produto adicionado com sucesso!', 'green');
@@ -164,4 +133,3 @@ document.addEventListener('DOMContentLoaded', carregarProdutos);
 // ==================== EXPORTAÇÕES GLOBAIS ====================
 window.addProduct = addProduct;
 window.excluirProduto = excluirProduto;
-
