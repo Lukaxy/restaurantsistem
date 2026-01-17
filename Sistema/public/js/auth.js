@@ -1,43 +1,30 @@
-// ==================== AUTH GLOBAL ====================
+// ==================== AUTH GLOBAL ==================== function getUser() { try { return JSON.parse(localStorage.getItem("user")); } catch { return null; } } function exigirLogin() { const user = getUser(); if (!user || !user.id) { alert("Você precisa estar logado."); window.location.href = "login.html"; throw new Error("Usuário não autenticado"); } return user; } function exigirAdmin() { const user = exigirLogin(); if (user.role !== "admin") { alert("Acesso restrito ao administrador."); window.location.href = "index.html"; throw new Error("Usuário sem permissão"); } return user; }auth.js - // ==================== AUTH GLOBAL ==================== function getUser() { try { return JSON.parse(localStorage.getItem("user")); } catch { return null; } } function exigirLogin() { const user = getUser(); if (!user || !user.id) { alert("Você precisa estar logado."); window.location.href = "login.html"; throw new Error("Usuário não autenticado"); } return user; } function exigirAdmin() { const user = exigirLogin(); if (user.role !== "admin") { alert("Acesso restrito ao administrador."); window.location.href = "index.html"; throw new Error("Usuário sem permissão"); } return user; }auth.js - // ==================== AUTH GLOBAL ====================
 
 function getUser() {
   try {
-    const user = JSON.parse(localStorage.getItem("user"));
-    return user && user.id ? user : null;
-  } catch (e) {
-    console.error("Erro ao ler usuário do localStorage", e);
+    return JSON.parse(localStorage.getItem("user"));
+  } catch {
     return null;
   }
 }
 
-/**
- * Exige que o usuário esteja logado
- * Redireciona e PARA a execução da página
- */
 function exigirLogin() {
   const user = getUser();
-
-  if (!user) {
+  if (!user || !user.id) {
     alert("Você precisa estar logado.");
     window.location.href = "login.html";
-    return null; // ❗ NÃO usar throw aqui
+    throw new Error("Usuário não autenticado");
   }
-
   return user;
 }
 
-/**
- * Exige que o usuário seja admin
- */
 function exigirAdmin() {
   const user = exigirLogin();
-
-  if (!user) return null;
 
   if (user.role !== "admin") {
     alert("Acesso restrito ao administrador.");
     window.location.href = "index.html";
-    return null; // ❗ evita quebrar JS da página
+    throw new Error("Usuário sem permissão");
   }
 
   return user;
