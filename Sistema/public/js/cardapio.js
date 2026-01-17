@@ -5,12 +5,12 @@ const cart = [];
 function groupByCategory(items) {
   const grouped = {};
   items.forEach(i => {
-    if (!grouped[i.category]) grouped[i.category] = [];
-    grouped[i.category].push(i);
+    const cat = i.category && i.category.trim() ? i.category : "Outros";
+    if (!grouped[cat]) grouped[cat] = [];
+    grouped[cat].push(i);
   });
   return grouped;
 }
-
 /* ======== RENDERIZAR ITENS ======== */
 function renderItems() {
   const el = document.getElementById('categories');
@@ -36,7 +36,7 @@ function renderItems() {
       div.className = 'card';
       div.innerHTML = `
         <h4>${i.name}</h4>
-        <div class="price">R$ ${i.price.toFixed(2)}</div>
+        <div class="price">R$ ${Number(i.price).toFixed(2)}</div>
         ${i.description ? `<p class="desc">${i.description}</p>` : ""}
       `;
 
