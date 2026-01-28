@@ -66,6 +66,43 @@ document.addEventListener("DOMContentLoaded", () => {
     return;
   }
 
+  // 1. Variável para não repetir o som para o mesmo pedido
+let idUltimoAlerta = null;
+
+// 2. Função que faz o barulho
+function dispararSom() {
+    const ping = new Audio('https://assets.mixkit.co/active_storage/sfx/2869/2869-preview.mp3');
+    ping.play().catch(() => console.log("Clique na tela para habilitar o som!"));
+}
+
+// 3. Função que faz a aba piscar
+function piscarTitulo() {
+    const tituloOriginal = document.title;
+    let troca = true;
+    
+    const loop = setInterval(() => {
+        document.title = troca ? "🔔 PEDIDO PRONTO!" : "🧾 MEUS PEDIDOS";
+        troca = !troca;
+    }, 800);
+
+    // Para de piscar quando o atendente volta para a aba
+    window.addEventListener('focus', () => {
+        clearInterval(loop);
+        document.title = tituloOriginal;
+    }, { once: true });
+}
+
+// 4. Integração dentro da sua função carregarPedidos()
+// Adicione isso LOGO DEPOIS que você receber os 'data.pedidos' do fetch:
+
+const pedidoRecemPronto = data.pedidos.find(p => p.status === 'pronto' && p.id !== idUltimoAlerta);
+
+if (pedidoRecemPronto) {
+    idUltimoAlerta = pedidoRecemPronto.id; // Salva para não apitar de novo pro mesmo
+    dispararSom();
+    piscarTitulo();
+}
+
   function renderizar() {
     if (pedidos.length === 0) {
       lista.innerHTML = `
