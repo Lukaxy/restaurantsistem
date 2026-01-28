@@ -1,0 +1,117 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Digital Menu | Evolua seu Restaurante</title>
+    <link rel="stylesheet" href="css/landing.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+</head>
+<body>
+
+    <nav class="navbar">
+        <div class="logo">🚀 Digital<span>Menu</span></div>
+        <div class="nav-links">
+            <a href="#funcionalidades">Funcionalidades</a>
+            <a href="#precos">Preços</a>
+            <a href="login.html" class="btn-login">Entrar</a>
+            <a href="#cadastro" class="btn-cta">Testar Grátis</a>
+        </div>
+    </nav>
+
+    <header class="hero">
+        <div class="hero-content">
+            <h1>Sua cozinha em <span>outro nível.</span></h1>
+            <p>Abandone o papel e caneta. Organize seus pedidos, otimize sua cozinha e venda muito mais com nosso cardápio digital.</p>
+            <div class="hero-btns">
+                <a href="#cadastro" class="btn-primary">Começar 5 dias grátis</a>
+                <a href="https://wa.me/SEUNUMERO" target="_blank" class="btn-secondary">
+                    <i class="fab fa-whatsapp"></i> Fale Conosco
+                </a>
+            </div>
+        </div>
+        <div class="hero-image">
+            <div class="mockup-circle"></div>
+            <img src="https://via.placeholder.com/500x300/1a1d21/339af0?text=Painel+da+Cozinha+Aqui" alt="Sistema na prática">
+        </div>
+    </header>
+
+    <section id="funcionalidades" class="features">
+        <div class="feature-card">
+            <i class="fas fa-qrcode"></i>
+            <h3>Cardápio QR Code</h3>
+            <p>Seu cliente acessa, escolhe e pede. Sem filas e sem erros.</p>
+        </div>
+        <div class="feature-card">
+            <i class="fas fa-utensils"></i>
+            <h3>Painel de Cozinha</h3>
+            <p>Pedidos organizados por tempo de chegada e status de preparo.</p>
+        </div>
+        <div class="feature-card">
+            <i class="fas fa-chart-line"></i>
+            <h3>Gestão Completa</h3>
+            <p>Relatórios de vendas e controle total da sua empresa.</p>
+        </div>
+    </section>
+
+    <section id="cadastro" class="registration">
+        <div class="box">
+            <h2>🚀 Crie sua conta em 30 segundos</h2>
+            <p>Não pedimos cartão de crédito para o teste.</p>
+            
+            <form id="formRegister" onsubmit="registrarEmpresa(event)">
+                <input type="text" id="regNomeEmpresa" placeholder="Nome do seu Restaurante" required>
+                <input type="email" id="regEmail" placeholder="Seu melhor e-mail" required>
+                <input type="password" id="regSenha" placeholder="Crie uma senha" required>
+                <button type="submit" class="btn-primary">Criar Meu Sistema Agora</button>
+            </form>
+            <p id="msg" style="margin-top:15px;"></p>
+        </div>
+    </section>
+
+    <footer class="footer">
+        <p>&copy; 2026 Digital Menu - O tempero tecnológico que faltava no seu negócio. 😉</p>
+    </footer>
+
+    <script>
+        async function registrarEmpresa(e) {
+            e.preventDefault();
+            const msg = document.getElementById('msg');
+            const btn = e.target.querySelector('button');
+            
+            const payload = {
+                name: document.getElementById('regNomeEmpresa').value,
+                email: document.getElementById('regEmail').value,
+                senha: document.getElementById('regSenha').value
+            };
+
+            btn.disabled = true;
+            btn.innerText = "Criando seu império...";
+
+            try {
+                const res = await fetch('/api/register-company', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(payload)
+                });
+
+                const data = await res.json();
+                if(!res.ok) throw new Error(data.error);
+
+                msg.style.color = "var(--color-green)";
+                msg.innerHTML = "✅ Conta criada! Redirecionando...";
+                
+                // Salva o login automático e manda pro dashboard
+                localStorage.setItem('user', JSON.stringify(data.user)); 
+                setTimeout(() => window.location.href = 'configuracoes.html', 1500);
+
+            } catch (err) {
+                msg.style.color = "var(--color-red)";
+                msg.innerText = err.message;
+                btn.disabled = false;
+                btn.innerText = "Criar Meu Sistema Agora";
+            }
+        }
+    </script>
+</body>
+</html>
