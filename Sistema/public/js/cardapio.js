@@ -42,6 +42,7 @@ function renderItems() {
         <div class="price">R$ ${Number(i.price).toFixed(2).replace(".", ",")}</div>
         ${i.description ? `<p class="desc">${i.description}</p>` : ""}
       `;
+      // Chama a função global ou local (depende de como está o escopo, mas aqui funciona)
       div.onclick = () => abrirModalProduto(i);
       itemsDiv.appendChild(div);
     });
@@ -52,23 +53,32 @@ function renderItems() {
 }
 
 /* ======== MODAL DO PRODUTO ======== */
-function abrirModalProduto(produto) {
+// Tornei a função global (window) caso precise ser chamada de fora, 
+// mas o onclick acima já resolve.
+window.abrirModalProduto = function(produto) {
+  const modal = document.getElementById('productModal');
+  if (!modal) return;
+
   document.getElementById('productName').innerText = produto.name;
   document.getElementById('productDescription').innerText =
     produto.description || "Sem descrição disponível.";
   document.getElementById('productPrice').innerText =
     "R$ " + Number(produto.price).toFixed(2).replace(".", ",");
 
-  document.getElementById('addToCartBtn').onclick = () => {
-    addToCart(produto.id);
-    fecharModalProduto();
-  };
+  const btnAdd = document.getElementById('addToCartBtn');
+  if (btnAdd) {
+      btnAdd.onclick = () => {
+        addToCart(produto.id);
+        fecharModalProduto();
+      };
+  }
 
-  document.getElementById('productModal').style.display = 'flex';
+  modal.style.display = 'flex';
 }
 
-function fecharModalProduto() {
-  document.getElementById('productModal').style.display = 'none';
+window.fecharModalProduto = function() {
+  const modal = document.getElementById('productModal');
+  if (modal) modal.style.display = 'none';
 }
 
 /* ======== CARRINHO ======== */
@@ -107,13 +117,19 @@ function renderCart() {
   `).join('');
 }
 
-/* ======== AO CARREGAR ======== */
+/* ======== AO CARREGAR (CORRIGIDO AQUI 👇) ======== */
 document.addEventListener('DOMContentLoaded', async () => {
-  const user = getUser(); // ✅ CORRETO
+  // Tenta pegar o user. Se getUser não existir (por causa do module), tenta ler direto.
+  let user;
+  try {
+    user = typeof getUser === 'function' ? getUser() : JSON.parse(localStorage.getItem('user'));
+  } catch (e) {
+    user = null;
+  }
 
   if (!user || !user.company_id) {
-    document.getElementById('categories').innerHTML =
-      '<p style="color:red;text-align:center;">Empresa não identificada.</p>';
+    const el = document.getElementById('categories');
+    if (el) el.innerHTML = '<p style="color:red;text-align:center;">Empresa não identificada.</p>';
     return;
   }
 
@@ -130,16 +146,25 @@ document.addEventListener('DOMContentLoaded', async () => {
 
   } catch (err) {
     console.error(err);
-    document.getElementById('categories').innerHTML =
-      `<p style="color:red;">Erro ao carregar cardápio.</p>`;
+    const el = document.getElementById('categories');
+    if (el) el.innerHTML = `<p style="color:red;">Erro ao carregar cardápio.</p>`;
   }
 
-  document.getElementById('openCart')?.onclick = () => {
-    renderCart();
-    document.getElementById('cartModal').style.display = 'flex';
-  };
+  // ✅ CORREÇÃO: Verificação segura dos botões
+  const btnOpen = document.getElementById('openCart');
+  if (btnOpen) {
+    btnOpen.onclick = () => {
+      renderCart();
+      const modal = document.getElementById('cartModal');
+      if (modal) modal.style.display = 'flex';
+    };
+  }
 
-  document.getElementById('closeCart')?.onclick = () => {
-    document.getElementById('cartModal').style.display = 'none';
-  };
+  const btnClose = document.getElementById('closeCart');
+  if (btnClose) {
+    btnClose.onclick = () => {
+      const modal = document.getElementById('cartModal');
+      if (modal) modal.style.display = 'none';
+    };
+  }
 });
