@@ -8,7 +8,6 @@
   <link rel="stylesheet" href="css/style.css" />
   
   <style>
-    /* Estilos para os badges de status */
     .status-badge {
       display: inline-block;
       padding: 4px 10px;
@@ -28,6 +27,13 @@
       padding: 15px;
       margin-bottom: 15px;
       box-shadow: var(--shadow);
+    }
+
+    /* Animação para o alerta de pedido pronto */
+    @keyframes pulse {
+      0% { transform: scale(1); opacity: 1; }
+      50% { transform: scale(1.02); opacity: 0.9; }
+      100% { transform: scale(1); opacity: 1; }
     }
   </style>
 </head>
@@ -58,50 +64,34 @@ document.addEventListener("DOMContentLoaded", () => {
   const lista = document.getElementById("pedidosList");
   const user = JSON.parse(localStorage.getItem("user") || "{}");
   const company_id = user.company_id;
-  const TEMPO_OCULTAR_PRONTO = 5 * 60 * 1000; // 5 minutos
+  const TEMPO_OCULTAR_PRONTO = 5 * 60 * 1000; 
   let pedidos = [];
+  let idUltimoAlerta = null; // Memória para não repetir o som
 
   if (!company_id) {
     lista.innerHTML = `<div class='box'><p style='color:var(--color-red); text-align:center;'>Empresa não identificada. Por favor, faça login.</p></div>`;
     return;
   }
 
-  // 1. Variável para não repetir o som para o mesmo pedido
-let idUltimoAlerta = null;
-
-// 2. Função que faz o barulho
-function dispararSom() {
+  // --- FUNÇÕES DE NOTIFICAÇÃO ---
+  function dispararSom() {
     const ping = new Audio('https://assets.mixkit.co/active_storage/sfx/2869/2869-preview.mp3');
     ping.play().catch(() => console.log("Clique na tela para habilitar o som!"));
-}
+  }
 
-// 3. Função que faz a aba piscar
-function piscarTitulo() {
-    const tituloOriginal = document.title;
+  function piscarTitulo() {
+    const tituloOriginal = "🧾 Meus Pedidos";
     let troca = true;
-    
     const loop = setInterval(() => {
         document.title = troca ? "🔔 PEDIDO PRONTO!" : "🧾 MEUS PEDIDOS";
         troca = !troca;
     }, 800);
 
-    // Para de piscar quando o atendente volta para a aba
     window.addEventListener('focus', () => {
         clearInterval(loop);
         document.title = tituloOriginal;
     }, { once: true });
-}
-
-// 4. Integração dentro da sua função carregarPedidos()
-// Adicione isso LOGO DEPOIS que você receber os 'data.pedidos' do fetch:
-
-const pedidoRecemPronto = data.pedidos.find(p => p.status === 'pronto' && p.id !== idUltimoAlerta);
-
-if (pedidoRecemPronto) {
-    idUltimoAlerta = pedidoRecemPronto.id; // Salva para não apitar de novo pro mesmo
-    dispararSom();
-    piscarTitulo();
-}
+  }
 
   function renderizar() {
     if (pedidos.length === 0) {
@@ -120,25 +110,24 @@ if (pedidoRecemPronto) {
       
       const hora = new Date(p.created_at).toLocaleTimeString("pt-BR", {hour:"2-digit",minute:"2-digit"});
       
-      // Lógica de Status com Classes do CSS
       let statusClass = "status-novo";
       let statusTxt = "🕒 Aguardando Cozinha";
-      
+      let alertVisual = ""; // Limpa o alerta para cada item
+
       if(p.status === "preparando" || p.status === "em preparo") {
           statusClass = "status-preparo";
           statusTxt = "🍳 Sendo Preparado";
       } else if(p.status === "pronto") {
-    statusClass = "status-pronto";
-    statusTxt = "✅ Pronto para Retirar";
-    // Aqui entra o "aviso bobo" mas importante:
-    alertVisual = `
-        <div style="margin-top:10px; text-align:center; background:rgba(81, 207, 102, 0.2); 
-             padding:10px; border-radius:8px; border: 1px dashed var(--color-green); 
-             animation: pulse 2s infinite;">
-             🚀 <strong>Ficou pronto!</strong> Pode vir buscar que tá quentinho!
-        </div>
-    `;
-}
+          statusClass = "status-pronto";
+          statusTxt = "✅ Pronto para Retirar";
+          alertVisual = `
+            <div style="margin-top:10px; text-align:center; background:rgba(81, 207, 102, 0.15); 
+                 padding:10px; border-radius:8px; border: 1px dashed var(--color-green); 
+                 animation: pulse 2s infinite; color: var(--color-green); font-weight: bold;">
+                 🚀 Ficou pronto! Pode vir buscar que tá quentinho!
+            </div>
+          `;
+      }
 
       return `
         <div class="pedido-card">
@@ -155,12 +144,7 @@ if (pedidoRecemPronto) {
           </div>
 
           ${p.notes ? `<div style="font-size:0.85rem; color:var(--text-secondary); font-style:italic;"><strong>Obs:</strong> ${p.notes}</div>` : ""}
-          
-          ${p.status === "pronto" ? `
-            <div style="margin-top:10px; text-align:center; background:rgba(81, 207, 102, 0.1); padding:8px; border-radius:4px; color:var(--color-green); font-weight:bold; font-size:0.9rem;">
-                🎈 Seu pedido chegou! Pode buscar.
-            </div>
-          ` : ""}
+          ${alertVisual}
         </div>
       `;
     }).join("");
@@ -171,6 +155,14 @@ if (pedidoRecemPronto) {
       const res = await fetch(`/api/orders?company_id=${company_id}`);
       const data = await res.json();
       if (!data.ok) throw new Error(data.error || "Erro ao carregar.");
+
+      // --- LÓGICA DE NOTIFICAÇÃO (Agora no lugar certo!) ---
+      const pedidoRecemPronto = data.pedidos.find(p => p.status === 'pronto' && p.id !== idUltimoAlerta);
+      if (pedidoRecemPronto) {
+          idUltimoAlerta = pedidoRecemPronto.id;
+          dispararSom();
+          piscarTitulo();
+      }
 
       const agora = Date.now();
       pedidos = data.pedidos.filter(p => {
@@ -190,7 +182,7 @@ if (pedidoRecemPronto) {
   }
 
   carregarPedidos();
-  setInterval(carregarPedidos, 5000); // Atualiza a cada 5 segundos
+  setInterval(carregarPedidos, 5000); 
 });
 
 function toggleMenu() {
