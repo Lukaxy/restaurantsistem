@@ -27,9 +27,9 @@
       padding: 15px;
       margin-bottom: 15px;
       box-shadow: var(--shadow);
+      transition: all 0.3s ease;
     }
 
-    /* Animação para o alerta de pedido pronto */
     @keyframes pulse {
       0% { transform: scale(1); opacity: 1; }
       50% { transform: scale(1.02); opacity: 0.9; }
@@ -66,7 +66,7 @@ document.addEventListener("DOMContentLoaded", () => {
   const company_id = user.company_id;
   const TEMPO_OCULTAR_PRONTO = 5 * 60 * 1000; 
   let pedidos = [];
-  let idUltimoAlerta = null; // Memória para não repetir o som
+  let idUltimoAlerta = null; 
 
   if (!company_id) {
     lista.innerHTML = `<div class='box'><p style='color:var(--color-red); text-align:center;'>Empresa não identificada. Por favor, faça login.</p></div>`;
@@ -75,8 +75,9 @@ document.addEventListener("DOMContentLoaded", () => {
 
   // --- FUNÇÕES DE NOTIFICAÇÃO ---
   function dispararSom() {
+    // Som de "Ding" profissional
     const ping = new Audio('https://assets.mixkit.co/active_storage/sfx/2869/2869-preview.mp3');
-    ping.play().catch(() => console.log("Clique na tela para habilitar o som!"));
+    ping.play().catch(() => console.log("Áudio aguardando interação do usuário."));
   }
 
   function piscarTitulo() {
@@ -112,7 +113,7 @@ document.addEventListener("DOMContentLoaded", () => {
       
       let statusClass = "status-novo";
       let statusTxt = "🕒 Aguardando Cozinha";
-      let alertVisual = ""; // Limpa o alerta para cada item
+      let alertVisual = ""; 
 
       if(p.status === "preparando" || p.status === "em preparo") {
           statusClass = "status-preparo";
@@ -156,20 +157,37 @@ document.addEventListener("DOMContentLoaded", () => {
       const data = await res.json();
       if (!data.ok) throw new Error(data.error || "Erro ao carregar.");
 
-      // --- LÓGICA DE NOTIFICAÇÃO (Agora no lugar certo!) ---
-      const pedidoRecemPronto = data.pedidos.find(p => p.status === 'pronto' && p.id !== idUltimoAlerta);
-      if (pedidoRecemPronto) {
-          idUltimoAlerta = pedidoRecemPronto.id;
-          dispararSom();
-          piscarTitulo();
+      // --- LÓGICA DE NOTIFICAÇÃO MELHORADA ---
+      const listaProntos = data.pedidos.filter(p => p.status === 'pronto');
+      
+      if (listaProntos.length > 0) {
+          const idMaisRecente = Math.max(...listaProntos.map(p => p.id));
+          
+          // Se for a primeira vez que carrega, apenas memoriza o ID sem apitar
+          if (idUltimoAlerta === null) {
+              idUltimoAlerta = idMaisRecente;
+          } 
+          // Se aparecer um ID maior do que o memorizado, aí sim notifica
+          else if (idMaisRecente > idUltimoAlerta) {
+              idUltimoAlerta = idMaisRecente;
+              dispararSom();
+              piscarTitulo();
+          }
       }
 
       const agora = Date.now();
       pedidos = data.pedidos.filter(p => {
         if (p.status === "cancelado") return false;
         if (p.status === "pronto") {
-          const atualizado = new Date(p.status_updated_at || p.created_at).getTime();
-          return agora - atualizado < TEMPO_OCULTAR_PRONTO;
+          // Fallback de data para evitar que o pedido suma por erro de fuso horário
+          const dataRef = p.status_updated_at || p.created_at;
+          if (!dataRef) return true;
+
+          const atualizado = new Date(dataRef).getTime();
+          const diferenca = agora - atualizado;
+          
+          // Só esconde se tiver passado de 5 min e a data for válida
+          return isNaN(diferenca) ? true : diferenca < TEMPO_OCULTAR_PRONTO;
         }
         return true;
       });
@@ -177,7 +195,6 @@ document.addEventListener("DOMContentLoaded", () => {
       renderizar();
     } catch (err) {
       console.error(err);
-      lista.innerHTML = `<p style="color:var(--color-red); text-align:center;">Erro ao atualizar pedidos.</p>`;
     }
   }
 
