@@ -3,20 +3,38 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Registrar Empresa</title>
-  <link rel="stylesheet" href="css/login.css">
+  <title>🏢 Registrar Empresa - Digital Menu</title>
+  
+  <link rel="stylesheet" href="css/style.css" />
 </head>
-<body>
-  <div class="login-container">
-    <h2>🏢 Registrar Empresa</h2>
+<body style="display: flex; align-items: center; justify-content: center; min-height: 100vh;">
 
-    <input type="text" id="name" placeholder="Nome da empresa" />
-    <input type="email" id="email" placeholder="E-mail do administrador" />
-    <input type="password" id="senha" placeholder="Senha" />
-    <button onclick="register()">Criar Empresa</button>
+  <div class="box" style="max-width: 400px; width: 90%;">
+    <h2 style="text-align: center; color: var(--color-blue); margin-bottom: 10px;">🏢 Nova Empresa</h2>
+    <p style="text-align: center; margin-bottom: 25px;">Cadastre seu estabelecimento no sistema.</p>
 
-    <p style="margin-top:10px;">Já tem conta? <a href="login.html">Fazer login</a></p>
-    <p id="msg" style="color:red;margin-top:10px;"></p>
+    <div style="display: flex; flex-direction: column; gap: 5px;">
+      <label style="font-size: 0.85rem; color: var(--text-secondary);">Nome do Negócio</label>
+      <input type="text" id="name" placeholder="Ex: Pizzaria do Zé" />
+
+      <label style="font-size: 0.85rem; color: var(--text-secondary); margin-top: 10px;">E-mail Administrativo</label>
+      <input type="email" id="email" placeholder="admin@empresa.com" />
+
+      <label style="font-size: 0.85rem; color: var(--text-secondary); margin-top: 10px;">Senha de Acesso</label>
+      <input type="password" id="senha" placeholder="••••••••" />
+    </div>
+
+    <button class="btn success" onclick="register()" style="width: 100%; margin-top: 25px; padding: 15px;">
+      🚀 Criar Empresa
+    </button>
+
+    <p id="msg" style="text-align: center; margin-top: 15px; font-weight: bold;"></p>
+
+    <hr style="border: 0; border-top: 1px solid var(--border-color); margin: 20px 0;">
+
+    <p style="text-align: center; font-size: 0.9rem;">
+      Já tem uma conta? <a href="login.html" style="font-weight: bold;">Fazer login</a>
+    </p>
   </div>
 
   <script>
@@ -25,13 +43,19 @@
       const email = document.getElementById('email').value.trim();
       const senha = document.getElementById('senha').value.trim();
       const msg = document.getElementById('msg');
+      const btn = document.querySelector('button');
 
       msg.textContent = '';
 
       if (!name || !email || !senha) {
-        msg.textContent = 'Preencha todos os campos.';
+        msg.style.color = 'var(--color-amber)';
+        msg.textContent = '⚠️ Preencha todos os campos.';
         return;
       }
+
+      // UX: Desabilita o botão para evitar cliques duplos
+      btn.disabled = true;
+      btn.innerText = 'Processando...';
 
       try {
         const res = await fetch('/api/register-company', {
@@ -41,16 +65,21 @@
         });
 
         const data = await res.json();
-        if (!data.ok) throw new Error(data.error || 'Erro ao registrar empresa.');
+        
+        if (!data.ok) throw new Error(data.error || 'Erro ao registrar.');
 
-        msg.style.color = 'green';
-        msg.textContent = 'Empresa criada com sucesso! Redirecionando...';
+        msg.style.color = 'var(--color-green)';
+        msg.textContent = '✅ Empresa criada! Redirecionando...';
+        
         setTimeout(() => (window.location.href = 'login.html'), 1500);
+
       } catch (err) {
-        msg.textContent = err.message;
+        msg.style.color = 'var(--color-red)';
+        msg.textContent = '❌ ' + err.message;
+        btn.disabled = false;
+        btn.innerText = 'Criar Empresa';
       }
     }
   </script>
 </body>
 </html>
-
