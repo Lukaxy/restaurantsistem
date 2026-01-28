@@ -235,3 +235,51 @@ form input:focus {
     .nav-links a:not(.btn-cta) { display: none; } /* Esconde links internos no celular */
     .hero-content h1 { font-size: 2rem; }
 }
+/* Container da imagem */
+.hero-image {
+    position: relative;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    width: 100%;
+}
+
+/* O círculo de fundo (opcional, dá um charme extra) */
+.mockup-circle {
+    position: absolute;
+    width: 300px;
+    height: 300px;
+    background: radial-gradient(circle, rgba(51, 154, 240, 0.2) 0%, rgba(15, 17, 19, 0) 70%);
+    border-radius: 50%;
+    z-index: 1;
+}
+
+/* Estilização da sua imagem tela1.png */
+.floating-img {
+    width: 100%;
+    max-width: 650px; /* Tamanho máximo no PC */
+    height: auto;
+    z-index: 2;
+    filter: drop-shadow(0 20px 50px rgba(0, 0, 0, 0.7)); /* Sombra para destacar do fundo preto */
+    animation: float 6s ease-in-out infinite; /* Efeito de flutuação */
+}
+
+/* Animação de flutuação */
+@keyframes float {
+    0% { transform: translateY(0px); }
+    50% { transform: translateY(-20px); }
+    100% { transform: translateY(0px); }
+}
+
+/* Ajuste específico para celular */
+@media (max-width: 768px) {
+    .floating-img {
+        max-width: 90%; /* Deixa a imagem um pouco menor no celular para não bater nas bordas */
+        margin-top: 20px;
+    }
+    
+    .mockup-circle {
+        width: 200px;
+        height: 200px;
+    }
+}
