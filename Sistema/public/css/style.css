@@ -145,3 +145,41 @@ header {
     color: var(--text-primary);
 }
 .menu-dropdown div:hover { background: var(--color-blue); color: white; }
+
+/* ================== ESTRUTURA DE CONFIGURAÇÕES (GRID) ================== */
+
+/* Container que envolve o formulário dentro da .box */
+.form-row {
+    display: flex;
+    gap: 12px;
+    margin-bottom: 15px;
+    flex-wrap: wrap; /* Garante que no celular os campos fiquem um embaixo do outro */
+}
+
+/* Distribuição de espaço entre os campos */
+/* O Nome (flex: 3) ganha 3x mais espaço que o Preço e Categoria */
+.form-row input[id="newName"] { 
+    flex: 3; 
+    min-width: 200px; 
+}
+
+.form-row input[id="newPrice"], 
+.form-row input[id="newCategory"] { 
+    flex: 1; 
+    min-width: 120px; 
+}
+
+/* Ajuste para a lista de produtos (o seu #productList) */
+#productList {
+    display: flex;
+    flex-direction: column;
+    background-color: var(--bg-card);
+    border-radius: var(--radius);
+    overflow: hidden; /* Garante que os itens não saiam da borda arredondada */
+    border: 1px solid var(--border-color);
+}
+
+/* Efeito de hover nos itens da lista para ficar interativo */
+#productList > div:hover {
+    background-color: rgba(255, 255, 255, 0.03);
+}
