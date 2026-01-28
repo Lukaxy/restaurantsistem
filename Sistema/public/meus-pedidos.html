@@ -91,9 +91,17 @@ document.addEventListener("DOMContentLoaded", () => {
           statusClass = "status-preparo";
           statusTxt = "🍳 Sendo Preparado";
       } else if(p.status === "pronto") {
-          statusClass = "status-pronto";
-          statusTxt = "✅ Pronto para Retirar";
-      }
+    statusClass = "status-pronto";
+    statusTxt = "✅ Pronto para Retirar";
+    // Aqui entra o "aviso bobo" mas importante:
+    alertVisual = `
+        <div style="margin-top:10px; text-align:center; background:rgba(81, 207, 102, 0.2); 
+             padding:10px; border-radius:8px; border: 1px dashed var(--color-green); 
+             animation: pulse 2s infinite;">
+             🚀 <strong>Ficou pronto!</strong> Pode vir buscar que tá quentinho!
+        </div>
+    `;
+}
 
       return `
         <div class="pedido-card">
