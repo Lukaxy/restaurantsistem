@@ -4,27 +4,20 @@
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width,initial-scale=1" />
   <title>🍽️ Restaurante</title>
-
-  <!-- Estilos -->
   <link rel="stylesheet" href="css/index.css" />
-
-  <!-- Autenticação (SEM defer para proteger antes de tudo) -->
+  
   <script src="js/auth.js"></script>
 </head>
 
 <body>
 
-<!-- ===================== PROTEÇÃO DE ACESSO ===================== -->
 <script>
-  // Bloqueia acesso se não estiver logado
   const user = JSON.parse(localStorage.getItem("user") || "null");
   if (!user || !user.id) {
-    alert("Você precisa estar logado.");
     window.location.href = "login.html";
   }
 </script>
 
-<!-- ===================== CABEÇALHO ===================== -->
 <header>
   <div class="menu-wrapper">
     <button class="menu-button" onclick="toggleMenu()">⋮</button>
@@ -39,27 +32,22 @@
   <div class="header-title">🍽️ Restaurante</div>
 </header>
 
-<!-- ===================== CONTEÚDO PRINCIPAL ===================== -->
 <main>
   <div id="categories" class="categories">Carregando cardápio...</div>
 </main>
 
-<!-- ===================== BOTÃO DO CARRINHO ===================== -->
 <button class="cart" id="openCart">
   🧺 Comanda <span id="cartCount" class="qty">0</span>
 </button>
 
-<!-- ===================== MODAL DO CARRINHO ===================== -->
 <div class="modal" id="cartModal">
   <div class="box">
     <h3>Pedido</h3>
     <div id="cartList"></div>
-
     <div class="pedido-form">
       <input id="tableName" placeholder="Mesa / Nome do cliente" autocomplete="off" />
       <textarea id="notes" placeholder="Observações (ex: sem cebola...)"></textarea>
     </div>
-
     <div class="pedido-actions">
       <button class="btn" id="sendOrder">Enviar pedido</button>
       <button class="btn cancel" id="closeCart">Fechar</button>
@@ -67,83 +55,38 @@
   </div>
 </div>
 
-<!-- ===================== NOTIFICAÇÃO ===================== -->
 <div id="notification" class="notification"></div>
 
-<!-- ===================== MODAL DO PRODUTO ===================== -->
 <div class="modal" id="productModal" style="display:none;">
   <div class="box">
     <h3 id="productName">Produto</h3>
     <p id="productDescription" class="desc"></p>
-
     <div style="display:flex;justify-content:space-between;align-items:center;">
       <span id="productPrice"></span>
       <button id="addToCartBtn" class="btn">Adicionar à comanda</button>
     </div>
-
     <button class="btn cancel" id="closeProductModal" style="margin-top:12px;">Fechar</button>
   </div>
 </div>
 
-<!-- ===================== SCRIPT DO CARDÁPIO ===================== -->
-<script src="js/cardapio.js" defer></script>
+<script type="module" src="js/cardapio.js"></script>
 
-<!-- ===================== SCRIPT DO MODAL DE PRODUTO ===================== -->
-<script>
-  const productModal = document.getElementById("productModal");
-  const productName = document.getElementById("productName");
-  const productDescription = document.getElementById("productDescription");
-  const productPrice = document.getElementById("productPrice");
-  const addToCartBtn = document.getElementById("addToCartBtn");
-  const closeProductModal = document.getElementById("closeProductModal");
-
-  function abrirModalProduto(produto) {
-    productName.textContent = produto.name;
-    productDescription.textContent = produto.description || "Sem descrição disponível.";
-    productPrice.textContent = "R$ " + Number(produto.price).toFixed(2).replace(".", ",");
-
-    addToCartBtn.onclick = () => {
-      if (typeof addToCart === "function") {
-        addToCart(produto.id);
-      } else {
-        alert("Erro ao adicionar produto.");
-      }
-      fecharModalProduto();
-    };
-
-    productModal.style.display = "flex";
-  }
-
-  function fecharModalProduto() {
-    productModal.style.display = "none";
-  }
-
-  closeProductModal.onclick = fecharModalProduto;
-
-  productModal.addEventListener("click", e => {
-    if (e.target === productModal) fecharModalProduto();
-  });
-</script>
-
-<!-- ===================== PAINEL DA EMPRESA ===================== -->
-<script>
-  function abrirPainelEmpresa() {
-    const user = JSON.parse(localStorage.getItem("user") || "{}");
-
-    if (user.role === "admin") {
-      window.location.href = "company-admin.html";
-    } else {
-      alert("Apenas o administrador pode acessar este painel.");
-    }
-  }
-</script>
-
-<!-- ===================== MENU ===================== -->
 <script>
   function toggleMenu() {
     document.getElementById("menuDropdown").classList.toggle("show");
   }
+  
+  function abrirPainelEmpresa() {
+    // Reutiliza a função do auth.js ou lê direto
+    const u = JSON.parse(localStorage.getItem("user") || "{}");
+    if (u.role === "admin" || u.role === "master") {
+      window.location.href = "company-admin.html";
+    } else {
+      alert("Acesso negado.");
+    }
+  }
 
+  // Fecha menu ao clicar fora
   document.addEventListener("click", e => {
     if (!e.target.closest(".menu-wrapper")) {
       document.getElementById("menuDropdown").classList.remove("show");
@@ -151,32 +94,11 @@
   });
 </script>
 
-<!-- ===================== ERROS DE EXTENSÃO ===================== -->
-<script>
-  window.onerror = function (msg) {
-    if (String(msg).includes("<path> attribute d")) {
-      console.warn("Erro SVG ignorado.");
-      return true;
-    }
-    return false;
-  };
-</script>
-
-<!-- ===================== ESTILO EXTRA ===================== -->
 <style>
-.modal {
-  display: none;
-}
-.modal[style*="flex"] {
-  display: flex !important;
-  justify-content: center;
-  align-items: center;
-}
-.desc {
-  color: #aaa;
-  font-size: 0.9rem;
-  margin: 10px 0;
-}
+/* CSS Crítico */
+.modal { display: none; }
+.modal[style*="flex"] { display: flex !important; justify-content: center; align-items: center; }
+.desc { color: #aaa; font-size: 0.9rem; margin: 10px 0; }
 </style>
 
 </body>
