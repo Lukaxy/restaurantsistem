@@ -217,3 +217,39 @@ main {
     max-width: 450px; /* Tamanho ideal para formulários de login/config */
     margin: 0 auto;   /* Centraliza se estiver fora de um flexbox */
 }
+/* ================== RESPONSIVIDADE (MODO CELULAR) ================== */
+
+@media (max-width: 768px) {
+    /* 1. Ajusta o container principal para não ter sobra nas laterais */
+    main {
+        padding: 10px;
+        max-width: 100%;
+    }
+
+    /* 2. Faz os campos de formulário (Nome, Preço, Categoria) ficarem um embaixo do outro */
+    .form-row {
+        flex-direction: column;
+        gap: 10px;
+    }
+
+    .form-row input, .form-row select {
+        flex: none !important; /* Remove a largura proporcional do PC */
+        width: 100%;           /* Força ocupar a largura toda */
+    }
+
+    /* 3. Ajusta a Cozinha: Cartões de pedidos ocupam a tela toda no celular */
+    #orders {
+        grid-template-columns: 1fr; 
+    }
+
+    /* 4. Ajusta os botões para ficarem maiores (fácil de tocar com o polegar) */
+    .btn {
+        width: 100%;       /* Botões de ação ocupam a largura toda */
+        padding: 15px;     /* Mais área de toque */
+    }
+
+    /* 5. Ajuste de fontes para não ficarem gigantes no celular */
+    .header-title {
+        font-size: 1.1rem;
+    }
+}
