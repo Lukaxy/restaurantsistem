@@ -1,168 +1,172 @@
-/* ======== COZINHA - CSS EXCLUSIVO ======== */
+/* ================= VARIAVEIS DE COR (Paleta Moderna Dark) ================= */
+:root {
+  --bg-main: #1a1d21;      /* Fundo da tela (cinza quase preto) */
+  --bg-card: #2c3035;      /* Fundo do cartão do pedido */
+  --text-primary: #e9ecef; /* Texto principal (branco suave) */
+  --text-secondary: #adb5bd; /* Texto secundário (cinza claro) */
 
-body {
-  font-family: "Poppins", Arial, sans-serif;
-  margin: 0;
-  padding: 16px;
-  background: #111;
-  color: #fff;
+  /* Cores de Ação */
+  --color-blue: #339af0;   /* Azul para "Preparar" */
+  --color-blue-hover: #1c7ed6;
+  --color-green: #51cf66;  /* Verde para "Pronto" */
+  --color-green-hover: #37b24d;
+  --color-red: #ff6b6b;    /* Vermelho para "Cancelar" */
+  --color-red-hover: #fa5252;
+
+  /* Observações (Resolvendo o problema do fundo branco) */
+  --obs-bg: #fcc419;       /* Amarelo âmbar chamativo */
+  --obs-text: #212529;     /* Texto escuro para contraste máximo */
 }
 
-header {
-  position: relative;              /* Essencial para o botão ⋮ funcionar corretamente */
-  min-height: 56px;                /* Garante altura mínima para o menu não sair do lugar */
-  padding: 16px;
+body {
+  font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+  background-color: var(--bg-main);
+  color: var(--text-primary);
+  margin: 0;
+  padding-bottom: 40px; /* Espaço no final */
+}
+
+/* Header simples */
+.header-title {
   text-align: center;
-  font-size: 20px;
+  padding: 20px;
+  font-size: 1.5rem;
+  font-weight: bold;
+  background: #212529;
+  box-shadow: 0 2px 10px rgba(0,0,0,0.3);
+}
+
+/* Container dos pedidos */
+#orders {
+  max-width: 800px;
+  margin: 30px auto;
+  padding: 0 15px;
+  display: flex;
+  flex-direction: column;
+  gap: 20px; /* Espaço entre os cartões */
+}
+
+/* ================= ESTILO DO CARTÃO DO PEDIDO ================= */
+.order {
+  background-color: var(--bg-card);
+  border-radius: 12px;
+  padding: 20px;
+  box-shadow: 0 4px 15px rgba(0,0,0,0.2);
+  border: 1px solid #3a3f44; /* Borda sutil */
+  transition: transform 0.2s;
+}
+
+/* Cabeçalho do Pedido (ID, Mesa, Hora) */
+.order-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 15px;
+  padding-bottom: 10px;
+  border-bottom: 2px dashed #495057;
+}
+
+.order-title {
+  font-size: 1.3rem;
+  color: var(--color-blue);
+}
+
+.order-meta {
+  text-align: right;
+  font-size: 0.9rem;
+  color: var(--text-secondary);
+}
+
+.table-info {
+  display: block;
+  font-weight: bold;
+  font-size: 1.1rem;
+  color: var(--text-primary);
+  margin-bottom: 4px;
+}
+
+/* Lista de Itens */
+.order-items {
+  font-family: 'Consolas', monospace;
+  font-size: 1.15rem;
+  margin-bottom: 20px;
+  line-height: 1.6;
+}
+.item-qty {
+  color: var(--color-blue);
+  font-weight: bold;
+  margin-right: 8px;
+}
+
+/* ================= OBSERVAÇÕES (A GRANDE MUDANÇA) ================= */
+.order-obs {
+  background-color: var(--obs-bg);
+  color: var(--obs-text);
+  padding: 12px 15px;
+  border-radius: 8px;
   font-weight: 600;
-  background: #1f1f1f;
-  border-bottom: 3px solid #ff6b00;
-  color: white;
+  margin-bottom: 20px;
+  display: flex;
+  align-items: center;
+  border-left: 6px solid #d9a714; /* Borda lateral para destaque */
+}
+.order-obs span {
+    margin-right: 8px;
+    font-size: 1.2rem;
+}
+
+/* ================= BOTÕES ================= */
+.controls {
+  display: flex;
+  gap: 10px;
+  justify-content: flex-end; /* Alinha botões à direita */
 }
 
 .btn {
-  background: #ff6b00;
-  color: white;
+  padding: 12px 24px;
   border: none;
-  padding: 8px 14px;
   border-radius: 8px;
-  cursor: pointer;
-  font-weight: 600;
-  transition: background 0.3s ease;
-}
-
-.btn:hover {
-  background: #e65c00;
-}
-
-#btnHistorico {
-  margin-bottom: 18px;
-}
-
-.order {
-  background: #222;
-  padding: 14px;
-  border-radius: 10px;
-  margin-bottom: 14px;
-  box-shadow: 0 2px 6px rgba(0,0,0,0.3);
-  border-left: 5px solid transparent;
-  transition: all 0.2s ease;
-}
-
-.order.new {
-  border-left: 5px solid #ff6b00;
-}
-
-.order div {
-  margin-bottom: 4px;
-  line-height: 1.5;
-}
-
-.order small {
-  color: #ccc;
-}
-
-.order .status {
+  font-size: 1rem;
   font-weight: bold;
-  color: #ff6b00;
-  margin-top: 10px;
-}
-
-.controls {
-  margin-top: 10px;
+  cursor: pointer;
+  transition: background-color 0.2s, transform 0.1s;
+  color: white;
   display: flex;
-  flex-wrap: wrap;
+  align-items: center;
   gap: 8px;
 }
 
-.menu-wrapper {
-  position: absolute;
-  left: 16px;
-  top: 50%;
-  transform: translateY(-50%);
-  z-index: 20;
-}
+.btn:active { transform: scale(0.98); }
 
-.menu-button {
-  background: rgba(255, 255, 255, 0.2);
-  color: white;
-  border: none;
-  border-radius: 8px;
-  padding: 6px 10px;
-  font-size: 20px;
-  cursor: pointer;
-}
+/* Cores específicas dos botões */
+.btn-preparar { background-color: var(--color-blue); }
+.btn-preparar:hover { background-color: var(--color-blue-hover); }
 
+.btn-pronto { background-color: var(--color-green); }
+.btn-pronto:hover { background-color: var(--color-green-hover); }
+
+.btn-cancel { background-color: var(--bg-card); color: var(--color-red); border: 2px solid var(--color-red); padding: 10px 20px; }
+.btn-cancel:hover { background-color: var(--color-red); color: white; }
+
+/* Menu Dropdown (mantendo simples) */
+.menu-wrapper { position: absolute; top: 15px; left: 15px; }
+.menu-button { background:none; border:none; color:white; font-size: 24px; cursor: pointer; }
 .menu-dropdown {
-  position: absolute;
-  top: 38px;
-  left: 0;
-  background: white;
-  color: #333;
-  border-radius: 8px;
-  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.2);
-  display: none;
-  min-width: 180px;
-  z-index: 100;
+    display: none;
+    position: absolute;
+    top: 40px; left: 0;
+    background: var(--bg-card);
+    border-radius: 8px;
+    box-shadow: 0 5px 15px rgba(0,0,0,0.5);
+    z-index: 100;
+    min-width: 180px;
+    overflow: hidden;
 }
-
-.menu-dropdown.show {
-  display: block;
-}
-
+.menu-dropdown.show { display: block; }
 .menu-dropdown div {
-  padding: 10px 16px;
-  border-bottom: 1px solid #eee;
-  cursor: pointer;
+    padding: 12px 20px;
+    cursor: pointer;
+    border-bottom: 1px solid #495057;
+    color: var(--text-primary);
 }
-
-.menu-dropdown div:hover {
-  background: #f6f6f6;
-}
-
-/* ======== MENU 3 PONTINHOS ======== */
-.menu-wrapper {
-  position: absolute;
-  left: 16px;
-  top: 50%;
-  transform: translateY(-50%);
-}
-
-.menu-button {
-  background: rgba(255, 255, 255, 0.2);
-  color: white;
-  border: none;
-  border-radius: 8px;
-  padding: 6px 10px;
-  font-size: 20px;
-  cursor: pointer;
-}
-
-.menu-dropdown {
-  position: absolute;
-  top: 38px;
-  left: 0;
-  background: white;
-  color: #333;
-  border-radius: 8px;
-  box-shadow: 0 4px 10px rgba(0,0,0,0.2);
-  display: none;
-  min-width: 180px;
-  z-index: 100;
-}
-
-.menu-dropdown.show {
-  display: block;
-}
-
-.menu-dropdown div {
-  padding: 10px 16px;
-  border-bottom: 1px solid #eee;
-  cursor: pointer;
-}
-
-.menu-dropdown div:hover {
-  background: #f6f6f6;
-}
-
-
+.menu-dropdown div:hover { background: var(--color-blue); color: white; }
