@@ -1,0 +1,237 @@
+/* =============================================================
+   🎨 LANDING PAGE CSS - DIGITAL MENU
+   ============================================================= */
+
+:root {
+    --bg-dark: #0f1113;
+    --bg-card: #1a1d21;
+    --color-blue: #339af0;
+    --color-blue-dark: #228be6;
+    --color-green: #51cf66;
+    --color-red: #ff6b6b;
+    --text-main: #e9ecef;
+    --text-muted: #adb5bd;
+    --border: #2c2f33;
+    --radius: 12px;
+    --shadow: 0 10px 30px rgba(0,0,0,0.5);
+}
+
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+    font-family: 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+}
+
+body {
+    background-color: var(--bg-dark);
+    color: var(--text-main);
+    line-height: 1.6;
+    overflow-x: hidden;
+}
+
+/* --- BARRA DE NAVEGAÇÃO --- */
+.navbar {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 20px 5%;
+    background: rgba(15, 17, 19, 0.95);
+    backdrop-filter: blur(10px);
+    position: sticky;
+    top: 0;
+    z-index: 1000;
+    border-bottom: 1px solid var(--border);
+}
+
+.logo {
+    font-size: 1.5rem;
+    font-weight: 800;
+    letter-spacing: -1px;
+}
+
+.logo span { color: var(--color-blue); }
+
+.nav-links {
+    display: flex;
+    gap: 20px;
+    align-items: center;
+}
+
+.nav-links a {
+    text-decoration: none;
+    color: var(--text-main);
+    font-size: 0.9rem;
+    font-weight: 500;
+}
+
+/* --- BOTÕES --- */
+.btn-cta, .btn-primary {
+    background-color: var(--color-blue);
+    color: white !important;
+    padding: 12px 24px;
+    border-radius: 8px;
+    font-weight: 600;
+    border: none;
+    cursor: pointer;
+    transition: 0.3s;
+    text-align: center;
+    text-decoration: none;
+}
+
+.btn-primary:hover {
+    background-color: var(--color-blue-dark);
+    transform: translateY(-2px);
+}
+
+.btn-secondary {
+    background-color: transparent;
+    color: var(--color-green) !important;
+    border: 2px solid var(--color-green);
+    padding: 10px 22px;
+    border-radius: 8px;
+    text-decoration: none;
+    font-weight: 600;
+}
+
+/* --- HERO SECTION (DESTAQUE) --- */
+.hero {
+    display: flex;
+    flex-direction: column; /* Mobile first */
+    align-items: center;
+    text-align: center;
+    padding: 60px 5%;
+    gap: 40px;
+}
+
+.hero-content h1 {
+    font-size: 2.5rem;
+    line-height: 1.1;
+    margin-bottom: 20px;
+}
+
+.hero-content h1 span { color: var(--color-blue); }
+
+.hero-content p {
+    color: var(--text-muted);
+    font-size: 1.1rem;
+    max-width: 600px;
+    margin: 0 auto 30px;
+}
+
+.hero-btns {
+    display: flex;
+    flex-direction: column;
+    gap: 15px;
+}
+
+.hero-image img {
+    width: 100%;
+    max-width: 500px;
+    border-radius: 20px;
+    box-shadow: var(--shadow);
+    border: 1px solid var(--border);
+}
+
+/* --- FUNCIONALIDADES (CARDS) --- */
+.features {
+    display: grid;
+    grid-template-columns: 1fr; /* 1 coluna no celular */
+    gap: 20px;
+    padding: 60px 5%;
+}
+
+.feature-card {
+    background: var(--bg-card);
+    padding: 30px;
+    border-radius: var(--radius);
+    border: 1px solid var(--border);
+    text-align: center;
+}
+
+.feature-card i {
+    font-size: 2.5rem;
+    color: var(--color-blue);
+    margin-bottom: 20px;
+}
+
+.feature-card h3 { margin-bottom: 10px; }
+.feature-card p { color: var(--text-muted); font-size: 0.95rem; }
+
+/* --- SEÇÃO DE CADASTRO --- */
+.registration {
+    padding: 60px 5%;
+}
+
+.registration .box {
+    background: var(--bg-card);
+    padding: 40px 20px;
+    border-radius: var(--radius);
+    max-width: 500px;
+    margin: 0 auto;
+    border: 2px solid var(--color-blue);
+}
+
+.registration h2 { text-align: center; margin-bottom: 10px; }
+.registration p { text-align: center; color: var(--text-muted); margin-bottom: 30px; }
+
+form {
+    display: flex;
+    flex-direction: column;
+    gap: 15px;
+}
+
+form input {
+    padding: 15px;
+    background: var(--bg-dark);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    color: white;
+    font-size: 1rem;
+}
+
+form input:focus {
+    border-color: var(--color-blue);
+    outline: none;
+}
+
+/* --- RODAPÉ --- */
+.footer {
+    text-align: center;
+    padding: 40px;
+    border-top: 1px solid var(--border);
+    color: var(--text-muted);
+    font-size: 0.85rem;
+}
+
+/* =============================================================
+   💻 AJUSTES PARA COMPUTADOR (DESKTOP)
+   ============================================================= */
+
+@media (min-width: 992px) {
+    .hero {
+        flex-direction: row;
+        text-align: left;
+        padding: 100px 10%;
+        justify-content: space-between;
+    }
+
+    .hero-content { flex: 1; }
+    .hero-image { flex: 1; display: flex; justify-content: flex-end; }
+    
+    .hero-content h1 { font-size: 4rem; }
+    .hero-btns { flex-direction: row; }
+
+    .features {
+        grid-template-columns: repeat(3, 1fr);
+        padding: 80px 10%;
+    }
+
+    .nav-links a:hover { color: var(--color-blue); }
+}
+
+/* Ajuste para telas muito pequenas */
+@media (max-width: 480px) {
+    .nav-links a:not(.btn-cta) { display: none; } /* Esconde links internos no celular */
+    .hero-content h1 { font-size: 2rem; }
+}
