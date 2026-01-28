@@ -3,24 +3,40 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>🔐 Login - Sistema Restaurante</title>
-  <link rel="stylesheet" href="css/login.css" />
+  <title>🔐 Login - Digital Menu</title>
+  
+  <link rel="stylesheet" href="css/style.css" />
 </head>
-<body>
-  <div class="login-container">
-    <h2>🔐 Login</h2>
+<body class="auth-page">
 
-    <input type="email" id="email" placeholder="E-mail" autocomplete="username" />
-    <input type="password" id="senha" placeholder="Senha" autocomplete="current-password" />
+  <div class="box" style="max-width: 380px; width: 95%; padding: 30px;">
+    <div style="text-align: center; margin-bottom: 25px;">
+        <h2 style="color: var(--color-blue); margin-bottom: 5px;">👋 Olá novamente!</h2>
+        <p style="font-size: 0.9rem; color: var(--text-secondary);">Acesse o painel da sua empresa.</p>
+    </div>
 
-    <button type="button" onclick="login()">Entrar</button>
+    <div style="display: flex; flex-direction: column; gap: 5px;">
+        <label>Seu E-mail</label>
+        <input type="email" id="email" placeholder="nome@exemplo.com" autocomplete="username" />
 
-    <p style="margin-top:10px;">
-      Não tem conta?
-      <a href="http://instagram.com/">Entre em contato com o administrador</a>
-    </p>
+        <label style="margin-top: 10px;">Sua Senha</label>
+        <input type="password" id="senha" placeholder="••••••••" autocomplete="current-password" />
+    </div>
 
-    <p id="msg" style="color:red;margin-top:10px;"></p>
+    <button class="btn" onclick="login()" style="width: 100%; margin-top: 25px; padding: 15px;">
+        Entrar no Sistema
+    </button>
+
+    <p id="msg" style="text-align: center; margin-top: 20px; font-weight: bold; min-height: 20px;"></p>
+
+    <hr style="border: 0; border-top: 1px solid var(--border-color); margin: 25px 0;">
+
+    <div style="text-align: center; font-size: 0.85rem; color: var(--text-secondary);">
+        Dificuldade para acessar? <br>
+        <a href="https://instagram.com/" target="_blank" style="color: var(--color-amber); font-weight: bold;">
+            Fale com o Administrador
+        </a>
+    </div>
   </div>
 
   <script>
@@ -28,14 +44,20 @@
       const email = document.getElementById('email').value.trim();
       const senha = document.getElementById('senha').value.trim();
       const msg = document.getElementById('msg');
+      const btn = document.querySelector('button');
 
       msg.textContent = '';
-      msg.style.color = 'red';
 
       if (!email || !senha) {
-        msg.textContent = 'Preencha e-mail e senha.';
+        msg.style.color = 'var(--color-amber)';
+        msg.textContent = '⚠️ Preencha e-mail e senha.';
         return;
       }
+
+      // Feedback visual no botão
+      btn.disabled = true;
+      const originalText = btn.innerText;
+      btn.innerText = 'Validando...';
 
       try {
         const res = await fetch('/api/login', {
@@ -47,18 +69,19 @@
         const data = await res.json();
 
         if (!res.ok || !data.ok) {
-          throw new Error(data.error || 'Erro no login');
+          throw new Error(data.error || 'E-mail ou senha inválidos.');
         }
 
-        // ✅ SALVA EXATAMENTE O QUE O BACKEND ENVIOU
+        // ✅ SALVA OS DADOS DO USUÁRIO
         localStorage.setItem('user', JSON.stringify(data.user));
 
-        msg.style.color = 'green';
+        msg.style.color = 'var(--color-green)';
         msg.textContent = '✅ Login realizado! Redirecionando...';
 
         setTimeout(() => {
           const role = (data.user.role || '').toLowerCase();
 
+          // Redirecionamento Inteligente baseado no cargo
           if (role === 'admin') {
             window.location.href = 'index.html';
           } else if (role === 'atendente') {
@@ -68,18 +91,21 @@
           } else {
             window.location.href = 'index.html';
           }
-        }, 600);
+        }, 800);
 
       } catch (err) {
         console.error(err);
-        msg.textContent = err.message;
+        msg.style.color = 'var(--color-red)';
+        msg.textContent = '❌ ' + err.message;
+        btn.disabled = false;
+        btn.innerText = originalText;
       }
     }
 
+    // Atalho do teclado
     document.addEventListener('keydown', e => {
       if (e.key === 'Enter') login();
     });
   </script>
 </body>
 </html>
-
