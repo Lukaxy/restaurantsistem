@@ -15,10 +15,8 @@ app.use(bodyParser.json({ limit: "2mb" }));
 // =============================================================
 // 🕒 HORA LOCAL
 // =============================================================
-function getHoraLocalISOString(offsetHoras = -3) {
-  const date = new Date();
-  date.setHours(date.getHours() + offsetHoras);
-  return date.toISOString();
+function getHoraLocalISOString() {
+  return new Date().toISOString(); // Salva o horário universal padrão
 }
 
 // =============================================================
