@@ -167,4 +167,29 @@ document.addEventListener('DOMContentLoaded', async () => {
       if (modal) modal.style.display = 'none';
     };
   }
+
+  // ... (código anterior dos outros botões)
+
+  // 👇 ADICIONE ISSO AQUI ANTES DE FECHAR O BLOCO DO DOMContentLoaded
+  
+  const btnCloseProd = document.getElementById('closeProductModal');
+  if (btnCloseProd) {
+    btnCloseProd.onclick = () => {
+      // Esconde a div do modal
+      const modal = document.getElementById('productModal');
+      if (modal) modal.style.display = 'none';
+    };
+  }
+
+  // Bônus de UX: Fechar se clicar fora da caixinha (no fundo escuro)
+  const modalProd = document.getElementById('productModal');
+  if (modalProd) {
+    modalProd.onclick = (e) => {
+      if (e.target === modalProd) {
+        modalProd.style.display = 'none';
+      }
+    };
+  }
+
+// }); <--- O fechamento do DOMContentLoaded fica aqui
 });
