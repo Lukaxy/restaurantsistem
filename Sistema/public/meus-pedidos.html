@@ -4,72 +4,34 @@
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width,initial-scale=1" />
   <title>🧾 Meus Pedidos</title>
-  <link rel="stylesheet" href="css/meus-pedidos.css" />
+  
+  <link rel="stylesheet" href="css/style.css" />
+  
   <style>
-    body {
-      background: #111;
-      color: #fff;
-      font-family: "Poppins", Arial, sans-serif;
-      margin: 0;
-      padding: 0;
+    /* Estilos para os badges de status */
+    .status-badge {
+      display: inline-block;
+      padding: 4px 10px;
+      border-radius: 20px;
+      font-size: 0.85rem;
+      font-weight: bold;
+      text-transform: uppercase;
     }
-
-    main { padding: 12px; }
-
-    .pedido {
-      background: #1b1b1b;
-      border: 1px solid #2b2b2b;
-      border-radius: 10px;
-      padding: 12px 14px;
-      margin-bottom: 10px;
-      box-shadow: 0 2px 8px rgba(0,0,0,0.4);
-      transition: transform 0.2s, border 0.2s;
-    }
-    .pedido:hover {
-      transform: scale(1.02);
-      border-color: #ffb347;
-    }
-    .pedido.novo { border-left: 5px solid #ff6b00; }
-    .pedido.em\ preparo { border-left: 5px solid #ffa500; }
-    .pedido.pronto { border-left: 5px solid #28a745; }
-    .pedido.cancelado { border-left: 5px solid #c00; opacity: 0.6; }
-
-    .pedido b {
-      color: #ffb347;
-      font-size: 1rem;
-    }
-    .pedido small { color: #bbb; }
-    .pedido pre {
-      background: #151515;
-      padding: 6px 8px;
-      border-radius: 6px;
-      color: #eee;
-      font-size: 0.95em;
-      white-space: pre-line;
-      margin-top: 6px;
-      border: 1px solid #222;
-    }
-    .pedido .status {
-      text-align: right;
-      font-size: 0.9em;
-      color: #ccc;
-      margin-top: 5px;
-    }
-    .pedido .status b { color: #ffb347; }
-    .pedido .obs {
-      background: #202020;
-      border-radius: 6px;
-      padding: 6px 8px;
-      margin-top: 6px;
-      color: #bbb;
-      font-style: italic;
-      border: 1px solid #333;
+    .status-novo { background: var(--bg-main); color: var(--color-amber); border: 1px solid var(--color-amber); }
+    .status-preparo { background: var(--color-blue); color: white; }
+    .status-pronto { background: var(--color-green); color: white; }
+    
+    .pedido-card {
+      background: var(--bg-card);
+      border: 1px solid var(--border-color);
+      border-radius: var(--radius);
+      padding: 15px;
+      margin-bottom: 15px;
+      box-shadow: var(--shadow);
     }
   </style>
 </head>
 <body>
-
-<script src="js/auth.js"></script>
 
 <header>
   <div class="menu-wrapper">
@@ -86,10 +48,11 @@
 </header>
 
 <main>
-  <div id="pedidosList">Carregando pedidos...</div>
+  <div id="pedidosList">
+    <p style="text-align:center; margin-top: 20px; color: var(--text-secondary);">Acompanhando seus pedidos...</p>
+  </div>
 </main>
 
-<!-- === SCRIPT PRINCIPAL ATUALIZADO === -->
 <script>
 document.addEventListener("DOMContentLoaded", () => {
   const lista = document.getElementById("pedidosList");
@@ -99,74 +62,70 @@ document.addEventListener("DOMContentLoaded", () => {
   let pedidos = [];
 
   if (!company_id) {
-    lista.innerHTML = "<p style='color:red;'>Erro: company_id não encontrado (faça login novamente).</p>";
+    lista.innerHTML = `<div class='box'><p style='color:var(--color-red); text-align:center;'>Empresa não identificada. Por favor, faça login.</p></div>`;
     return;
-  }
-
-  function parseItems(data) {
-    if (!data) return [];
-    if (typeof data === "string") {
-      try { return JSON.parse(data); } catch { return []; }
-    }
-    if (Array.isArray(data)) return data;
-    return [];
   }
 
   function renderizar() {
     if (pedidos.length === 0) {
-      lista.innerHTML = "<p style='text-align:center;margin-top:20px;color:#aaa;'>Nenhum pedido realizado ainda 🧺</p>";
+      lista.innerHTML = `
+        <div style="text-align:center; margin-top:50px; color: var(--text-secondary);">
+            <div style="font-size: 3rem;">🧺</div>
+            <p>Você não tem pedidos ativos no momento.</p>
+            <button class="btn" onclick="window.location.href='index.html'" style="margin-top:15px;">Ir para o Cardápio</button>
+        </div>`;
       return;
     }
 
     lista.innerHTML = pedidos.map(p => {
-      const items = parseItems(p.items);
+      let items = [];
+      try { items = Array.isArray(p.items) ? p.items : JSON.parse(p.items || "[]"); } catch {}
+      
       const hora = new Date(p.created_at).toLocaleTimeString("pt-BR", {hour:"2-digit",minute:"2-digit"});
-      const statusTxt =
-        p.status === "novo" ? "🕒 Aguardando preparo" :
-        p.status === "em preparo" ? "🍳 Em preparo" :
-        p.status === "pronto" ? "✅ Pronto" :
-        p.status === "cancelado" ? "❌ Cancelado" :
-        p.status;
-
-      // 🆕 nome e mesa
-      const mesa = p.table_name ? `Mesa ${p.table_name}` : "Mesa não informada";
-      const nomeCliente = p.notes && p.notes.includes("Cliente:")
-        ? p.notes.split("Cliente:")[1].trim()
-        : "";
+      
+      // Lógica de Status com Classes do CSS
+      let statusClass = "status-novo";
+      let statusTxt = "🕒 Aguardando Cozinha";
+      
+      if(p.status === "preparando" || p.status === "em preparo") {
+          statusClass = "status-preparo";
+          statusTxt = "🍳 Sendo Preparado";
+      } else if(p.status === "pronto") {
+          statusClass = "status-pronto";
+          statusTxt = "✅ Pronto para Retirar";
+      }
 
       return `
-        <div class="pedido ${p.status}">
-          <div>
-            <b>Pedido #${p.id}</b> <small>(${hora})</small><br>
-            <small>${mesa}${nomeCliente ? " — " + nomeCliente : ""}</small>
+        <div class="pedido-card">
+          <div style="display:flex; justify-content:space-between; align-items:flex-start; margin-bottom:12px;">
+            <div>
+                <b style="color:var(--color-blue); font-size:1.1rem;">Pedido #${p.id}</b>
+                <div style="font-size:0.8rem; color:var(--text-secondary);">${hora} — ${p.table_name ? 'Mesa ' + p.table_name : 'Balcão'}</div>
+            </div>
+            <span class="status-badge ${statusClass}">${statusTxt}</span>
           </div>
-          <pre>${items.map(i => `${i.qty}x ${i.name}`).join("\n")}</pre>
-          ${p.notes ? `<div class="obs">Obs: ${p.notes}</div>` : ""}
-          <div class="status">${statusTxt}</div>
+
+          <div style="background:var(--bg-main); padding:10px; border-radius:6px; margin-bottom:10px; font-family:monospace;">
+            ${items.map(i => `<div><span style="color:var(--color-blue); font-weight:bold;">${i.qty}x</span> ${i.name}</div>`).join("")}
+          </div>
+
+          ${p.notes ? `<div style="font-size:0.85rem; color:var(--text-secondary); font-style:italic;"><strong>Obs:</strong> ${p.notes}</div>` : ""}
+          
+          ${p.status === "pronto" ? `
+            <div style="margin-top:10px; text-align:center; background:rgba(81, 207, 102, 0.1); padding:8px; border-radius:4px; color:var(--color-green); font-weight:bold; font-size:0.9rem;">
+                🎈 Seu pedido chegou! Pode buscar.
+            </div>
+          ` : ""}
         </div>
       `;
     }).join("");
   }
 
-  function removerPedidosAntigos() {
-    const agora = Date.now();
-    pedidos = pedidos.filter(p => {
-      if (p.status !== "pronto") return true;
-      const atualizado = new Date(p.status_updated_at || p.created_at).getTime();
-      return agora - atualizado < TEMPO_OCULTAR_PRONTO;
-    });
-    renderizar();
-  }
-
   async function carregarPedidos() {
     try {
       const res = await fetch(`/api/orders?company_id=${company_id}`);
-      const text = await res.text();
-      if (text.trim().startsWith("<"))
-        throw new Error("Servidor retornou HTML — verifique rota /api/orders.");
-
-      const data = JSON.parse(text);
-      if (!data.ok) throw new Error(data.error || "Erro ao carregar pedidos.");
+      const data = await res.json();
+      if (!data.ok) throw new Error(data.error || "Erro ao carregar.");
 
       const agora = Date.now();
       pedidos = data.pedidos.filter(p => {
@@ -180,29 +139,19 @@ document.addEventListener("DOMContentLoaded", () => {
 
       renderizar();
     } catch (err) {
-      console.error("Erro ao carregar pedidos:", err);
-      lista.innerHTML = `<p style="color:red;">${err.message}</p>`;
+      console.error(err);
+      lista.innerHTML = `<p style="color:var(--color-red); text-align:center;">Erro ao atualizar pedidos.</p>`;
     }
   }
 
   carregarPedidos();
-  setInterval(carregarPedidos, 5000);
-  setInterval(removerPedidosAntigos, 60000);
+  setInterval(carregarPedidos, 5000); // Atualiza a cada 5 segundos
 });
-</script>
 
-<script>
 function toggleMenu() {
-  const menu = document.getElementById("menuDropdown");
-  menu.classList.toggle("show");
+  document.getElementById("menuDropdown").classList.toggle("show");
 }
-document.addEventListener("click", e => {
-  if (!e.target.closest(".menu-wrapper")) {
-    document.getElementById("menuDropdown").classList.remove("show");
-  }
-});
 </script>
 
 </body>
 </html>
-
