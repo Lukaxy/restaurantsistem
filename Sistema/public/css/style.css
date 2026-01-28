@@ -183,3 +183,37 @@ header {
 #productList > div:hover {
     background-color: rgba(255, 255, 255, 0.03);
 }
+
+/* ================== ESTRUTURA CENTRALIZADA ================== */
+
+/* Centraliza o conteúdo das páginas internas (Cozinha, Configurações, etc) */
+main {
+    max-width: 1000px; /* Evita que o conteúdo estique demais em monitores grandes */
+    margin: 0 auto;    /* A MÁGICA: centraliza o bloco na horizontal */
+    padding: 20px;     /* Espaço interno para não encostar nas bordas */
+    width: 100%;       /* Garante que ocupe o espaço disponível até o limite do max-width */
+    box-sizing: border-box;
+}
+
+/* Centraliza as telas de Login e Registro (Vertical e Horizontal) */
+.auth-page {
+    display: flex;
+    align-items: center;      /* Centraliza verticalmente */
+    justify-content: center;   /* Centraliza horizontalmente */
+    min-height: 100vh;        /* Ocupa a altura toda da tela */
+    background: radial-gradient(circle, #1a1d21 0%, #000 100%);
+    padding: 20px;
+    box-sizing: border-box;
+}
+
+/* Garante que a .box não estoure e fique centralizada */
+.box {
+    background-color: var(--bg-card);
+    border-radius: var(--radius);
+    padding: 25px;
+    border: 1px solid var(--border-color);
+    box-shadow: var(--shadow);
+    width: 100%;
+    max-width: 450px; /* Tamanho ideal para formulários de login/config */
+    margin: 0 auto;   /* Centraliza se estiver fora de um flexbox */
+}
