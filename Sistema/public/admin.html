@@ -2,12 +2,10 @@
 <html lang="pt-br">
 <head>
   <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>👑 Painel Master - Empresas</title>
-  <link rel="stylesheet" href="css/admin.css" />
-
-  <!-- Proteção de acesso -->
-  <script src="js/auth.js"></script>
+  <meta name="viewport" content="width=device-width,initial-scale=1.0" />
+  <title>👑 Painel Master - Gerenciar Sistema</title>
+  
+  <link rel="stylesheet" href="css/style.css" />
 
   <script type="module">
     import { api } from "./js/http.js";
@@ -24,41 +22,44 @@
     // ================== LISTAR EMPRESAS ==================
     async function carregarEmpresas() {
       const div = document.getElementById("empresas-list");
-      div.innerHTML = "Carregando...";
+      div.innerHTML = "<p style='text-align:center;'>Buscando registros...</p>";
 
       try {
         const data = await api("/api/empresas");
-
         if (!data.ok) throw new Error(data.error || "Erro ao buscar empresas.");
+        
         if (!data.empresas.length) {
-          div.innerHTML = "<p style='color:#bbb;'>Nenhuma empresa cadastrada.</p>";
+          div.innerHTML = "<p style='text-align:center; color:var(--text-secondary);'>Nenhuma empresa no sistema.</p>";
           return;
         }
 
-        div.innerHTML = data.empresas
-          .map(
-            (e) => `
-          <div class="empresa">
-            <b>${e.name}</b><br>
-            <small>${e.email_admin}</small><br>
-            <small style="color:#999;">
-              Criada em ${new Date(e.created_at).toLocaleDateString("pt-BR")}
-            </small><br>
-            <small>Plano:
-              <select onchange="alterarPlano(${e.id}, this.value)">
-                <option value="basic" ${e.plano === "basic" ? "selected" : ""}>Basic</option>
-                <option value="plus" ${e.plano === "plus" ? "selected" : ""}>Plus</option>
-                <option value="pro" ${e.plano === "pro" ? "selected" : ""}>Pro</option>
-              </select>
-            </small><br>
-            <button onclick="excluirEmpresa(${e.id})" style="margin-top:6px;">🗑️ Excluir</button>
+        div.innerHTML = data.empresas.map(e => `
+          <div class="box" style="margin-bottom: 15px; border-left: 5px solid ${e.plano === 'pro' ? 'var(--color-blue)' : 'var(--border-color)'};">
+            <div style="display: flex; justify-content: space-between; align-items: flex-start;">
+              <div>
+                <strong style="font-size: 1.2rem; color: var(--text-primary);">${e.name}</strong><br>
+                <small style="color: var(--text-secondary);">${e.email_admin}</small><br>
+                <small style="color: #666;">Criada em: ${new Date(e.created_at).toLocaleDateString("pt-BR")}</small>
+              </div>
+              <div style="text-align: right;">
+                <label style="font-size: 0.75rem; color: var(--text-secondary); display: block; margin-bottom: 4px;">PLANO ATUAL</label>
+                <select class="btn" style="background: var(--bg-main); padding: 5px; font-size: 0.8rem; border: 1px solid var(--border-color);" onchange="alterarPlano(${e.id}, this.value)">
+                  <option value="basic" ${e.plano === "basic" ? "selected" : ""}>Basic</option>
+                  <option value="plus" ${e.plano === "plus" ? "selected" : ""}>Plus</option>
+                  <option value="pro" ${e.plano === "pro" ? "selected" : ""}>Pro</option>
+                </select>
+              </div>
+            </div>
+            
+            <div style="margin-top: 15px; display: flex; justify-content: flex-end;">
+                <button class="btn cancel" onclick="excluirEmpresa(${e.id})" style="padding: 5px 12px; font-size: 0.85rem;">
+                    🗑️ Excluir Empresa
+                </button>
+            </div>
           </div>
-        `
-          )
-          .join("");
+        `).join("");
       } catch (err) {
-        console.error("Erro ao carregar empresas:", err);
-        div.innerHTML = `<p style="color:red;">${err.message}</p>`;
+        div.innerHTML = `<p style="color:var(--color-red); text-align:center;">${err.message}</p>`;
       }
     }
 
@@ -68,11 +69,10 @@
       const email = document.getElementById("email").value.trim();
       const senha = document.getElementById("senha").value.trim();
       const msg = document.getElementById("msg");
-      msg.textContent = "";
 
       if (!nome || !email || !senha) {
-        msg.textContent = "Preencha todos os campos.";
-        msg.style.color = "red";
+        msg.textContent = "⚠️ Preencha todos os campos.";
+        msg.style.color = "var(--color-amber)";
         return;
       }
 
@@ -84,81 +84,93 @@
 
         if (!data.ok) throw new Error(data.error || "Erro ao criar empresa.");
 
-        msg.style.color = "lightgreen";
+        msg.style.color = "var(--color-green)";
         msg.textContent = "✅ Empresa criada com sucesso!";
-        document.getElementById("nome").value = "";
-        document.getElementById("email").value = "";
-        document.getElementById("senha").value = "";
+        ["nome", "email", "senha"].forEach(id => document.getElementById(id).value = "");
 
         carregarEmpresas();
       } catch (err) {
-        msg.style.color = "red";
-        msg.textContent = err.message;
+        msg.style.color = "var(--color-red)";
+        msg.textContent = "❌ " + err.message;
       }
     }
 
     // ================== ALTERAR PLANO ==================
-    async function alterarPlano(id, plano) {
+    window.alterarPlano = async function(id, plano) {
       try {
         const data = await api(`/api/empresas/${id}/plano`, {
           method: "POST",
           body: JSON.stringify({ plano }),
         });
-        if (!data.ok) throw new Error(data.error || "Erro ao atualizar plano.");
-        alert("Plano atualizado!");
+        if (!data.ok) throw new Error(data.error || "Erro ao atualizar.");
+        alert("Plano atualizado com sucesso!");
       } catch (err) {
         alert("Erro: " + err.message);
       }
-    }
+    };
 
     // ================== EXCLUIR EMPRESA ==================
-    async function excluirEmpresa(id) {
-      if (!confirm("Deseja realmente excluir esta empresa?")) return;
+    window.excluirEmpresa = async function(id) {
+      if (!confirm("⚠️ ATENÇÃO: Isso excluirá todos os produtos, usuários e pedidos desta empresa. Confirmar?")) return;
       try {
         const data = await api(`/api/empresas/${id}`, { method: "DELETE" });
-        if (!data.ok) throw new Error(data.error || "Erro ao excluir empresa.");
-        alert("Empresa excluída com sucesso!");
+        if (!data.ok) throw new Error(data.error || "Erro ao excluir.");
         carregarEmpresas();
       } catch (err) {
         alert(err.message);
       }
-    }
+    };
 
-    // ================== LOGOUT ==================
-    window.logout = function logout() {
+    window.logout = function() {
       localStorage.clear();
       window.location.href = "admin-login.html";
     };
 
-    // ================== EVENTOS ==================
     document.addEventListener("DOMContentLoaded", carregarEmpresas);
     window.criarEmpresa = criarEmpresa;
-    window.excluirEmpresa = excluirEmpresa;
-    window.alterarPlano = alterarPlano;
   </script>
+
+  <style>
+    /* Toque especial para o Painel Master */
+    header { border-bottom: 2px solid var(--color-blue); }
+    .master-title { color: var(--color-blue); font-weight: bold; font-size: 1.4rem; }
+  </style>
 </head>
 
 <body>
   <header>
-    Painel Master — Gerenciar Empresas
-    <span class="logout" onclick="logout()">Sair</span>
+    <div class="master-title">👑 Painel Master</div>
+    <button class="btn cancel" onclick="logout()" style="padding: 8px 15px;">Sair</button>
   </header>
 
   <main>
-    <section>
-      <h2>🏢 Cadastrar nova empresa</h2>
-      <input id="nome" placeholder="Nome da empresa" />
-      <input id="email" placeholder="E-mail do administrador" type="email" />
-      <input id="senha" placeholder="Senha do administrador" type="password" />
-      <button onclick="criarEmpresa()">Cadastrar Empresa</button>
-      <p id="msg"></p>
+    <div style="display: flex; gap: 15px; margin-bottom: 20px;">
+        <div class="box" style="flex: 1; text-align: center; border-bottom: 3px solid var(--color-blue);">
+            <small style="color: var(--text-secondary);">Total de Clientes</small>
+            <h2 id="total-count">...</h2>
+        </div>
+    </div>
+
+    <section class="box" style="margin-bottom: 30px;">
+      <h3 style="color: var(--color-green); margin-bottom: 20px;">🏢 Cadastrar Nova Empresa</h3>
+      <div class="form-row">
+        <input id="nome" placeholder="Nome Fantasia" style="flex: 2;" />
+        <input id="email" placeholder="E-mail Admin" type="email" style="flex: 2;" />
+        <input id="senha" placeholder="Senha Inicial" type="password" style="flex: 1;" />
+      </div>
+      <button class="btn success" onclick="criarEmpresa()" style="width: 100%; margin-top: 10px;">
+        🚀 Ativar Empresa no Sistema
+      </button>
+      <p id="msg" style="text-align: center; margin-top: 10px; font-weight: bold;"></p>
     </section>
 
     <section>
-      <h2>📋 Empresas cadastradas</h2>
-      <div id="empresas-list">Carregando...</div>
+      <h2 style="margin-bottom: 20px; display: flex; align-items: center; gap: 10px;">
+          📋 Empresas Ativas
+      </h2>
+      <div id="empresas-list">
+          </div>
     </section>
   </main>
 </body>
 </html>
-
