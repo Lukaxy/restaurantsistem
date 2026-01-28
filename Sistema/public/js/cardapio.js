@@ -191,5 +191,81 @@ document.addEventListener('DOMContentLoaded', async () => {
     };
   }
 
-// }); <--- O fechamento do DOMContentLoaded fica aqui
+  // ... (código dos outros botões acima)
+
+  // 👇 AQUI COMEÇA A MÁGICA DO ENVIAR PEDIDO 👇
+  const btnSend = document.getElementById('sendOrder');
+  if (btnSend) {
+    btnSend.onclick = async () => {
+      // 1. Validações básicas
+      if (cart.length === 0) {
+        alert("Seu carrinho está vazio!");
+        return;
+      }
+
+      const tableName = document.getElementById('tableName').value;
+      if (!tableName) {
+        alert("Por favor, informe a Mesa ou Nome do cliente.");
+        return;
+      }
+
+      const notes = document.getElementById('notes').value;
+
+      // 2. Prepara os dados
+      // Precisamos pegar o company_id de novo (garantia)
+      const userAtual = JSON.parse(localStorage.getItem('user') || '{}');
+      
+      const total = cart.reduce((acc, item) => acc + (item.price * item.qty), 0);
+
+      const pedido = {
+        company_id: userAtual.company_id,
+        items: cart, // O backend vai converter pra string, lembra?
+        total: total,
+        table_name: tableName,
+        notes: notes
+      };
+
+      // 3. Muda o texto do botão pra avisar que está trabalhando
+      const btnOriginalText = btnSend.innerText;
+      btnSend.innerText = "Enviando...";
+      btnSend.disabled = true;
+
+      try {
+        // 4. Envia pro servidor
+        const res = await fetch('/api/orders', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(pedido)
+        });
+
+        const data = await res.json();
+
+        if (data.ok) {
+          alert("✅ Pedido enviado com sucesso!");
+          
+          // 5. Limpa tudo
+          cart.length = 0; // Zera o array do carrinho
+          updateCartCount();
+          renderCart();
+          document.getElementById('tableName').value = "";
+          document.getElementById('notes').value = "";
+          
+          // Fecha o modal
+          const modal = document.getElementById('cartModal');
+          if (modal) modal.style.display = 'none';
+
+        } else {
+          alert("Erro ao enviar: " + (data.error || "Desconhecido"));
+        }
+
+      } catch (erro) {
+        console.error(erro);
+        alert("Erro de conexão com a cozinha.");
+      } finally {
+        // 6. Restaura o botão
+        btnSend.innerText = btnOriginalText;
+        btnSend.disabled = false;
+      }
+    };
+  }
 });
