@@ -4,46 +4,52 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>🏢 Painel da Empresa</title>
-  <link rel="stylesheet" href="css/admin.css">
+  
+  <link rel="stylesheet" href="css/style.css">
 
   <script type="module">
     import { api } from "./js/http.js";
 
     // ======== DADOS DO USUÁRIO LOGADO ========
-    const token = localStorage.getItem("token");
     const user = JSON.parse(localStorage.getItem("user") || "{}");
-    const msg = document.getElementById("msg");
-    const list = document.getElementById("users-list");
 
     // ======== BLOQUEIA NÃO-ADMINS ========
     if (!user || !user.role || user.role !== "admin") {
-      alert("Acesso negado. Apenas o administrador da empresa pode entrar.");
+      alert("Acesso negado.");
       window.location.href = "login.html";
     }
 
     // ======== LISTAR USUÁRIOS ========
     async function carregarUsuarios() {
-      list.innerHTML = "Carregando...";
+      const list = document.getElementById("users-list");
+      list.innerHTML = "<p style='text-align:center;'>Buscando equipe...</p>";
 
       try {
         const data = await api(`/api/users?company_id=${user.company_id}`);
         if (!data.ok) throw new Error(data.error || "Erro ao carregar usuários");
 
         if (!data.users || data.users.length === 0) {
-          list.innerHTML = "<p>Nenhum usuário encontrado.</p>";
+          list.innerHTML = "<p style='text-align:center; color:var(--text-secondary);'>Nenhum funcionário cadastrado.</p>";
           return;
         }
 
         list.innerHTML = data.users.map(u => `
-          <div class="user">
-            <b>${u.name}</b> — ${u.email} <small>(${u.role})</small>
-            ${u.role !== "admin" ? `<button onclick="excluir(${u.id})">🗑️</button>` : ""}
+          <div style="display: flex; justify-content: space-between; align-items: center; padding: 12px; border-bottom: 1px solid var(--border-color); gap: 10px;">
+            <div>
+                <strong style="color: var(--text-primary);">${u.name}</strong> <br>
+                <small style="color: var(--text-secondary);">${u.email}</small> 
+                <span style="font-size: 0.7rem; background: var(--bg-main); padding: 2px 6px; border-radius: 4px; color: var(--color-blue); margin-left: 5px; text-transform: uppercase;">
+                    ${u.role}
+                </span>
+            </div>
+            ${u.role !== "admin" ? `
+                <button class="btn cancel" onclick="excluir(${u.id})" style="padding: 5px 10px;">🗑️</button>
+            ` : `<small style="color:var(--color-amber);">Admin</small>`}
           </div>
         `).join("");
 
       } catch (err) {
-        console.error("Erro ao listar usuários:", err);
-        list.innerHTML = `<p style="color:red;">${err.message}</p>`;
+        list.innerHTML = `<p style="color:var(--color-red); text-align:center;">${err.message}</p>`;
       }
     }
 
@@ -53,12 +59,11 @@
       const email = document.getElementById("email").value.trim();
       const senha = document.getElementById("senha").value.trim();
       const role = document.getElementById("role").value;
-
-      msg.textContent = "";
-      msg.style.color = "red";
+      const msg = document.getElementById("msg");
 
       if (!name || !email || !senha) {
-        msg.textContent = "Preencha todos os campos.";
+        msg.textContent = "⚠️ Preencha todos os campos.";
+        msg.style.color = "var(--color-amber)";
         return;
       }
 
@@ -67,41 +72,32 @@
           method: "POST",
           body: JSON.stringify({
             company_id: user.company_id,
-            name,
-            email,
-            senha,
-            role
+            name, email, senha, role
           }),
         });
 
-        if (!data.ok) throw new Error(data.error || "Erro ao adicionar usuário.");
+        if (!data.ok) throw new Error(data.error || "Erro ao adicionar.");
 
-        msg.style.color = "green";
+        msg.style.color = "var(--color-green)";
         msg.textContent = "✅ Usuário adicionado com sucesso!";
 
-        document.getElementById("name").value = "";
-        document.getElementById("email").value = "";
-        document.getElementById("senha").value = "";
-
+        // Limpa campos
+        ["name", "email", "senha"].forEach(id => document.getElementById(id).value = "");
         carregarUsuarios();
 
       } catch (err) {
-        console.error("Erro ao adicionar usuário:", err);
-        msg.style.color = "red";
-        msg.textContent = err.message;
+        msg.style.color = "var(--color-red)";
+        msg.textContent = "❌ " + err.message;
       }
     }
 
     // ======== EXCLUIR USUÁRIO ========
     async function excluir(id) {
-      if (!confirm("Deseja realmente excluir este usuário?")) return;
-
+      if (!confirm("Remover este funcionário do sistema?")) return;
       try {
         const data = await api(`/api/users/${id}`, { method: "DELETE" });
-        if (!data.ok) throw new Error(data.error || "Erro ao excluir usuário.");
-
+        if (!data.ok) throw new Error(data.error || "Erro ao excluir.");
         carregarUsuarios();
-
       } catch (err) {
         alert("Erro: " + err.message);
       }
@@ -109,15 +105,11 @@
 
     // ======== LOGOUT ========
     function logout() {
-      localStorage.removeItem("token");
-      localStorage.removeItem("user");
+      localStorage.clear();
       window.location.href = "login.html";
     }
 
-    // ======== INICIALIZAÇÃO ========
     document.addEventListener("DOMContentLoaded", carregarUsuarios);
-
-    // ======== EXPOE FUNÇÕES GLOBAIS ========
     window.addUser = addUser;
     window.excluir = excluir;
     window.logout = logout;
@@ -126,30 +118,44 @@
 
 <body>  
   <header>
-    <button onclick="window.location.href='index.html'">📙 Cardápio</button>
-    <h1>🏢 Painel do Administrador da Empresa</h1>
-    <button onclick="logout()">Sair</button>
+    <div style="position: absolute; left: 15px;">
+        <button class="btn" onclick="window.location.href='index.html'" style="padding: 8px 12px; font-size: 0.9rem;">📙 Cardápio</button>
+    </div>
+    <div class="header-title">🏢 Gestão da Empresa</div>
+    <div style="position: absolute; right: 15px;">
+        <button class="btn cancel" onclick="logout()" style="padding: 8px 12px; font-size: 0.9rem;">Sair</button>
+    </div>
   </header>
 
   <main>
-    <section>
-      <h2>👥 Usuários da Empresa</h2>
-      <div id="users-list">Carregando...</div>
-    </section>
+    <div class="box">
+      <h3 style="color: var(--color-blue); margin-bottom: 20px;">➕ Cadastrar Funcionário</h3>
+      
+      <div class="form-row">
+        <input id="name" placeholder="Nome Completo" style="flex: 2;">
+        <select id="role" style="flex: 1;">
+            <option value="atendente">🙋‍♂️ Atendente</option>
+            <option value="cozinha">👨‍🍳 Cozinha</option>
+            <option value="admin">🔑 Admin</option>
+        </select>
+      </div>
 
-    <section>
-      <h2>➕ Adicionar Usuário</h2>
-      <input id="name" placeholder="Nome" />
-      <input id="email" placeholder="E-mail" type="email" />
-      <input id="senha" placeholder="Senha" type="password" />
-      <select id="role">
-        <option value="atendente">Atendente</option>
-        <option value="cozinha">Cozinha</option>
-      </select>
-      <button onclick="addUser()">Adicionar</button>
-      <p id="msg" style="margin-top:10px;color:red;"></p>
-    </section>
+      <div class="form-row">
+        <input id="email" placeholder="E-mail de acesso" type="email" style="flex: 1;">
+        <input id="senha" placeholder="Senha" type="password" style="flex: 1;">
+      </div>
+
+      <button class="btn success" onclick="addUser()" style="width: 100%; margin-top: 10px;">
+        Confirmar Cadastro
+      </button>
+      <p id="msg" style="margin-top:10px; text-align: center; font-weight: bold;"></p>
+    </div>
+
+    <div class="box" style="margin-top: 25px;">
+      <h3 style="margin-bottom: 20px;">👥 Equipe Atual</h3>
+      <div id="users-list">
+          </div>
+    </div>
   </main>
 </body>
 </html>
-
