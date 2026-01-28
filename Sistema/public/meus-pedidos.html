@@ -27,7 +27,6 @@
       padding: 15px;
       margin-bottom: 15px;
       box-shadow: var(--shadow);
-      transition: all 0.3s ease;
     }
 
     @keyframes pulse {
@@ -64,20 +63,13 @@ document.addEventListener("DOMContentLoaded", () => {
   const lista = document.getElementById("pedidosList");
   const user = JSON.parse(localStorage.getItem("user") || "{}");
   const company_id = user.company_id;
-  const TEMPO_OCULTAR_PRONTO = 5 * 60 * 1000; 
+  const CINCO_MINUTOS = 5 * 60 * 1000; 
   let pedidos = [];
   let idUltimoAlerta = null; 
 
   if (!company_id) {
-    lista.innerHTML = `<div class='box'><p style='color:var(--color-red); text-align:center;'>Empresa não identificada. Por favor, faça login.</p></div>`;
+    lista.innerHTML = `<div class='box'><p style='color:var(--color-red); text-align:center;'>Empresa não identificada.</p></div>`;
     return;
-  }
-
-  // --- FUNÇÕES DE NOTIFICAÇÃO ---
-  function dispararSom() {
-    // Som de "Ding" profissional
-    const ping = new Audio('https://assets.mixkit.co/active_storage/sfx/2869/2869-preview.mp3');
-    ping.play().catch(() => console.log("Áudio aguardando interação do usuário."));
   }
 
   function piscarTitulo() {
@@ -87,7 +79,6 @@ document.addEventListener("DOMContentLoaded", () => {
         document.title = troca ? "🔔 PEDIDO PRONTO!" : "🧾 MEUS PEDIDOS";
         troca = !troca;
     }, 800);
-
     window.addEventListener('focus', () => {
         clearInterval(loop);
         document.title = tituloOriginal;
@@ -96,11 +87,9 @@ document.addEventListener("DOMContentLoaded", () => {
 
   function renderizar() {
     if (pedidos.length === 0) {
-      lista.innerHTML = `
-        <div style="text-align:center; margin-top:50px; color: var(--text-secondary);">
+      lista.innerHTML = `<div style="text-align:center; margin-top:50px; color: var(--text-secondary);">
             <div style="font-size: 3rem;">🧺</div>
-            <p>Você não tem pedidos ativos no momento.</p>
-            <button class="btn" onclick="window.location.href='index.html'" style="margin-top:15px;">Ir para o Cardápio</button>
+            <p>Nenhum pedido ativo.</p>
         </div>`;
       return;
     }
@@ -110,7 +99,6 @@ document.addEventListener("DOMContentLoaded", () => {
       try { items = Array.isArray(p.items) ? p.items : JSON.parse(p.items || "[]"); } catch {}
       
       const hora = new Date(p.created_at).toLocaleTimeString("pt-BR", {hour:"2-digit",minute:"2-digit"});
-      
       let statusClass = "status-novo";
       let statusTxt = "🕒 Aguardando Cozinha";
       let alertVisual = ""; 
@@ -121,13 +109,11 @@ document.addEventListener("DOMContentLoaded", () => {
       } else if(p.status === "pronto") {
           statusClass = "status-pronto";
           statusTxt = "✅ Pronto para Retirar";
-          alertVisual = `
-            <div style="margin-top:10px; text-align:center; background:rgba(81, 207, 102, 0.15); 
+          alertVisual = `<div style="margin-top:10px; text-align:center; background:rgba(81, 207, 102, 0.15); 
                  padding:10px; border-radius:8px; border: 1px dashed var(--color-green); 
                  animation: pulse 2s infinite; color: var(--color-green); font-weight: bold;">
-                 🚀 Ficou pronto! Pode vir buscar que tá quentinho!
-            </div>
-          `;
+                 🚀 Ficou pronto! Pode vir buscar!
+            </div>`;
       }
 
       return `
@@ -135,19 +121,16 @@ document.addEventListener("DOMContentLoaded", () => {
           <div style="display:flex; justify-content:space-between; align-items:flex-start; margin-bottom:12px;">
             <div>
                 <b style="color:var(--color-blue); font-size:1.1rem;">Pedido #${p.id}</b>
-                <div style="font-size:0.8rem; color:var(--text-secondary);">${hora} — ${p.table_name ? 'Mesa ' + p.table_name : 'Balcão'}</div>
+                <div style="font-size:0.8rem; color:var(--text-secondary);">${hora} — ${p.table_name || 'Balcão'}</div>
             </div>
             <span class="status-badge ${statusClass}">${statusTxt}</span>
           </div>
-
           <div style="background:var(--bg-main); padding:10px; border-radius:6px; margin-bottom:10px; font-family:monospace;">
             ${items.map(i => `<div><span style="color:var(--color-blue); font-weight:bold;">${i.qty}x</span> ${i.name}</div>`).join("")}
           </div>
-
           ${p.notes ? `<div style="font-size:0.85rem; color:var(--text-secondary); font-style:italic;"><strong>Obs:</strong> ${p.notes}</div>` : ""}
           ${alertVisual}
-        </div>
-      `;
+        </div>`;
     }).join("");
   }
 
@@ -155,39 +138,32 @@ document.addEventListener("DOMContentLoaded", () => {
     try {
       const res = await fetch(`/api/orders?company_id=${company_id}`);
       const data = await res.json();
-      if (!data.ok) throw new Error(data.error || "Erro ao carregar.");
+      if (!data.ok) throw new Error(data.error || "Erro.");
 
-      // --- LÓGICA DE NOTIFICAÇÃO MELHORADA ---
+      // Lógica de Notificação (Alerta visual na aba)
       const listaProntos = data.pedidos.filter(p => p.status === 'pronto');
-      
       if (listaProntos.length > 0) {
           const idMaisRecente = Math.max(...listaProntos.map(p => p.id));
-          
-          // Se for a primeira vez que carrega, apenas memoriza o ID sem apitar
-          if (idUltimoAlerta === null) {
-              idUltimoAlerta = idMaisRecente;
-          } 
-          // Se aparecer um ID maior do que o memorizado, aí sim notifica
-          else if (idMaisRecente > idUltimoAlerta) {
-              idUltimoAlerta = idMaisRecente;
-              dispararSom();
+          if (idUltimoAlerta !== null && idMaisRecente > idUltimoAlerta) {
               piscarTitulo();
           }
+          idUltimoAlerta = idMaisRecente;
       }
 
-      const agora = Date.now();
+      const agora = new Date().getTime();
       pedidos = data.pedidos.filter(p => {
         if (p.status === "cancelado") return false;
         if (p.status === "pronto") {
-          // Fallback de data para evitar que o pedido suma por erro de fuso horário
           const dataRef = p.status_updated_at || p.created_at;
           if (!dataRef) return true;
 
           const atualizado = new Date(dataRef).getTime();
           const diferenca = agora - atualizado;
+
+          // Se a diferença for negativa (devido a pequenos atrasos de sincronia), mantém o pedido
+          if (diferenca < 0) return true;
           
-          // Só esconde se tiver passado de 5 min e a data for válida
-          return isNaN(diferenca) ? true : diferenca < TEMPO_OCULTAR_PRONTO;
+          return diferenca < CINCO_MINUTOS;
         }
         return true;
       });
