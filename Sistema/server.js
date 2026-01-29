@@ -26,7 +26,7 @@ const DB_PATH = path.join(__dirname, "orders.db");
 const db = new sqlite3.Database(DB_PATH);
 
 db.serialize(() => {
-  // ATUALIZADO: Incluindo trial_expires_at
+  // Tabela de Empresas (SaaS)
   db.run(`CREATE TABLE IF NOT EXISTS companies (
     id INTEGER PRIMARY KEY AUTOINCREMENT,
     name TEXT NOT NULL,
@@ -37,6 +37,7 @@ db.serialize(() => {
     created_at DATETIME
   )`);
 
+  // Tabela de Usuários
   db.run(`CREATE TABLE IF NOT EXISTS users (
     id INTEGER PRIMARY KEY AUTOINCREMENT,
     company_id INTEGER,
@@ -49,6 +50,7 @@ db.serialize(() => {
     FOREIGN KEY(company_id) REFERENCES companies(id)
   )`);
 
+  // Tabelas de Pedidos e Produtos
   db.run(`CREATE TABLE IF NOT EXISTS orders (
     id INTEGER PRIMARY KEY AUTOINCREMENT,
     company_id INTEGER,
@@ -72,6 +74,7 @@ db.serialize(() => {
     FOREIGN KEY(company_id) REFERENCES companies(id)
   )`);
 
+  // Conta Master
   const hash = bcrypt.hashSync(MASTER_SENHA, 10);
   db.get(`SELECT * FROM users WHERE email = ?`, [MASTER_EMAIL], (err, row) => {
     if (!row) {
@@ -89,6 +92,7 @@ db.serialize(() => {
 // 📡 ROTAS DE LOGIN E CADASTRO
 // =============================================================
 
+// Login Master
 app.post("/api/admin-login", async (req, res) => {
   const { email, senha } = req.body;
   db.get(`SELECT * FROM users WHERE email = ? AND role = 'master'`, [email], async (err, user) => {
@@ -99,11 +103,9 @@ app.post("/api/admin-login", async (req, res) => {
   });
 });
 
-// LOGIN ATUALIZADO COM TRAVA DE 5 DIAS
+// Login Usuário com Trava SaaS
 app.post("/api/login", (req, res) => {
   const { email, senha } = req.body;
-  
-  // Buscamos o usuário E os dados da empresa dele (JOIN)
   const sql = `
     SELECT u.*, c.trial_expires_at, c.plano 
     FROM users u 
@@ -117,14 +119,14 @@ app.post("/api/login", (req, res) => {
     const valid = await bcrypt.compare(senha, user.senha_hash);
     if (!valid) return res.status(401).json({ ok: false, error: "Senha incorreta." });
 
-    // VERIFICAÇÃO DE EXPIRAÇÃO
+    // VERIFICAÇÃO DE EXPIRAÇÃO (Só bloqueia se for plano 'trial')
     const hoje = new Date();
     const expira = new Date(user.trial_expires_at);
 
     if (user.plano === 'trial' && hoje > expira) {
       return res.status(403).json({ 
         ok: false, 
-        error: "Seu período de teste acabou! 🛑 Entre em contato para ativar sua assinatura." 
+        error: "Seu período de teste acabou! 🛑 Entre em contato para ativar." 
       });
     }
 
@@ -132,7 +134,7 @@ app.post("/api/login", (req, res) => {
   });
 });
 
-// CADASTRO ATUALIZADO COM LÓGICA DE 5 DIAS
+// Cadastro de Empresa (Inicia 5 dias grátis)
 app.post("/api/register-company", (req, res) => {
   const { name, email, senha } = req.body;
   if (!name || !email || !senha) return res.status(400).json({ ok: false, error: "Campos obrigatórios." });
@@ -140,7 +142,6 @@ app.post("/api/register-company", (req, res) => {
   const senha_hash = bcrypt.hashSync(senha, 10);
   const created_at = getHoraLocalISOString();
 
-  // Calcula data de expiração (Hoje + 5 dias)
   const dataExpira = new Date();
   dataExpira.setDate(dataExpira.getDate() + 5);
   const trial_expires_at = dataExpira.toISOString();
@@ -154,7 +155,6 @@ app.post("/api/register-company", (req, res) => {
       [name, email, senha_hash, trial_expires_at, created_at],
       function (err) {
         if (err) return res.status(500).json({ ok: false, error: "Erro ao criar empresa." });
-
         const companyId = this.lastID;
         db.run(
           `INSERT INTO users (company_id, name, email, senha_hash, role, created_at)
@@ -162,12 +162,7 @@ app.post("/api/register-company", (req, res) => {
           [companyId, "Administrador", email, senha_hash, created_at],
           (userErr) => {
             if (userErr) return res.status(500).json({ ok: false, error: "Erro ao criar admin." });
-            
-            // Retorna o objeto user para o front logar direto
-            res.json({ 
-              ok: true, 
-              user: { id: companyId, company_id: companyId, name: "Administrador", email, role: 'admin' } 
-            });
+            res.json({ ok: true, id: companyId, user: { id: companyId, company_id: companyId, name: "Administrador", email, role: 'admin' } });
           }
         );
       }
@@ -175,7 +170,44 @@ app.post("/api/register-company", (req, res) => {
   });
 });
 
-// ... (Restante das suas rotas de produtos, pedidos e usuários permanecem iguais)
+// =============================================================
+// 👑 ROTAS MASTER (admin.html)
+// =============================================================
+
+app.get("/api/empresas", (req, res) => {
+  db.all(`SELECT id, name, email_admin, plano, trial_expires_at, created_at FROM companies ORDER BY id DESC`, (err, rows) => {
+    if (err) return res.status(500).json({ ok: false, error: "Erro ao listar empresas." });
+    res.json({ ok: true, empresas: rows });
+  });
+});
+
+app.post("/api/empresas/:id/plano", (req, res) => {
+  const { plano } = req.body;
+  const id = req.params.id;
+  db.run(`UPDATE companies SET plano = ? WHERE id = ?`, [plano, id], function (err) {
+    if (err) return res.status(500).json({ ok: false, error: "Erro ao atualizar." });
+    res.json({ ok: true });
+  });
+});
+
+app.delete("/api/empresas/:id", (req, res) => {
+  const id = req.params.id;
+  db.serialize(() => {
+    db.run(`DELETE FROM users WHERE company_id = ?`, [id]);
+    db.run(`DELETE FROM products WHERE company_id = ?`, [id]);
+    db.run(`DELETE FROM orders WHERE company_id = ?`, [id]);
+    db.run(`DELETE FROM companies WHERE id = ?`, [id], (err) => {
+      res.json({ ok: true });
+    });
+  });
+});
+
+// =============================================================
+// 🧾 ROTAS DE NEGÓCIO (PRODUTOS / PEDIDOS)
+// =============================================================
+
+// (Aqui entram as suas rotas de produtos, pedidos e usuários que você já tem)
+// Vou omitir para o código não ficar gigante, mas mantenha as que você já usa.
 
 // =============================================================
 // ⚙️ SERVIR ARQUIVOS ESTÁTICOS
@@ -183,7 +215,6 @@ app.post("/api/register-company", (req, res) => {
 const publicPath = path.join(__dirname, "public");
 app.use(express.static(publicPath));
 
-// Iniciar
 const PORT = process.env.PORT || 3000;
 app.listen(PORT, "0.0.0.0", () => {
   console.log(`✅ Sistema Rodando em http://localhost:${PORT}`);
