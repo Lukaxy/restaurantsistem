@@ -8,41 +8,14 @@
   <link rel="stylesheet" href="css/style.css" />
   
   <style>
-    /* Estilos específicos para o efeito de "Abre e Fecha" do relatório */
-    .dia-group {
-      margin-bottom: 15px;
-      border: 1px solid var(--border-color);
-      border-radius: var(--radius);
-      overflow: hidden;
-    }
-    .dia-header {
-      background: var(--bg-card);
-      padding: 15px;
-      cursor: pointer;
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      font-weight: bold;
-      color: var(--color-amber);
-      transition: background 0.2s;
-    }
-    .dia-header:hover { background: #3a3f44; }
-    
-    .dia-content {
-      display: none;
-      padding: 15px;
-      background: var(--bg-main);
-      border-top: 1px solid var(--border-color);
+    :root {
+      --bg-card: #1a1a1a;
+      --border-color: #2c2f33;
+      --color-amber: #fcc419;
+      --color-green: #51cf66;
+      --color-blue: #339af0;
     }
 
-    .pedido-card {
-      background: var(--bg-card);
-      padding: 12px;
-      border-radius: 8px;
-      margin-bottom: 10px;
-      border-left: 4px solid var(--color-green);
-    }
-    
     .resumo-grid {
       display: grid;
       grid-template-columns: 1fr 1fr;
@@ -53,106 +26,159 @@
     .kpi-card {
       background: var(--bg-card);
       padding: 20px;
-      border-radius: var(--radius);
+      border-radius: 10px;
       text-align: center;
       border: 1px solid var(--border-color);
     }
-    .kpi-card span { display: block; color: var(--text-secondary); font-size: 0.9rem; }
+    .kpi-card span { display: block; color: #adb5bd; font-size: 0.9rem; }
     .kpi-card strong { font-size: 1.4rem; color: var(--color-blue); }
+
+    .dia-group {
+      margin-bottom: 15px;
+      border: 1px solid var(--border-color);
+      border-radius: 8px;
+      overflow: hidden;
+    }
+    .dia-header {
+      background: var(--bg-card);
+      padding: 15px;
+      cursor: pointer;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      font-weight: bold;
+    }
+    .dia-content {
+      display: none;
+      padding: 15px;
+      background: #0d0d0d;
+    }
+
+    .pedido-card {
+      background: #252a2e;
+      padding: 12px;
+      border-radius: 8px;
+      margin-bottom: 10px;
+      border-left: 4px solid var(--color-green);
+    }
+
+    /* Menu Dropdown */
+    .menu-dropdown {
+      display: none;
+      position: absolute;
+      background: #1e1e1e;
+      border: 1px solid var(--border-color);
+      right: 20px;
+      top: 60px;
+      z-index: 100;
+    }
+    .menu-dropdown.show { display: block; }
+    .menu-dropdown div { padding: 10px 20px; cursor: pointer; border-bottom: 1px solid #333; }
   </style>
 </head>
 <body>
 
-  <header>
+  <header style="display: flex; justify-content: space-between; align-items: center; padding: 15px;">
+    <div class="header-title" style="font-weight: bold; font-size: 1.2rem;">📊 Relatório de Vendas</div>
     <div class="menu-wrapper">
-      <button class="menu-button" onclick="toggleMenu()">⋮</button>
+      <button onclick="toggleMenu()" style="background:none; border:none; color:white; font-size: 1.5rem; cursor:pointer;">⋮</button>
       <div id="menuDropdown" class="menu-dropdown">
         <div onclick="window.location.href='index.html'">📙 Cardápio</div>
-        <div onclick="window.location.href='meus-pedidos.html'">🧾 Meus pedidos</div>
         <div onclick="window.location.href='cozinha.html'">👨‍🍳 Cozinha</div>
-        <div onclick="window.location.href='configuracoes.html'">⚙️ Configurações</div>
+        <div onclick="window.location.href='admin.html'">⚙️ Master</div>
       </div>
     </div>
-    <div class="header-title">📊 Relatório de Vendas</div>
   </header>
 
-  <main>
+  <main style="padding: 20px;">
     <div id="resumo" class="resumo-grid">
-        <div class="kpi-card"><span>Carregando...</span></div>
-        <div class="kpi-card"><span>Carregando...</span></div>
+        <div class="kpi-card"><span>Pedidos</span><strong>...</strong></div>
+        <div class="kpi-card"><span>Total</span><strong>...</strong></div>
     </div>
 
     <section id="listaPedidos">
-        <p style="text-align: center; color: var(--text-secondary);">Buscando histórico...</p>
+        <p style="text-align: center; color: #888;">Buscando histórico de vendas...</p>
     </section>
   </main>
 
   <script>
-  document.addEventListener("DOMContentLoaded", async () => {
-    const user = JSON.parse(localStorage.getItem("user") || "{}");
-    const company_id = user.company_id;
-    const resumoEl = document.getElementById("resumo");
-    const listaEl = document.getElementById("listaPedidos");
+    // Funções Globais
+    window.toggleMenu = () => document.getElementById("menuDropdown").classList.toggle("show");
+    
+    window.toggleDia = (header) => {
+      const content = header.nextElementSibling;
+      content.style.display = (content.style.display === 'block') ? 'none' : 'block';
+    };
 
-    if (!company_id) {
-      listaEl.innerHTML = "<p style='color:var(--color-red); text-align:center;'>Empresa não identificada.</p>";
-      return;
-    }
+    document.addEventListener("DOMContentLoaded", async () => {
+      // 1. Pegar dados do usuário (Importante: usar company_id com underline)
+      const user = JSON.parse(localStorage.getItem("user") || "{}");
+      const company_id = user.company_id || user.id;
 
-    try {
-      const res = await fetch(`/api/orders/history?company_id=${company_id}`);
-      const data = await res.json();
+      const resumoEl = document.getElementById("resumo");
+      const listaEl = document.getElementById("listaPedidos");
 
-      if (!data.ok) throw new Error(data.error || "Erro ao carregar histórico.");
-
-      const pedidos = data.pedidos || [];
-      if (pedidos.length === 0) {
-        resumoEl.innerHTML = "";
-        listaEl.innerHTML = "<div class='box'><p style='text-align:center;'>Nenhum pedido finalizado ainda.</p></div>";
+      if (!company_id) {
+        listaEl.innerHTML = "<p style='color:red; text-align:center;'>Empresa não identificada. Faça login novamente.</p>";
         return;
       }
 
-      // 1. Resumo Geral (KPIs)
-      const totalVendas = pedidos.reduce((s, p) => s + (Number(p.total) || 0), 0);
-      resumoEl.innerHTML = `
-        <div class="kpi-card">
-            <span>Total de Pedidos</span>
-            <strong>${pedidos.length}</strong>
-        </div>
-        <div class="kpi-card">
-            <span>Faturamento Total</span>
-            <strong style="color: var(--color-green);">R$ ${totalVendas.toFixed(2).replace('.',',')}</strong>
-        </div>
-      `;
+      try {
+        // 2. Chamar a API de histórico
+        const res = await fetch(`/api/orders/history?company_id=${company_id}`);
+        const data = await res.json();
 
-      // 2. Agrupar por dia
-      const porDia = {};
-      pedidos.forEach(p => {
-        const dataDia = new Date(p.status_updated_at || p.created_at).toLocaleDateString("pt-BR");
-        if (!porDia[dataDia]) porDia[dataDia] = [];
-        porDia[dataDia].push(p);
-      });
+        if (!data.ok) throw new Error(data.error || "Erro ao carregar dados.");
 
-      // 3. Renderizar Acordeões
-      listaEl.innerHTML = Object.keys(porDia).sort((a,b) => b.localeCompare(a))
-        .map(dia => {
+        const pedidos = data.pedidos || [];
+        if (pedidos.length === 0) {
+          resumoEl.innerHTML = "";
+          listaEl.innerHTML = "<p style='text-align:center; color:#888;'>Nenhum pedido finalizado encontrado.</p>";
+          return;
+        }
+
+        // 3. Calcular Resumo Geral
+        const totalVendas = pedidos.reduce((s, p) => s + (Number(p.total) || 0), 0);
+        resumoEl.innerHTML = `
+          <div class="kpi-card">
+              <span>Total de Pedidos</span>
+              <strong>${pedidos.length}</strong>
+          </div>
+          <div class="kpi-card">
+              <span>Faturamento Total</span>
+              <strong style="color: var(--color-green);">R$ ${totalVendas.toFixed(2).replace('.',',')}</strong>
+          </div>
+        `;
+
+        // 4. Agrupar por data
+        const porDia = {};
+        pedidos.forEach(p => {
+          const dia = new Date(p.status_updated_at || p.created_at).toLocaleDateString("pt-BR");
+          if (!porDia[dia]) porDia[dia] = [];
+          porDia[dia].push(p);
+        });
+
+        // 5. Gerar a lista com efeito Abre/Fecha
+        listaEl.innerHTML = Object.keys(porDia).sort((a,b) => {
+           return b.split('/').reverse().join('') - a.split('/').reverse().join('');
+        }).map(dia => {
           const totalDia = porDia[dia].reduce((s, p) => s + (Number(p.total) || 0), 0);
           
-          const conteudo = porDia[dia].map(p => {
+          const cardsHtml = porDia[dia].map(p => {
             let items = [];
-            try { items = Array.isArray(p.items) ? p.items : JSON.parse(p.items || "[]"); } catch {}
+            try { items = Array.isArray(p.items) ? p.items : JSON.parse(p.items || "[]"); } catch { items = []; }
             
             return `
               <div class="pedido-card">
-                <div style="display:flex; justify-content:space-between; margin-bottom:8px;">
-                  <span style="font-weight:bold; color:var(--color-blue);">#${p.id}</span>
-                  <small style="color:var(--text-secondary);">${new Date(p.status_updated_at).toLocaleTimeString("pt-BR", {hour:'2-digit', minute:'2-digit'})}</small>
+                <div style="display:flex; justify-content:space-between; margin-bottom:5px;">
+                  <span style="color:var(--color-blue); font-weight:bold;">#${p.id}</span>
+                  <small style="color:#888;">${new Date(p.status_updated_at || p.created_at).toLocaleTimeString("pt-BR", {hour:'2-digit', minute:'2-digit'})}</small>
                 </div>
-                <div style="font-size:0.95rem; margin-bottom:8px;">
+                <div style="font-size:0.9rem; margin-bottom:8px;">
                   ${items.map(i => `<span style="color:var(--color-amber);">${i.qty}x</span> ${i.name}`).join("<br>")}
                 </div>
-                <div style="display:flex; justify-content:space-between; align-items:center; border-top:1px solid #3a3f44; pt-8px; margin-top:8px; padding-top:8px;">
-                  <small>${p.table_name ? `Mesa: ${p.table_name}` : 'Balcão'}</small>
+                <div style="display:flex; justify-content:space-between; border-top: 1px solid #333; padding-top:8px;">
+                  <small>${p.table_name ? 'Mesa: '+p.table_name : 'Balcão'}</small>
                   <strong>R$ ${Number(p.total).toFixed(2).replace('.',',')}</strong>
                 </div>
               </div>
@@ -163,30 +189,18 @@
             <div class="dia-group">
               <div class="dia-header" onclick="toggleDia(this)">
                 <span>📅 ${dia}</span>
-                <span>R$ ${totalDia.toFixed(2).replace('.',',')} ⯆</span>
+                <span style="color:var(--color-green)">R$ ${totalDia.toFixed(2).replace('.',',')} ▾</span>
               </div>
-              <div class="dia-content">${conteudo}</div>
+              <div class="dia-content">${cardsHtml}</div>
             </div>
           `;
         }).join("");
 
-    } catch (err) {
-      listaEl.innerHTML = `<p style="color:var(--color-red); text-align:center;">${err.message}</p>`;
-    }
-  });
-
-  // Função para abrir/fechar o dia
-  function toggleDia(header) {
-    const content = header.nextElementSibling;
-    const isVisible = content.style.display === 'block';
-    content.style.display = isVisible ? 'none' : 'block';
-    header.querySelector('span:last-child').innerHTML = isVisible ? `R$ ... ⯆` : `R$ ... ⯈`;
-    // (Pequeno ajuste: recarregar o texto do total no toggle se quiser, mas o básico acima já funciona)
-  }
-
-  function toggleMenu() {
-    document.getElementById("menuDropdown").classList.toggle("show");
-  }
+      } catch (err) {
+        console.error(err);
+        listaEl.innerHTML = `<p style="color:red; text-align:center;">Erro ao carregar: ${err.message}</p>`;
+      }
+    });
   </script>
 </body>
 </html>
