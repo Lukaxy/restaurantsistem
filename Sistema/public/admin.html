@@ -1,101 +1,183 @@
-<script type="module">
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1.0" />
+  <title>👑 Painel Master - Digital Menu</title>
+  
+  <style>
+    /* CSS INTEGRADO PARA FACILITAR SUA VIDA */
+    :root {
+      --bg-main: #0d0d0d;
+      --bg-box: #1a1a1a;
+      --color-blue: #339af0;
+      --color-green: #51cf66;
+      --color-red: #ff6b6b;
+      --color-amber: #fcc419;
+      --text-primary: #ffffff;
+      --text-secondary: #adb5bd;
+      --border-color: #2c2f33;
+    }
+
+    body {
+      font-family: "Poppins", sans-serif;
+      background: var(--bg-main);
+      color: var(--text-primary);
+      margin: 0; padding: 0;
+    }
+
+    header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      background: #1e1e1e;
+      padding: 15px 20px;
+      border-bottom: 2px solid var(--color-blue);
+    }
+
+    main { padding: 20px; max-width: 1100px; margin: 0 auto; }
+
+    .box {
+      background: var(--bg-box);
+      padding: 20px;
+      border-radius: 10px;
+      border: 1px solid var(--border-color);
+      margin-bottom: 20px;
+    }
+
+    .form-row { display: flex; gap: 10px; flex-wrap: wrap; margin-bottom: 15px; }
+    
+    input, select {
+      flex: 1; min-width: 200px;
+      padding: 12px;
+      border-radius: 6px;
+      border: 1px solid var(--border-color);
+      background: #2b2b2b;
+      color: white;
+    }
+
+    .btn {
+      border: none; padding: 10px 20px;
+      border-radius: 6px; cursor: pointer;
+      font-weight: bold; color: white; transition: 0.3s;
+    }
+    .btn.success { background: var(--color-green); width: 100%; }
+    .btn.cancel { background: var(--color-red); }
+    
+    .badge {
+      font-size: 0.7rem; padding: 3px 8px;
+      border-radius: 4px; margin-left: 10px;
+      text-transform: uppercase;
+    }
+  </style>
+
+  <script type="module">
     import { api } from "./js/http.js";
 
-    // ================== VERIFICA LOGIN MASTER ==================
+    // --- PROTEÇÃO DE ACESSO ---
     const user = JSON.parse(localStorage.getItem("user") || "{}");
     if (!user || user.role !== "master") {
-      alert("Acesso negado.");
-      localStorage.clear();
+      alert("Acesso restrito!");
       window.location.href = "admin-login.html";
     }
 
-    // ================== FUNÇÃO AUXILIAR DE STATUS ==================
-    function getStatusInfo(e) {
-      if (e.plano === 'vitalicio') return { label: '💎 VIP / VITALÍCIO', color: 'var(--color-blue)' };
-      
-      const hoje = new Date();
-      const expira = new Date(e.trial_expires_at);
-      
-      if (hoje > expira && e.plano === 'trial') {
-        return { label: '🛑 EXPIRADO', color: 'var(--color-red)' };
-      }
-      
-      return { label: `⏳ Expira: ${expira.toLocaleDateString("pt-BR")}`, color: 'var(--color-green)' };
-    }
-
-    // ================== LISTAR EMPRESAS ==================
+    // --- CARREGAR EMPRESAS ---
     async function carregarEmpresas() {
-      const div = document.getElementById("empresas-list");
-      const countEl = document.getElementById("total-count");
-      div.innerHTML = "<p style='text-align:center;'>Buscando império...</p>";
-
+      const list = document.getElementById("empresas-list");
+      const count = document.getElementById("total-count");
+      
       try {
         const data = await api("/api/empresas");
-        if (!data.ok) throw new Error(data.error || "Erro ao buscar empresas.");
+        if (!data.ok) throw new Error(data.error);
+
+        count.textContent = data.empresas.length;
         
-        countEl.textContent = data.empresas.length;
+        list.innerHTML = data.empresas.map(e => {
+          const hoje = new Date();
+          const expira = new Date(e.trial_expires_at);
+          const isExpirado = e.plano === 'trial' && hoje > expira;
+          const isVip = e.plano === 'vitalicio';
 
-        if (!data.empresas.length) {
-          div.innerHTML = "<p style='text-align:center; color:var(--text-secondary);'>Nenhum cliente ainda. Hora de vender! 🚀</p>";
-          return;
-        }
+          let statusLabel = isVip ? "💎 VIP" : isExpirado ? "🛑 EXPIRADO" : "⏳ ATIVO";
+          let statusColor = isVip ? "var(--color-blue)" : isExpirado ? "var(--color-red)" : "var(--color-green)";
 
-        div.innerHTML = data.empresas.map(e => {
-          const status = getStatusInfo(e);
           return `
-          <div class="box" style="margin-bottom: 15px; border-left: 5px solid ${status.color};">
-            <div style="display: flex; justify-content: space-between; align-items: flex-start;">
-              <div>
-                <strong style="font-size: 1.2rem; color: var(--text-primary);">${e.name}</strong> 
-                <span style="font-size: 0.7rem; background: ${status.color}; color: white; padding: 2px 6px; border-radius: 4px; margin-left: 10px;">
-                    ${status.label}
-                </span>
-                <br>
-                <small style="color: var(--text-secondary);">${e.email_admin}</small><br>
-                <small style="color: #666;">Criada em: ${new Date(e.created_at).toLocaleDateString("pt-BR")}</small>
-              </div>
-              <div style="text-align: right;">
-                <label style="font-size: 0.75rem; color: var(--text-secondary); display: block; margin-bottom: 4px;">ALTERAR ACESSO</label>
-                <select class="btn" style="background: var(--bg-main); padding: 5px; font-size: 0.8rem; border: 1px solid var(--border-color);" onchange="alterarPlano(${e.id}, this.value)">
-                  <option value="trial" ${e.plano === "trial" ? "selected" : ""}>Teste (5 dias)</option>
-                  <option value="basic" ${e.plano === "basic" ? "selected" : ""}>Mensal (Ativo)</option>
-                  <option value="vitalicio" ${e.plano === "vitalicio" ? "selected" : ""}>💎 Vitalício (Grátis)</option>
-                </select>
+            <div class="box" style="border-left: 5px solid ${statusColor}">
+              <div style="display: flex; justify-content: space-between; align-items: center;">
+                <div>
+                  <strong>${e.name}</strong> 
+                  <span class="badge" style="background:${statusColor}">${statusLabel}</span>
+                  <br><small>${e.email_admin}</small>
+                  <br><small style="color:var(--text-secondary)">Expira em: ${expira.toLocaleDateString()}</small>
+                </div>
+                <div>
+                  <select onchange="alterarPlano(${e.id}, this.value)" style="width: auto;">
+                    <option value="trial" ${e.plano === 'trial' ? 'selected' : ''}>Teste (5 dias)</option>
+                    <option value="basic" ${e.plano === 'basic' ? 'selected' : ''}>Mensal (Ativo)</option>
+                    <option value="vitalicio" ${e.plano === 'vitalicio' ? 'selected' : ''}>💎 Vitalício</option>
+                  </select>
+                  <button class="btn cancel" onclick="excluirEmpresa(${e.id})" style="margin-left:10px">🗑️</button>
+                </div>
               </div>
             </div>
-            
-            <div style="margin-top: 15px; display: flex; justify-content: space-between; align-items: center;">
-                <small style="color: var(--text-secondary)">ID: #${e.id}</small>
-                <button class="btn cancel" onclick="excluirEmpresa(${e.id})" style="padding: 5px 12px; font-size: 0.85rem;">
-                    🗑️ Remover Cliente
-                </button>
-            </div>
-          </div>
-        `}).join("");
-      } catch (err) {
-        div.innerHTML = `<p style="color:var(--color-red); text-align:center;">${err.message}</p>`;
-      }
+          `;
+        }).join("");
+      } catch (err) { alert(err.message); }
     }
 
-    // ================== ALTERAR PLANO ==================
-    window.alterarPlano = async function(id, plano) {
-      try {
-        const data = await api(`/api/empresas/${id}/plano`, {
-          method: "POST",
-          body: JSON.stringify({ plano }),
-        });
-        if (!data.ok) throw new Error(data.error || "Erro ao atualizar.");
-        alert("Acesso do cliente atualizado!");
+    // --- CRIAR EMPRESA ---
+    window.criarEmpresa = async () => {
+      const body = {
+        name: document.getElementById("nome").value,
+        email: document.getElementById("email").value,
+        senha: document.getElementById("senha").value
+      };
+      const res = await api("/api/register-company", { method: "POST", body: JSON.stringify(body) });
+      if(res.ok) { alert("Empresa criada!"); carregarEmpresas(); }
+    };
+
+    // --- ALTERAR PLANO ---
+    window.alterarPlano = async (id, plano) => {
+      const res = await api(`/api/empresas/${id}/plano`, { method: "POST", body: JSON.stringify({ plano }) });
+      if(res.ok) carregarEmpresas();
+    };
+
+    // --- EXCLUIR ---
+    window.excluirEmpresa = async (id) => {
+      if(confirm("Excluir empresa permanentemente?")) {
+        await api(`/api/empresas/${id}`, { method: "DELETE" });
         carregarEmpresas();
-      } catch (err) {
-        alert("Erro: " + err.message);
       }
     };
 
-    // ... (restante das funções criarEmpresa, excluirEmpresa e logout que você já tem)
-    window.criarEmpresa = criarEmpresa;
-    window.excluirEmpresa = excluirEmpresa;
-    window.logout = logout;
-
+    window.logout = () => { localStorage.clear(); window.location.href="admin-login.html"; };
     document.addEventListener("DOMContentLoaded", carregarEmpresas);
   </script>
+</head>
+<body>
+  <header>
+    <div style="font-size: 1.5rem;">👑 <strong>Painel Master</strong></div>
+    <button class="btn cancel" onclick="logout()">Sair</button>
+  </header>
+
+  <main>
+    <div class="box" style="text-align: center;">
+      <small style="color: var(--text-secondary)">Total de Clientes no Império</small>
+      <h2 id="total-count" style="margin: 5px 0; font-size: 2.5rem; color: var(--color-blue);">...</h2>
+    </div>
+
+    <section class="box">
+      <h3 style="color: var(--color-green)">🏢 Ativar Novo Cliente</h3>
+      <div class="form-row">
+        <input id="nome" placeholder="Nome do Restaurante">
+        <input id="email" placeholder="E-mail de Login">
+        <input id="senha" placeholder="Senha" type="password">
+      </div>
+      <button class="btn success" onclick="criarEmpresa()">🚀 Ativar Agora</button>
+    </section>
+
+    <h2 style="margin-top: 30px;">📋 Gestão de Empresas</h2>
+    <div id="empresas-list"></div>
+  </main>
+</body>
+</html>
