@@ -283,3 +283,43 @@ form input:focus {
         height: 200px;
     }
 }
+
+.extra-screens {
+    padding: 60px 5%;
+    text-align: center;
+    background: rgba(0, 0, 0, 0.2); /* Um fundo levemente diferente para separar */
+}
+
+.extra-screens h2 {
+    margin-bottom: 40px;
+    font-size: 1.8rem;
+    color: var(--color-blue);
+}
+
+.screens-container {
+    display: flex;
+    flex-wrap: wrap; /* Faz as imagens descerem no celular */
+    justify-content: center;
+    gap: 30px;
+}
+
+.floating-img-small {
+    width: 100%;
+    max-width: 300px; /* Tamanho menor para caberem três lado a lado no PC */
+    height: auto;
+    border-radius: 15px;
+    filter: drop-shadow(0 15px 30px rgba(0, 0, 0, 0.6));
+    /* Usando a mesma animação da primeira imagem */
+    animation: float 6s ease-in-out infinite;
+}
+
+/* Delay para que elas não flutuem todas juntas (fica mais natural) */
+.floating-img-small:nth-child(2) { animation-delay: 1s; }
+.floating-img-small:nth-child(3) { animation-delay: 2s; }
+
+/* Ajuste para celular */
+@media (max-width: 768px) {
+    .floating-img-small {
+        max-width: 80%; /* No celular elas ficam maiores e empilhadas */
+    }
+}
