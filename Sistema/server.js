@@ -194,6 +194,19 @@ app.get("/api/users", (req, res) => {
   db.all(`SELECT id, name, email, role FROM users WHERE company_id = ?`, [req.query.company_id], (err, rows) => res.json({ ok: true, users: rows }));
 });
 
+// ROTA PARA O RELATÓRIO
+app.get("/api/orders/history", (req, res) => {
+  const { company_id } = req.query;
+  // Busca pedidos que NÃO são 'novo' ou 'preparando'
+  const sql = `SELECT * FROM orders WHERE company_id = ? AND status IN ('finalizado', 'entregue', 'pago') ORDER BY id DESC`;
+  
+  db.all(sql, [company_id], (err, rows) => {
+    if (err) return res.status(500).json({ ok: false });
+    rows.forEach(r => r.items = JSON.parse(r.items || "[]"));
+    res.json({ ok: true, pedidos: rows });
+  });
+});
+
 // =============================================================
 // ⚙️ SERVIR ARQUIVOS ESTÁTICOS
 // =============================================================
