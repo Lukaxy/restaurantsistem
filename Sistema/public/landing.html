@@ -114,43 +114,50 @@
         max-width: 800px; 
         margin: 0 auto; 
         font-family: sans-serif;
+        /* O fundo da seção pode ser transparente ou do mesmo tom escuro do site */
     }
     
     .faq-section h2 { 
         text-align: center; 
         margin-bottom: 30px; 
-        color: #333; /* Título em cinza escuro */
+        color: #ffffff; /* Título em branco para o tema escuro */
     }
     
     details { 
-        background: #ffffff; /* Fundo branco puro para destacar do fundo do site se for cinza */
+        background: #2d2d2d; /* Fundo cinza escuro para os cards do FAQ */
         padding: 15px; 
         margin-bottom: 15px; 
         border-radius: 10px; 
         cursor: pointer; 
-        border: 1px solid #e0e0e0; /* Borda leve para não sumir */
-        box-shadow: 0 2px 5px rgba(0,0,0,0.05); /* Sombra suave para dar profundidade */
+        border: 1px solid #3d3d3d; /* Borda um pouco mais clara para definição */
+        box-shadow: 0 2px 5px rgba(0,0,0,0.2); /* Sombra mais forte para o tema escuro */
+        transition: border-color 0.3s ease;
     }
     
-    /* Quando o item estiver aberto, a borda fica azul (estilo Mercado Pago) */
+    /* Quando o item estiver aberto, a borda fica azul vibrante */
     details[open] {
-        border-color: #009ee3;
+        border-color: #009ee3; /* Azul vibrante do botão "Começar 5 dias grátis" */
     }
 
     summary { 
         font-weight: bold; 
         list-style: none; 
-        color: #004b7a; /* Azul escuro elegante para a pergunta */
+        color: #ffffff; /* Pergunta em branco para máximo contraste */
+        outline: none;
     }
     
+    summary:hover {
+        color: #009ee3; /* Um toque sutil de azul ao passar o mouse */
+    }
+
     summary::-webkit-details-marker { display: none; } 
 
-    /* Aqui estava o erro: mudei de white para um cinza legível */
+    /* A resposta em um cinza claro para boa leitura no fundo escuro */
     p { 
         margin-top: 10px; 
-        color: #555; /* Cinza grafite, perfeito para leitura */
+        color: #cccccc; /* Cinza claro para a resposta */
         line-height: 1.6;
-        border-top: 1px solid #eee;
+        border-top: 1px solid #3d3d3d;
         padding-top: 10px;
     }
 </style>
