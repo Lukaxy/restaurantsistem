@@ -1,97 +1,79 @@
-<!DOCTYPE html>
-<html lang="pt-br">
-<head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width,initial-scale=1.0" />
-  <title>👑 Painel Master - Gerenciar Sistema</title>
-  
-  <link rel="stylesheet" href="css/style.css" />
-
-  <script type="module">
+<script type="module">
     import { api } from "./js/http.js";
 
     // ================== VERIFICA LOGIN MASTER ==================
     const user = JSON.parse(localStorage.getItem("user") || "{}");
-
     if (!user || user.role !== "master") {
-      alert("Acesso negado. Apenas o administrador master pode entrar.");
+      alert("Acesso negado.");
       localStorage.clear();
       window.location.href = "admin-login.html";
+    }
+
+    // ================== FUNÇÃO AUXILIAR DE STATUS ==================
+    function getStatusInfo(e) {
+      if (e.plano === 'vitalicio') return { label: '💎 VIP / VITALÍCIO', color: 'var(--color-blue)' };
+      
+      const hoje = new Date();
+      const expira = new Date(e.trial_expires_at);
+      
+      if (hoje > expira && e.plano === 'trial') {
+        return { label: '🛑 EXPIRADO', color: 'var(--color-red)' };
+      }
+      
+      return { label: `⏳ Expira: ${expira.toLocaleDateString("pt-BR")}`, color: 'var(--color-green)' };
     }
 
     // ================== LISTAR EMPRESAS ==================
     async function carregarEmpresas() {
       const div = document.getElementById("empresas-list");
-      div.innerHTML = "<p style='text-align:center;'>Buscando registros...</p>";
+      const countEl = document.getElementById("total-count");
+      div.innerHTML = "<p style='text-align:center;'>Buscando império...</p>";
 
       try {
         const data = await api("/api/empresas");
         if (!data.ok) throw new Error(data.error || "Erro ao buscar empresas.");
         
+        countEl.textContent = data.empresas.length;
+
         if (!data.empresas.length) {
-          div.innerHTML = "<p style='text-align:center; color:var(--text-secondary);'>Nenhuma empresa no sistema.</p>";
+          div.innerHTML = "<p style='text-align:center; color:var(--text-secondary);'>Nenhum cliente ainda. Hora de vender! 🚀</p>";
           return;
         }
 
-        div.innerHTML = data.empresas.map(e => `
-          <div class="box" style="margin-bottom: 15px; border-left: 5px solid ${e.plano === 'pro' ? 'var(--color-blue)' : 'var(--border-color)'};">
+        div.innerHTML = data.empresas.map(e => {
+          const status = getStatusInfo(e);
+          return `
+          <div class="box" style="margin-bottom: 15px; border-left: 5px solid ${status.color};">
             <div style="display: flex; justify-content: space-between; align-items: flex-start;">
               <div>
-                <strong style="font-size: 1.2rem; color: var(--text-primary);">${e.name}</strong><br>
+                <strong style="font-size: 1.2rem; color: var(--text-primary);">${e.name}</strong> 
+                <span style="font-size: 0.7rem; background: ${status.color}; color: white; padding: 2px 6px; border-radius: 4px; margin-left: 10px;">
+                    ${status.label}
+                </span>
+                <br>
                 <small style="color: var(--text-secondary);">${e.email_admin}</small><br>
                 <small style="color: #666;">Criada em: ${new Date(e.created_at).toLocaleDateString("pt-BR")}</small>
               </div>
               <div style="text-align: right;">
-                <label style="font-size: 0.75rem; color: var(--text-secondary); display: block; margin-bottom: 4px;">PLANO ATUAL</label>
+                <label style="font-size: 0.75rem; color: var(--text-secondary); display: block; margin-bottom: 4px;">ALTERAR ACESSO</label>
                 <select class="btn" style="background: var(--bg-main); padding: 5px; font-size: 0.8rem; border: 1px solid var(--border-color);" onchange="alterarPlano(${e.id}, this.value)">
-                  <option value="basic" ${e.plano === "basic" ? "selected" : ""}>Basic</option>
-                  <option value="plus" ${e.plano === "plus" ? "selected" : ""}>Plus</option>
-                  <option value="pro" ${e.plano === "pro" ? "selected" : ""}>Pro</option>
+                  <option value="trial" ${e.plano === "trial" ? "selected" : ""}>Teste (5 dias)</option>
+                  <option value="basic" ${e.plano === "basic" ? "selected" : ""}>Mensal (Ativo)</option>
+                  <option value="vitalicio" ${e.plano === "vitalicio" ? "selected" : ""}>💎 Vitalício (Grátis)</option>
                 </select>
               </div>
             </div>
             
-            <div style="margin-top: 15px; display: flex; justify-content: flex-end;">
+            <div style="margin-top: 15px; display: flex; justify-content: space-between; align-items: center;">
+                <small style="color: var(--text-secondary)">ID: #${e.id}</small>
                 <button class="btn cancel" onclick="excluirEmpresa(${e.id})" style="padding: 5px 12px; font-size: 0.85rem;">
-                    🗑️ Excluir Empresa
+                    🗑️ Remover Cliente
                 </button>
             </div>
           </div>
-        `).join("");
+        `}).join("");
       } catch (err) {
         div.innerHTML = `<p style="color:var(--color-red); text-align:center;">${err.message}</p>`;
-      }
-    }
-
-    // ================== CRIAR EMPRESA ==================
-    async function criarEmpresa() {
-      const nome = document.getElementById("nome").value.trim();
-      const email = document.getElementById("email").value.trim();
-      const senha = document.getElementById("senha").value.trim();
-      const msg = document.getElementById("msg");
-
-      if (!nome || !email || !senha) {
-        msg.textContent = "⚠️ Preencha todos os campos.";
-        msg.style.color = "var(--color-amber)";
-        return;
-      }
-
-      try {
-        const data = await api("/api/register-company", {
-          method: "POST",
-          body: JSON.stringify({ name: nome, email, senha }),
-        });
-
-        if (!data.ok) throw new Error(data.error || "Erro ao criar empresa.");
-
-        msg.style.color = "var(--color-green)";
-        msg.textContent = "✅ Empresa criada com sucesso!";
-        ["nome", "email", "senha"].forEach(id => document.getElementById(id).value = "");
-
-        carregarEmpresas();
-      } catch (err) {
-        msg.style.color = "var(--color-red)";
-        msg.textContent = "❌ " + err.message;
       }
     }
 
@@ -103,74 +85,17 @@
           body: JSON.stringify({ plano }),
         });
         if (!data.ok) throw new Error(data.error || "Erro ao atualizar.");
-        alert("Plano atualizado com sucesso!");
+        alert("Acesso do cliente atualizado!");
+        carregarEmpresas();
       } catch (err) {
         alert("Erro: " + err.message);
       }
     };
 
-    // ================== EXCLUIR EMPRESA ==================
-    window.excluirEmpresa = async function(id) {
-      if (!confirm("⚠️ ATENÇÃO: Isso excluirá todos os produtos, usuários e pedidos desta empresa. Confirmar?")) return;
-      try {
-        const data = await api(`/api/empresas/${id}`, { method: "DELETE" });
-        if (!data.ok) throw new Error(data.error || "Erro ao excluir.");
-        carregarEmpresas();
-      } catch (err) {
-        alert(err.message);
-      }
-    };
-
-    window.logout = function() {
-      localStorage.clear();
-      window.location.href = "admin-login.html";
-    };
+    // ... (restante das funções criarEmpresa, excluirEmpresa e logout que você já tem)
+    window.criarEmpresa = criarEmpresa;
+    window.excluirEmpresa = excluirEmpresa;
+    window.logout = logout;
 
     document.addEventListener("DOMContentLoaded", carregarEmpresas);
-    window.criarEmpresa = criarEmpresa;
   </script>
-
-  <style>
-    /* Toque especial para o Painel Master */
-    header { border-bottom: 2px solid var(--color-blue); }
-    .master-title { color: var(--color-blue); font-weight: bold; font-size: 1.4rem; }
-  </style>
-</head>
-
-<body>
-  <header>
-    <div class="master-title">👑 Painel Master</div>
-    <button class="btn cancel" onclick="logout()" style="padding: 8px 15px;">Sair</button>
-  </header>
-
-  <main>
-    <div style="display: flex; gap: 15px; margin-bottom: 20px;">
-        <div class="box" style="flex: 1; text-align: center; border-bottom: 3px solid var(--color-blue);">
-            <small style="color: var(--text-secondary);">Total de Clientes</small>
-            <h2 id="total-count">...</h2>
-        </div>
-    </div>
-
-    <section class="box" style="margin-bottom: 30px;">
-      <h3 style="color: var(--color-green); margin-bottom: 20px;">🏢 Cadastrar Nova Empresa</h3>
-      <div class="form-row">
-        <input id="nome" placeholder="Nome Fantasia" style="flex: 2;" />
-        <input id="email" placeholder="E-mail Admin" type="email" style="flex: 2;" />
-        <input id="senha" placeholder="Senha Inicial" type="password" style="flex: 1;" />
-      </div>
-      <button class="btn success" onclick="criarEmpresa()" style="width: 100%; margin-top: 10px;">
-        🚀 Ativar Empresa no Sistema
-      </button>
-      <p id="msg" style="text-align: center; margin-top: 10px; font-weight: bold;"></p>
-    </section>
-
-    <section>
-      <h2 style="margin-bottom: 20px; display: flex; align-items: center; gap: 10px;">
-          📋 Empresas Ativas
-      </h2>
-      <div id="empresas-list">
-          </div>
-    </section>
-  </main>
-</body>
-</html>
