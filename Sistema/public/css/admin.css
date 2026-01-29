@@ -1,7 +1,23 @@
+/* =============================================================
+   👑 MASTER STYLE - DIGITAL MENU
+   ============================================================= */
+
+:root {
+  --bg-main: #0d0d0d;
+  --bg-box: #1a1a1a;
+  --color-blue: #339af0;
+  --color-green: #51cf66;
+  --color-red: #ff6b6b;
+  --color-amber: #fcc419;
+  --text-primary: #ffffff;
+  --text-secondary: #adb5bd;
+  --border-color: #2c2f33;
+}
+
 body {
   font-family: "Poppins", sans-serif;
-  background: #0d0d0d;
-  color: #fff;
+  background: var(--bg-main);
+  color: var(--text-primary);
   margin: 0;
   padding: 0;
 }
@@ -12,50 +28,74 @@ header {
   align-items: center;
   background: #1e1e1e;
   padding: 15px 20px;
-}
-
-h1 {
-  color: #ff7b00;
-  margin: 0;
+  border-bottom: 2px solid var(--color-blue);
 }
 
 main {
   padding: 20px;
-  display: flex;
-  flex-wrap: wrap;
-  gap: 30px;
+  max-width: 1200px; /* Centraliza o painel no PC */
+  margin: 0 auto;
 }
 
-section {
-  background: #1a1a1a;
+/* --- BOXES E CARDS --- */
+.box {
+  background: var(--bg-box);
   padding: 20px;
   border-radius: 10px;
-  flex: 1;
-  min-width: 300px;
+  border: 1px solid var(--border-color);
+  margin-bottom: 20px;
+  transition: transform 0.2s;
 }
 
-button {
-  background: #ff7b00;
-  border: none;
-  color: white;
-  padding: 8px 12px;
-  border-radius: 6px;
-  cursor: pointer;
-  margin-top: 8px;
+.box:hover {
+  border-color: #444;
 }
 
-button:hover {
-  background: #e56d00;
-}
-
-input {
+/* --- INPUTS --- */
+input, select {
   display: block;
   width: 100%;
   margin-bottom: 10px;
-  padding: 10px;
-  border: none;
+  padding: 12px;
+  border: 1px solid var(--border-color);
   border-radius: 6px;
   background: #2b2b2b;
   color: white;
+  font-size: 0.9rem;
 }
 
+input:focus, select:focus {
+  outline: none;
+  border-color: var(--color-blue);
+}
+
+/* --- BOTÕES --- */
+.btn {
+  border: none;
+  padding: 10px 18px;
+  border-radius: 6px;
+  cursor: pointer;
+  font-weight: 600;
+  transition: 0.3s;
+  color: white;
+}
+
+.btn.success { background: var(--color-green); }
+.btn.success:hover { background: #40c057; }
+
+.btn.cancel { background: var(--color-red); }
+.btn.cancel:hover { background: #fa5252; }
+
+/* --- FORMULÁRIO EM LINHA --- */
+.form-row {
+  display: flex;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+
+/* --- RESPONSIVIDADE --- */
+@media (max-width: 600px) {
+  .form-row {
+    flex-direction: column;
+  }
+}
