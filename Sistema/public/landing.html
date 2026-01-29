@@ -109,13 +109,51 @@
 </section>
 
 <style>
-    .faq-section { padding: 50px 20px; max-width: 800px; margin: 0 auto; }
-    .faq-section h2 { text-align: center; margin-bottom: 30px; }
-    details { background: #f9f9f9; padding: 15px; margin-bottom: 10px; border-radius: 8px; cursor: pointer; }
-    summary { font-weight: bold; list-style: none; }
-    summary::-webkit-details-marker { display: none; } /* Esconde a setinha padrão no Chrome */
-    p { margin-top: 10px; color: #555; }
-</style>    
+    .faq-section { 
+        padding: 50px 20px; 
+        max-width: 800px; 
+        margin: 0 auto; 
+        font-family: sans-serif;
+    }
+    
+    .faq-section h2 { 
+        text-align: center; 
+        margin-bottom: 30px; 
+        color: #333; /* Título em cinza escuro */
+    }
+    
+    details { 
+        background: #ffffff; /* Fundo branco puro para destacar do fundo do site se for cinza */
+        padding: 15px; 
+        margin-bottom: 15px; 
+        border-radius: 10px; 
+        cursor: pointer; 
+        border: 1px solid #e0e0e0; /* Borda leve para não sumir */
+        box-shadow: 0 2px 5px rgba(0,0,0,0.05); /* Sombra suave para dar profundidade */
+    }
+    
+    /* Quando o item estiver aberto, a borda fica azul (estilo Mercado Pago) */
+    details[open] {
+        border-color: #009ee3;
+    }
+
+    summary { 
+        font-weight: bold; 
+        list-style: none; 
+        color: #004b7a; /* Azul escuro elegante para a pergunta */
+    }
+    
+    summary::-webkit-details-marker { display: none; } 
+
+    /* Aqui estava o erro: mudei de white para um cinza legível */
+    p { 
+        margin-top: 10px; 
+        color: #555; /* Cinza grafite, perfeito para leitura */
+        line-height: 1.6;
+        border-top: 1px solid #eee;
+        padding-top: 10px;
+    }
+</style>
 
     <footer class="footer">
         <p>&copy; 2026 Digital Menu - O tempero tecnológico que faltava no seu negócio. 😉</p>
