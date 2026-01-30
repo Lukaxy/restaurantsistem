@@ -168,35 +168,11 @@
       if(res.ok) { alert("Empresa criada!"); carregarEmpresas(); }
     };
 
-    // --- NOVA FUNÇÃO: GOD MODE (ENTRAR COMO CLIENTE) ---
-    // --- NOVA FUNÇÃO: GOD MODE (CORRIGIDA) ---
-    window.logarComo = (id, nome) => {
-        if(confirm(`Entrar no painel de ${nome}?`)) {
-            
-            const godModeUser = {
-                id: 999999,       // Um ID falso de usuário para não dar erro
-                company_id: id,   // <--- O ID REAL DA EMPRESA (O Importante!)
-                name: "👑 Acesso Master",// --- NOVA FUNÇÃO: GOD MODE (CORRIGIDA) ---
-    window.logarComo = (id, nome) => {
-        if(confirm(`Entrar no painel de ${nome}?`)) {
-            
-            // O TRUQUE ESTÁ AQUI: 
             // O Dashboard espera um objeto completo com 'company_id'
             const godModeUser = {
                 id: 999999,       // Um ID falso de usuário para não dar erro
                 company_id: id,   // <--- O ID REAL DA EMPRESA (O Importante!)
                 name: "👑 Acesso Master",
-                email: "master@acesso.com",
-                role: "admin"     // Permissão total na loja
-            };
-
-            // Salvamos o "crachá" falso no navegador
-            localStorage.setItem("user", JSON.stringify(godModeUser));
-            
-            // Abre o painel em outra aba
-            window.open("dashboard.html", "_blank"); 
-        }
-    };
                 email: "master@acesso.com",
                 role: "admin"     // Permissão total na loja
             };
