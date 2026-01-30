@@ -6,7 +6,7 @@
   <title>Painel Master - Digital Menu 👑</title>
   
   <style>
-    /* CSS INTEGRADO PARA FACILITAR SUA VIDA */
+    /* CSS INTEGRADO - Mantido idêntico ao seu */
     :root {
       --bg-main: #0d0d0d;
       --bg-box: #1a1a1a;
@@ -63,12 +63,16 @@
     }
     .btn.success { background: var(--color-green); width: 100%; }
     .btn.cancel { background: var(--color-red); }
+    .btn.action { background: #444; font-size: 0.85rem; padding: 5px 10px; }
     
     .badge {
       font-size: 0.7rem; padding: 3px 8px;
       border-radius: 4px; margin-left: 10px;
       text-transform: uppercase;
     }
+    
+    /* Pequeno ajuste para os botões de ação ficarem alinhados */
+    .actions-row { margin-top: 10px; display: flex; gap: 8px; }
   </style>
 
   <script type="module">
@@ -87,6 +91,7 @@
       const count = document.getElementById("total-count");
       
       try {
+        // Certifique-se que sua API retorna o campo 'whatsapp'
         const data = await api("/api/empresas");
         if (!data.ok) throw new Error(data.error);
 
@@ -94,46 +99,96 @@
         
         list.innerHTML = data.empresas.map(e => {
           const hoje = new Date();
-          const expira = new Date(e.trial_expires_at);
-          const isExpirado = e.plano === 'trial' && hoje > expira;
+          const expira = new Date(e.trial_expires_at || e.data_vencimento); // Ajuste conforme seu banco
+          const isExpirado = expira < hoje;
           const isVip = e.plano === 'vitalicio';
+          
+          // Lógica do Semáforo
+          let statusLabel, statusColor;
 
-          let statusLabel = isVip ? "💎 VIP" : isExpirado ? "🛑 EXPIRADO" : "⏳ ATIVO";
-          let statusColor = isVip ? "var(--color-blue)" : isExpirado ? "var(--color-red)" : "var(--color-green)";
+          if (isVip) {
+              statusLabel = "💎 VIP"; statusColor = "var(--color-blue)";
+          } else if (isExpirado) {
+              statusLabel = "🛑 VENCIDO"; statusColor = "var(--color-red)";
+          } else if (e.plano === 'trial') {
+              statusLabel = "🟡 TESTE"; statusColor = "var(--color-amber)";
+          } else {
+              statusLabel = "🟢 ATIVO"; statusColor = "var(--color-green)";
+          }
 
           return `
             <div class="box" style="border-left: 5px solid ${statusColor}">
-              <div style="display: flex; justify-content: space-between; align-items: center;">
-                <div>
-                  <strong>${e.name}</strong> 
-                  <span class="badge" style="background:${statusColor}">${statusLabel}</span>
-                  <br><small>${e.email_admin}</small>
-                  <br><small style="color:var(--text-secondary)">Expira em: ${expira.toLocaleDateString()}</small>
+              <div style="display: flex; justify-content: space-between; align-items: flex-start;">
+                
+                <div style="flex: 2;">
+                  <strong style="font-size: 1.1em">${e.name}</strong> 
+                  <span class="badge" style="background:${statusColor}; color: #000;">${statusLabel}</span>
+                  
+                  <div style="margin-top: 5px; color: var(--text-secondary); font-size: 0.9em;">
+                    📧 ${e.email_admin} <br>
+                    📱 ${e.whatsapp || 'Sem Whats'} <br>
+                    📅 Expira em: <strong>${expira.toLocaleDateString()}</strong>
+                  </div>
+
+                  <div class="actions-row">
+                    <button class="btn action" onclick="window.logarComo(${e.id}, '${e.name}')">🔑 Entrar</button>
+                    <button class="btn action" onclick="window.adicionarDias(${e.id})">📅 + Dias</button>
+                    <a href="https://wa.me/55${e.whatsapp}?text=Oi, seu plano venceu!" target="_blank" class="btn action" style="text-decoration:none; background: #25D366;">💬 Zap</a>
+                  </div>
                 </div>
-                <div>
-                  <select onchange="alterarPlano(${e.id}, this.value)" style="width: auto;">
-                    <option value="trial" ${e.plano === 'trial' ? 'selected' : ''}>Teste (5 dias)</option>
-                    <option value="basic" ${e.plano === 'basic' ? 'selected' : ''}>Mensal (Ativo)</option>
-                    <option value="vitalicio" ${e.plano === 'vitalicio' ? 'selected' : ''}>💎 Vitalício</option>
+
+                <div style="text-align: right;">
+                  <select onchange="alterarPlano(${e.id}, this.value)" style="width: auto; padding: 5px; margin-bottom: 5px;">
+                    <option value="trial" ${e.plano === 'trial' ? 'selected' : ''}>Teste Grátis</option>
+                    <option value="basic" ${e.plano === 'basic' ? 'selected' : ''}>Mensal (Pago)</option>
+                    <option value="vitalicio" ${e.plano === 'vitalicio' ? 'selected' : ''}>Vitalício</option>
                   </select>
-                  <button class="btn cancel" onclick="excluirEmpresa(${e.id})" style="margin-left:10px">🗑️</button>
+                  <br>
+                  <button class="btn cancel" onclick="excluirEmpresa(${e.id})" style="padding: 5px 10px;">🗑️ Excluir</button>
                 </div>
               </div>
             </div>
           `;
         }).join("");
-      } catch (err) { alert(err.message); }
+      } catch (err) { alert("Erro ao carregar: " + err.message); }
     }
 
-    // --- CRIAR EMPRESA ---
+    // --- NOVA FUNÇÃO: CRIAR COM WHATSAPP ---
     window.criarEmpresa = async () => {
       const body = {
         name: document.getElementById("nome").value,
         email: document.getElementById("email").value,
+        whatsapp: document.getElementById("whatsapp").value, // Novo campo
         senha: document.getElementById("senha").value
       };
+      
+      if(!body.whatsapp) return alert("WhatsApp é obrigatório!");
+
       const res = await api("/api/register-company", { method: "POST", body: JSON.stringify(body) });
       if(res.ok) { alert("Empresa criada!"); carregarEmpresas(); }
+    };
+
+    // --- NOVA FUNÇÃO: GOD MODE (ENTRAR COMO CLIENTE) ---
+    window.logarComo = (id, nome) => {
+        if(confirm(`Entrar no painel de ${nome}?`)) {
+            // Simulando login: Salva o ID da empresa no localStorage como se fosse o login dela
+            // Ajuste as chaves conforme o que seu 'dashboard.html' espera
+            localStorage.setItem("user", JSON.stringify({ id: id, role: "admin", name: nome }));
+            window.open("dashboard.html", "_blank"); // Abre em nova aba
+        }
+    };
+
+    // --- NOVA FUNÇÃO: ADICIONAR DIAS MANUALMENTE ---
+    window.adicionarDias = async (id) => {
+        const dias = prompt("Quantos dias extras você quer dar para essa empresa?");
+        if (dias && !isNaN(dias)) {
+            // Requer criar essa rota no backend
+            const res = await api(`/api/empresas/${id}/add-days`, { 
+                method: "POST", 
+                body: JSON.stringify({ dias: parseInt(dias) }) 
+            });
+            if (res.ok) { alert("Dias adicionados!"); carregarEmpresas(); }
+        }
     };
 
     // --- ALTERAR PLANO ---
@@ -144,13 +199,16 @@
 
     // --- EXCLUIR ---
     window.excluirEmpresa = async (id) => {
-      if(confirm("Excluir empresa permanentemente?")) {
+      if(confirm("Tem certeza? Isso apaga cardápios e pedidos!")) {
         await api(`/api/empresas/${id}`, { method: "DELETE" });
         carregarEmpresas();
       }
     };
 
     window.logout = () => { localStorage.clear(); window.location.href="admin-login.html"; };
+    
+    // Tornar funções globais para o onclick funcionar com type=module
+    window.carregarEmpresas = carregarEmpresas;
     document.addEventListener("DOMContentLoaded", carregarEmpresas);
   </script>
 </head>
@@ -171,6 +229,7 @@
       <div class="form-row">
         <input id="nome" placeholder="Nome do Restaurante">
         <input id="email" placeholder="E-mail de Login">
+        <input id="whatsapp" placeholder="WhatsApp (ex: 11999999999)" type="tel"> 
         <input id="senha" placeholder="Senha" type="password">
       </div>
       <button class="btn success" onclick="criarEmpresa()">Ativar Agora 🚀</button>
