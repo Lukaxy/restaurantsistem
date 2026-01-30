@@ -168,7 +168,7 @@
       if(res.ok) { alert("Empresa criada!"); carregarEmpresas(); }
     };
 
-            // O Dashboard espera um objeto completo com 'company_id'
+            // O company-admin espera um objeto completo com 'company_id'
             const godModeUser = {
                 id: 999999,       // Um ID falso de usuário para não dar erro
                 company_id: id,   // <--- O ID REAL DA EMPRESA (O Importante!)
@@ -181,7 +181,7 @@
             localStorage.setItem("user", JSON.stringify(godModeUser));
             
             // Abre o painel em outra aba
-            window.open("dashboard.html", "_blank"); 
+            window.open("company-admin.html", "_blank"); 
         }
     };
     // --- NOVA FUNÇÃO: ADICIONAR DIAS MANUALMENTE ---
