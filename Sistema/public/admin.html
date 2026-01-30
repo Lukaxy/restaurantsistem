@@ -168,22 +168,6 @@
       if(res.ok) { alert("Empresa criada!"); carregarEmpresas(); }
     };
 
-            // O company-admin espera um objeto completo com 'company_id'
-            const godModeUser = {
-                id: 999999,       // Um ID falso de usuário para não dar erro
-                company_id: id,   // <--- O ID REAL DA EMPRESA (O Importante!)
-                name: "👑 Acesso Master",
-                email: "master@acesso.com",
-                role: "admin"     // Permissão total na loja
-            };
-
-            // Salvamos o "crachá" falso no navegador
-            localStorage.setItem("user", JSON.stringify(godModeUser));
-            
-            // Abre o painel em outra aba
-            window.open("company-admin.html", "_blank"); 
-        }
-    };
     // --- NOVA FUNÇÃO: ADICIONAR DIAS MANUALMENTE ---
     window.adicionarDias = async (id) => {
         const dias = prompt("Quantos dias extras você quer dar para essa empresa?");
