@@ -3,17 +3,19 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Planos & Preços - Digital Menu 🚀</title>
+  <title>Upgrade de Plano - Digital Menu 🚀</title>
   
   <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;600;700&display=swap" rel="stylesheet">
 
   <style>
+    /* VARIÁVEIS DE COR (Mesmas do seu sistema) */
     :root {
       --bg-main: #0d0d0d;
       --bg-card: #1a1a1a;
       --color-blue: #339af0;
       --color-green: #51cf66;
-      --color-purple: #845ef7; /* Cor especial para o Vitalício */
+      --color-purple: #845ef7; 
+      --color-red: #ff6b6b;
       --text-primary: #ffffff;
       --text-secondary: #adb5bd;
       --border-color: #2c2f33;
@@ -25,14 +27,14 @@
       font-family: "Poppins", sans-serif;
       background: var(--bg-main);
       color: var(--text-primary);
-      margin: 0;
-      padding: 0;
+      margin: 0; padding: 0;
       display: flex;
       flex-direction: column;
       align-items: center;
       min-height: 100vh;
     }
 
+    /* HEADER */
     header {
       text-align: center;
       padding: 60px 20px 40px;
@@ -40,8 +42,8 @@
 
     h1 {
       font-size: 2.5rem;
-      margin: 0 0 10px;
-      background: linear-gradient(90deg, #fff, #339af0);
+      margin: 0 0 15px;
+      background: linear-gradient(90deg, #fff, var(--color-blue));
       -webkit-background-clip: text;
       -webkit-text-fill-color: transparent;
     }
@@ -51,6 +53,7 @@
       font-size: 1.1rem;
       max-width: 600px;
       margin: 0 auto;
+      line-height: 1.6;
     }
 
     /* GRID DE PLANOS */
@@ -72,7 +75,7 @@
       width: 320px;
       text-align: center;
       position: relative;
-      transition: transform 0.3s ease, border-color 0.3s ease;
+      transition: all 0.3s ease;
       display: flex;
       flex-direction: column;
     }
@@ -80,17 +83,20 @@
     .plan-card:hover {
       transform: translateY(-10px);
       border-color: var(--color-blue);
-      box-shadow: 0 10px 30px rgba(0,0,0,0.5);
+      box-shadow: 0 15px 30px rgba(0,0,0,0.4);
     }
 
-    /* DESTAQUE (Card do meio) */
+    /* DESTAQUE (Card do Meio - Anual) */
     .plan-card.popular {
       border: 2px solid var(--color-blue);
-      box-shadow: 0 0 20px rgba(51, 154, 240, 0.15);
-      transform: scale(1.05); /* Um pouco maior que os outros */
+      box-shadow: 0 0 25px rgba(51, 154, 240, 0.15);
+      transform: scale(1.05); 
+      z-index: 2;
     }
+    
     .plan-card.popular:hover {
       transform: scale(1.05) translateY(-10px);
+      box-shadow: 0 15px 40px rgba(51, 154, 240, 0.25);
     }
 
     .badge {
@@ -106,12 +112,16 @@
       font-weight: 700;
       letter-spacing: 1px;
       text-transform: uppercase;
+      box-shadow: 0 4px 10px rgba(0,0,0,0.3);
     }
 
+    /* PREÇOS E TEXTOS */
     .plan-name {
-      font-size: 1.5rem;
+      font-size: 1.4rem;
       margin-bottom: 10px;
       color: var(--text-primary);
+      text-transform: uppercase;
+      letter-spacing: 1px;
     }
 
     .price {
@@ -120,18 +130,22 @@
       margin: 20px 0;
       color: white;
     }
-    .price span {
+    
+    .price small {
       font-size: 1rem;
       color: var(--text-secondary);
       font-weight: 400;
     }
 
+    /* LISTA DE VANTAGENS */
     ul.features {
       list-style: none;
       padding: 0;
       margin: 0 0 30px;
-      flex-grow: 1; /* Empurra o botão para baixo */
+      flex-grow: 1; 
       text-align: left;
+      border-top: 1px solid var(--border-color);
+      padding-top: 20px;
     }
 
     ul.features li {
@@ -139,34 +153,39 @@
       color: #ccc;
       display: flex;
       align-items: center;
+      font-size: 0.95rem;
     }
 
+    /* Checkmark Verde */
     ul.features li::before {
       content: "✔";
-      display: inline-block;
-      width: 20px;
-      height: 20px;
-      background: rgba(81, 207, 102, 0.2);
+      display: inline-flex;
+      justify-content: center;
+      align-items: center;
+      min-width: 24px;
+      height: 24px;
+      background: rgba(81, 207, 102, 0.1);
       color: var(--color-green);
       border-radius: 50%;
-      text-align: center;
-      line-height: 20px;
+      margin-right: 12px;
       font-size: 12px;
-      margin-right: 10px;
     }
 
     /* BOTÕES */
     .btn-plan {
       display: block;
       width: 100%;
-      padding: 15px;
+      padding: 16px;
       border-radius: 8px;
       text-decoration: none;
       font-weight: 600;
+      font-size: 1rem;
       transition: 0.3s;
       margin-top: auto;
+      cursor: pointer;
     }
 
+    /* Estilo Botão Básico */
     .btn-outline {
       border: 1px solid var(--border-color);
       color: white;
@@ -177,18 +196,127 @@
       background: rgba(255,255,255,0.05);
     }
 
+    /* Estilo Botão Destaque */
     .btn-primary {
       background: var(--color-blue);
       color: white;
       border: none;
-      box-shadow: 0 4px 15px rgba(51, 154, 240, 0.4);
+      box-shadow: 0 4px 15px rgba(51, 154, 240, 0.3);
     }
     .btn-primary:hover {
       background: #228be6;
-      transform: scale(1.02);
+      box-shadow: 0 6px 20px rgba(51, 154, 240, 0.5);
     }
 
+    /* Estilo Botão VIP */
     .btn-vip {
       background: linear-gradient(135deg, #6741d9, #e03131);
       color: white;
-      border:
+      border: none;
+      box-shadow: 0 4px 15px rgba(103, 65, 217, 0.3);
+    }
+    .btn-vip:hover {
+      opacity: 0.9;
+      transform: scale(1.02);
+    }
+
+    /* FOOTER */
+    .footer-link {
+      margin: 50px 0;
+      color: var(--text-secondary);
+      text-decoration: none;
+      font-size: 0.9rem;
+      border-bottom: 1px dashed var(--border-color);
+      padding-bottom: 2px;
+      transition: 0.3s;
+    }
+    .footer-link:hover { color: white; border-color: white; }
+
+    /* RESPONSIVO */
+    @media (max-width: 800px) {
+      .plans-container { flex-direction: column; align-items: center; }
+      .plan-card { width: 100%; max-width: 350px; }
+      .plan-card.popular { transform: none; margin: 10px 0; }
+      .plan-card.popular:hover { transform: translateY(-5px); }
+    }
+  </style>
+</head>
+<body>
+
+  <header>
+    <h1>Escolha seu Plano 🚀</h1>
+    <p class="subtitle">
+      Desbloqueie todos os recursos e leve seu restaurante para o próximo nível.
+      Sem fidelidade, cancele quando quiser.
+    </p>
+  </header>
+
+  <div class="plans-container">
+    
+    <div class="plan-card">
+      <h3 class="plan-name">Mensal</h3>
+      <div class="price">R$ 49<small>,90</small> <small style="font-size: 0.4em">/mês</small></div>
+      
+      <ul class="features">
+        <li>Cardápio Digital Ilimitado</li>
+        <li>Painel de Pedidos em Tempo Real</li>
+        <li>Impressão de Comandas</li>
+        <li>Suporte via WhatsApp</li>
+      </ul>
+
+      <a href="#" class="btn-plan btn-outline">Assinar Mensal</a>
+    </div>
+
+    <div class="plan-card popular">
+      <div class="badge">MAIS VENDIDO 🔥</div>
+      <h3 class="plan-name">Anual</h3>
+      <div class="price">R$ 499 <small style="font-size: 0.4em">/ano</small></div>
+      <p style="color: var(--color-green); font-size: 0.9rem; margin-top: -15px; font-weight: bold;">
+        Economize R$ 100,00 (2 meses OFF)
+      </p>
+      
+      <ul class="features">
+        <li><strong>Todos os recursos do Mensal</strong></li>
+        <li>Prioridade no Suporte Técnico</li>
+        <li>Backup Diário dos Dados</li>
+        <li>Acesso a novidades Beta</li>
+      </ul>
+
+      <a href="#" class="btn-plan btn-primary">Quero Economizar</a>
+    </div>
+
+    <div class="plan-card" style="border-color: #4c4c4c;">
+      <h3 class="plan-name" style="background: linear-gradient(90deg, #b197fc, #ff8787); -webkit-background-clip: text; -webkit-text-fill-color: transparent;">Vitalício</h3>
+      <div class="price">R$ 997 <small style="font-size: 0.4em">/único</small></div>
+      
+      <ul class="features">
+        <li>Pagamento Único (Sem mensalidade)</li>
+        <li>Acesso Vitalício ao Sistema</li>
+        <li>Selo "Parceiro Fundador"</li>
+        <li>Contato direto com o Desenvolvedor</li>
+      </ul>
+
+      <a href="#" class="btn-plan btn-vip">Comprar Acesso Eterno</a>
+    </div>
+
+  </div>
+
+  <a href="javascript:history.back()" class="footer-link">← Voltar para o Sistema</a>
+
+  <script>
+    // Placeholder para interatividade futura
+    // Quando tivermos os links do Mercado Pago, vamos injetar aqui
+    const botoes = document.querySelectorAll('.btn-plan');
+    botoes.forEach(btn => {
+      btn.addEventListener('click', (e) => {
+        // Se o link for #, mostra alerta (enquanto não configuramos o MP)
+        if(btn.getAttribute('href') === '#') {
+          e.preventDefault();
+          alert("Em breve! Estamos configurando o gateway de pagamento.");
+        }
+      });
+    });
+  </script>
+
+</body>
+</html>
