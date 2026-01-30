@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>🔐 Login - Digital Menu</title>
+  <title>Login - Digital Menu 🔐 </title>
   
   <link rel="stylesheet" href="css/style.css" />
 </head>
@@ -11,7 +11,7 @@
 
   <div class="box" style="max-width: 380px; width: 95%; padding: 30px;">
     <div style="text-align: center; margin-bottom: 25px;">
-        <h2 style="color: var(--color-blue); margin-bottom: 5px;">👋 Olá novamente!</h2>
+        <h2 style="color: var(--color-blue); margin-bottom: 5px;">Olá novamente!👋</h2>
         <p style="font-size: 0.9rem; color: var(--text-secondary);">Acesse o painel da sua empresa.</p>
     </div>
 
@@ -50,7 +50,7 @@
 
       if (!email || !senha) {
         msg.style.color = 'var(--color-amber)';
-        msg.textContent = '⚠️ Preencha e-mail e senha.';
+        msg.textContent = '⚠️ Preencha e-mail e senha. ⚠️';
         return;
       }
 
@@ -76,7 +76,7 @@
         localStorage.setItem('user', JSON.stringify(data.user));
 
         msg.style.color = 'var(--color-green)';
-        msg.textContent = '✅ Login realizado! Redirecionando...';
+        msg.textContent = 'Login realizado! Redirecionando... ✅';
 
         setTimeout(() => {
           const role = (data.user.role || '').toLowerCase();
