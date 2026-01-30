@@ -24,6 +24,7 @@ db.serialize(() => {
     id INTEGER PRIMARY KEY AUTOINCREMENT,
     name TEXT NOT NULL,
     email_admin TEXT UNIQUE,
+    whatsapp TEXT,
     senha_hash TEXT NOT NULL,
     plano TEXT DEFAULT 'trial',
     trial_expires_at DATETIME,
@@ -136,16 +137,26 @@ app.post("/api/admin-login", async (req, res) => {
 });
 
 app.post("/api/register-company", (req, res) => {
-  const { name, email, senha } = req.body;
+  // Adicionei 'whatsapp' aqui na leitura
+  const { name, email, whatsapp, senha } = req.body; 
+  
   const hash = bcrypt.hashSync(senha, 10);
+  
+  // Calcula data de expiração (5 dias)
   const dataExpira = new Date();
   dataExpira.setDate(dataExpira.getDate() + 5);
+  
   const trial_expires_at = dataExpira.toISOString();
   const created_at = getHoraLocalISOString();
-  db.run(`INSERT INTO companies (name, email_admin, senha_hash, trial_expires_at, created_at) VALUES (?,?,?,?,?)`,
-    [name, email, hash, trial_expires_at, created_at], function(err) {
+
+  // Adicionei 'whatsapp' no INSERT abaixo
+  db.run(`INSERT INTO companies (name, email_admin, whatsapp, senha_hash, trial_expires_at, created_at) VALUES (?,?,?,?,?,?)`,
+    [name, email, whatsapp, hash, trial_expires_at, created_at], function(err) {
       if (err) return res.status(400).json({ ok: false, error: "E-mail cadastrado." });
+      
       const companyId = this.lastID;
+      
+      // Cria o usuário admin dessa empresa
       db.run(`INSERT INTO users (company_id, name, email, senha_hash, role, created_at) VALUES (?,?,?,?,'admin',?)`,
         [companyId, "Administrador", email, hash, created_at], () => {
           res.json({ ok: true, user: { id: companyId, company_id: companyId, role: 'admin' } });
@@ -154,8 +165,37 @@ app.post("/api/register-company", (req, res) => {
 });
 
 app.get("/api/empresas", (req, res) => {
-  db.all(`SELECT id, name, email_admin, plano, trial_expires_at, created_at FROM companies ORDER BY id DESC`, (err, rows) => {
+  // Adicionei whatsapp na lista de campos
+  db.all(`SELECT id, name, email_admin, whatsapp, plano, trial_expires_at, created_at FROM companies ORDER BY id DESC`, (err, rows) => {
     res.json({ ok: true, empresas: rows });
+  });
+});
+
+// NOVA ROTA: Adicionar dias ao plano manualmente
+app.post("/api/empresas/:id/add-days", (req, res) => {
+  const { id } = req.params;
+  const { dias } = req.body;
+
+  // 1. Primeiro buscamos a empresa para ver a data atual dela
+  db.get("SELECT trial_expires_at FROM companies WHERE id = ?", [id], (err, row) => {
+    if (err || !row) return res.status(404).json({ ok: false, error: "Empresa não encontrada" });
+
+    // 2. Lógica inteligente de data
+    const hoje = new Date();
+    const vencimentoAtual = new Date(row.trial_expires_at);
+    
+    // Se já venceu, começa a contar de HOJE. Se não venceu, soma ao que já tem.
+    let novaData = (vencimentoAtual > hoje) ? vencimentoAtual : hoje;
+    novaData.setDate(novaData.getDate() + parseInt(dias));
+
+    // 3. Atualiza no banco
+    db.run("UPDATE companies SET trial_expires_at = ?, plano = 'basic' WHERE id = ?", 
+      [novaData.toISOString(), id], 
+      (err) => {
+        if (err) return res.status(500).json({ ok: false });
+        res.json({ ok: true, nova_data: novaData });
+      }
+    );
   });
 });
 
