@@ -169,15 +169,45 @@
     };
 
     // --- NOVA FUNÇÃO: GOD MODE (ENTRAR COMO CLIENTE) ---
+    // --- NOVA FUNÇÃO: GOD MODE (CORRIGIDA) ---
     window.logarComo = (id, nome) => {
         if(confirm(`Entrar no painel de ${nome}?`)) {
-            // Simulando login: Salva o ID da empresa no localStorage como se fosse o login dela
-            // Ajuste as chaves conforme o que seu 'dashboard.html' espera
-            localStorage.setItem("user", JSON.stringify({ id: id, role: "admin", name: nome }));
-            window.open("company-admin.html", "_blank"); // Abre em nova aba
+            
+            const godModeUser = {
+                id: 999999,       // Um ID falso de usuário para não dar erro
+                company_id: id,   // <--- O ID REAL DA EMPRESA (O Importante!)
+                name: "👑 Acesso Master",// --- NOVA FUNÇÃO: GOD MODE (CORRIGIDA) ---
+    window.logarComo = (id, nome) => {
+        if(confirm(`Entrar no painel de ${nome}?`)) {
+            
+            // O TRUQUE ESTÁ AQUI: 
+            // O Dashboard espera um objeto completo com 'company_id'
+            const godModeUser = {
+                id: 999999,       // Um ID falso de usuário para não dar erro
+                company_id: id,   // <--- O ID REAL DA EMPRESA (O Importante!)
+                name: "👑 Acesso Master",
+                email: "master@acesso.com",
+                role: "admin"     // Permissão total na loja
+            };
+
+            // Salvamos o "crachá" falso no navegador
+            localStorage.setItem("user", JSON.stringify(godModeUser));
+            
+            // Abre o painel em outra aba
+            window.open("dashboard.html", "_blank"); 
         }
     };
+                email: "master@acesso.com",
+                role: "admin"     // Permissão total na loja
+            };
 
+            // Salvamos o "crachá" falso no navegador
+            localStorage.setItem("user", JSON.stringify(godModeUser));
+            
+            // Abre o painel em outra aba
+            window.open("dashboard.html", "_blank"); 
+        }
+    };
     // --- NOVA FUNÇÃO: ADICIONAR DIAS MANUALMENTE ---
     window.adicionarDias = async (id) => {
         const dias = prompt("Quantos dias extras você quer dar para essa empresa?");
