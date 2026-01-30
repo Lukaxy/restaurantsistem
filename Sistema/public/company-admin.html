@@ -103,13 +103,27 @@
       }
     }
 
-    // ======== LOGOUT ========
+// ======== LOGOUT ========
     function logout() {
       localStorage.clear();
       window.location.href = "login.html";
     }
 
-    document.addEventListener("DOMContentLoaded", carregarUsuarios);
+    // ==== AQUI É O LUGAR CERTO! ====
+    document.addEventListener("DOMContentLoaded", () => {
+        // 1. Carrega a lista de funcionários
+        carregarUsuarios(); 
+
+        // 2. Lógica do Botão de Assinatura
+        // Verifica se é o Dono (admin) ou o Master
+        if (user.role === "admin" || user.role === "master") {
+            const btnAssinatura = document.getElementById("btn-assinatura");
+            if (btnAssinatura) {
+                btnAssinatura.style.display = "inline-block";
+            }
+        }
+    });
+
     window.addUser = addUser;
     window.excluir = excluir;
     window.logout = logout;
