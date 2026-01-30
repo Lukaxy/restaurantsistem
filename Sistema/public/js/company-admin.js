@@ -43,12 +43,13 @@ async function carregarUsuarios() {
 async function addUser() {
   const name = document.getElementById("name").value.trim();
   const email = document.getElementById("email").value.trim();
+  const whatsapp = document.getElementById("whatsapp").value.trim();
   const senha = document.getElementById("senha").value.trim();
   const role = document.getElementById("role").value;
 
   msg.textContent = "";
 
-  if (!name || !email || !senha) {
+  if (!name || !email || !whatsapp || !senha) {
     msg.style.color = "red";
     msg.textContent = "Preencha todos os campos.";
     return;
@@ -58,7 +59,7 @@ async function addUser() {
     const res = await fetch("/api/users", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ name, email, senha, role, company_id: user.company_id })
+      body: JSON.stringify({ name, email, whatsapp, senha, role, company_id: user.company_id })
     });
 
     const data = await res.json();
@@ -67,6 +68,7 @@ async function addUser() {
     msg.style.color = "green";
     msg.textContent = "✅ Usuário adicionado com sucesso!";
     document.getElementById("name").value = "";
+    document.getElementById("whatsapp").value = "";
     document.getElementById("email").value = "";
     document.getElementById("senha").value = "";
 
