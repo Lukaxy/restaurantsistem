@@ -71,7 +71,6 @@
       text-transform: uppercase;
     }
     
-    /* Pequeno ajuste para os botões de ação ficarem alinhados */
     .actions-row { margin-top: 10px; display: flex; gap: 8px; }
   </style>
 
@@ -91,7 +90,6 @@
       const count = document.getElementById("total-count");
       
       try {
-        // Certifique-se que sua API retorna o campo 'whatsapp'
         const data = await api("/api/empresas");
         if (!data.ok) throw new Error(data.error);
 
@@ -99,22 +97,20 @@
         
         list.innerHTML = data.empresas.map(e => {
           const hoje = new Date();
-          const expira = new Date(e.trial_expires_at || e.data_vencimento); // Ajuste conforme seu banco
+          const expira = new Date(e.trial_expires_at || e.data_vencimento || hoje); 
           const isExpirado = expira < hoje;
           const isVip = e.plano === 'vitalicio';
           
           // Lógica do Semáforo
-          let statusLabel, statusColor;
+          let statusLabel = isVip ? "💎 VIP" : isExpirado ? "🛑 VENCIDO" : (e.plano === 'trial' ? "🟡 TESTE" : "🟢 ATIVO");
+          let statusColor = isVip ? "var(--color-blue)" : isExpirado ? "var(--color-red)" : (e.plano === 'trial' ? "var(--color-amber)" : "var(--color-green)");
 
-          if (isVip) {
-              statusLabel = "💎 VIP"; statusColor = "var(--color-blue)";
-          } else if (isExpirado) {
-              statusLabel = "🛑 VENCIDO"; statusColor = "var(--color-red)";
-          } else if (e.plano === 'trial') {
-              statusLabel = "🟡 TESTE"; statusColor = "var(--color-amber)";
-          } else {
-              statusLabel = "🟢 ATIVO"; statusColor = "var(--color-green)";
-          }
+          // --- PREPARAÇÃO DE DADOS PARA O LOGIN (GOD MODE) ---
+          // Isso garante que o botão funcione sem dar erro de aspas ou falta de dados
+          const safeName = (e.name || "").replace(/'/g, ""); 
+          const safeEmail = (e.email_admin || "").replace(/'/g, "");
+          const safePlano = e.plano || "trial";
+          const safeDate = e.trial_expires_at || new Date().toISOString();
 
           return `
             <div class="box" style="border-left: 5px solid ${statusColor}">
@@ -127,13 +123,13 @@
                   <div style="margin-top: 5px; color: var(--text-secondary); font-size: 0.9em;">
                     📧 ${e.email_admin} <br>
                     📱 ${e.whatsapp || 'Sem Whats'} <br>
-                    📅 Expira em: <strong>${expira.toLocaleDateString()}</strong>
+                    📅 Validade: <strong>${expira.toLocaleDateString()}</strong>
                   </div>
 
                   <div class="actions-row">
-                    <button class="btn action" onclick="window.logarComo(${e.id}, '${e.name}')">🔑 Entrar</button>
+                    <button class="btn action" onclick="window.logarComo(${e.id}, '${safeName}', '${safeEmail}', '${safePlano}', '${safeDate}')">🔑 Entrar</button>
                     <button class="btn action" onclick="window.adicionarDias(${e.id})">📅 + Dias</button>
-                    <a href="https://wa.me/55${e.whatsapp}?text=Oi, seu plano venceu!" target="_blank" class="btn action" style="text-decoration:none; background: #25D366;">💬 Zap</a>
+                    <a href="https://wa.me/55${(e.whatsapp || '').replace(/\D/g,'')}?text=Oi, seu plano venceu!" target="_blank" class="btn action" style="text-decoration:none; background: #25D366;">💬 Zap</a>
                   </div>
                 </div>
 
@@ -150,7 +146,7 @@
             </div>
           `;
         }).join("");
-      } catch (err) { alert("Erro ao carregar: " + err.message); }
+      } catch (err) { console.error(err); alert("Erro ao carregar lista."); }
     }
 
     // --- NOVA FUNÇÃO: CRIAR COM WHATSAPP ---
@@ -158,21 +154,49 @@
       const body = {
         name: document.getElementById("nome").value,
         email: document.getElementById("email").value,
-        whatsapp: document.getElementById("whatsapp").value, // Novo campo
+        whatsapp: document.getElementById("whatsapp").value, 
         senha: document.getElementById("senha").value
       };
       
       if(!body.whatsapp) return alert("WhatsApp é obrigatório!");
 
       const res = await api("/api/register-company", { method: "POST", body: JSON.stringify(body) });
-      if(res.ok) { alert("Empresa criada!"); carregarEmpresas(); }
+      if(res.ok) { 
+          alert("Empresa criada!"); 
+          carregarEmpresas(); 
+          // Limpa formulário
+          document.getElementById("nome").value = "";
+          document.getElementById("email").value = "";
+          document.getElementById("whatsapp").value = "";
+          document.getElementById("senha").value = "";
+      }
     };
 
-    // --- NOVA FUNÇÃO: ADICIONAR DIAS MANUALMENTE ---
+    // --- FUNÇÃO GOD MODE (ENTRAR COMO) ---
+    // Esta é a função que estava faltando/quebrada. Agora está completa!
+    window.logarComo = (id, nome, email, plano, trial_expires_at) => {
+        if(confirm(`Acessar o painel de ${nome}?`)) {
+            
+            // Monta o usuário perfeito para o dashboard aceitar
+            const godModeUser = {
+                id: 999999,           
+                company_id: id,       // ID REAL da Empresa
+                name: "👑 Master: " + nome,
+                email: email,         
+                role: "admin",        
+                plano: plano,         
+                trial_expires_at: trial_expires_at 
+            };
+
+            localStorage.setItem("user", JSON.stringify(godModeUser));
+            window.open("company-admin.html", "_blank"); // Verifica se o nome do arquivo é esse mesmo
+        }
+    };
+
+    // --- NOVA FUNÇÃO: ADICIONAR DIAS ---
     window.adicionarDias = async (id) => {
         const dias = prompt("Quantos dias extras você quer dar para essa empresa?");
         if (dias && !isNaN(dias)) {
-            // Requer criar essa rota no backend
             const res = await api(`/api/empresas/${id}/add-days`, { 
                 method: "POST", 
                 body: JSON.stringify({ dias: parseInt(dias) }) 
@@ -197,7 +221,6 @@
 
     window.logout = () => { localStorage.clear(); window.location.href="admin-login.html"; };
     
-    // Tornar funções globais para o onclick funcionar com type=module
     window.carregarEmpresas = carregarEmpresas;
     document.addEventListener("DOMContentLoaded", carregarEmpresas);
   </script>
