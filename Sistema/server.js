@@ -111,7 +111,7 @@ app.post("/api/login", (req, res) => {
 app.get("/api/orders/history", (req, res) => {
   const { company_id } = req.query;
   // Agora aceita 'concluido' e 'pago', que são comuns ao finalizar pedidos
-  const sql = `SELECT * FROM orders WHERE company_id = ? AND status IN ('finalizado', 'entregue', 'pago', 'concluido', 'concluído') ORDER BY status_updated_at DESC`;
+  const sql = `SELECT * FROM orders WHERE company_id = ? AND status IN ('finalizado', 'pronto', 'entregue', 'pago', 'concluido', 'concluído') ORDER BY status_updated_at DESC`;
   
   db.all(sql, [company_id], (err, rows) => {
     if (err) return res.status(500).json({ ok: false });
