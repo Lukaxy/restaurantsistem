@@ -41,13 +41,14 @@
     async function register() {
       const name = document.getElementById('name').value.trim();
       const email = document.getElementById('email').value.trim();
+      const whatsapp = document.getElementById('whatsapp').value.trim();
       const senha = document.getElementById('senha').value.trim();
       const msg = document.getElementById('msg');
       const btn = document.querySelector('button');
 
       msg.textContent = '';
 
-      if (!name || !email || !senha) {
+      if (!name || !email || !whatsapp || !senha) {
         msg.style.color = 'var(--color-amber)';
         msg.textContent = '⚠️ Preencha todos os campos.';
         return;
