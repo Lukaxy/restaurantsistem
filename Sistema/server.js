@@ -328,8 +328,17 @@ app.post("/api/pay/create", async (req, res) => {
                     dias_adicionar: dias
                 },
                 payment_methods: {
-                    excluded_payment_types: [{ id: "credit_card" }], // Só PIX e Boleto
-                    installments: 1
+                    excluded_payment_types: [
+                        { id: "credit_card" },
+                        { id: "debit_card" },
+                        { id: "ticket" }, // "ticket" é o famigerado BOLETO
+                        { id: "atm" }
+                    ],
+                    excluded_payment_methods: [
+                        { id: "bolbradesco" },
+                        { id: "pec" }
+                    ],
+                    installments: 1 // Pix não parcela
                 }
             }
         });
