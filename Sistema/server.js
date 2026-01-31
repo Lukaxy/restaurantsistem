@@ -300,6 +300,53 @@ app.post("/api/users", (req, res) => {
     });
 });
 
+// =============================================================
+// 💰 ROTA PARA GERAR PIX (MERCADO PAGO)
+// =============================================================
+app.post("/api/pay/create", async (req, res) => {
+    const { company_id, email, valor, dias } = req.body;
+
+    try {
+        const preference = new Preference(client);
+        
+        const result = await preference.create({
+            body: {
+                items: [
+                    {
+                        id: `plano_${dias}dias`,
+                        title: `Assinatura Sistema - ${dias} Dias`,
+                        quantity: 1,
+                        unit_price: Number(valor)
+                    }
+                ],
+                payer: {
+                    email: email
+                },
+                // Dados escondidos para identificarmos a empresa depois
+                metadata: {
+                    company_id: company_id,
+                    dias_adicionar: dias
+                },
+                payment_methods: {
+                    excluded_payment_types: [{ id: "credit_card" }], // Só PIX e Boleto
+                    installments: 1
+                }
+            }
+        });
+
+        // Devolve o link de pagamento
+        res.json({ 
+            ok: true, 
+            init_point: result.init_point, 
+            id: result.id 
+        });
+
+    } catch (error) {
+        console.log(error);
+        res.status(500).json({ ok: false, error: "Erro ao gerar PIX" });
+    }
+});
+
 const publicPath = path.join(__dirname, "public");
 app.use(express.static(publicPath));
 
