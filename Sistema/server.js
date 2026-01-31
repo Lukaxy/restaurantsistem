@@ -242,30 +242,34 @@ app.post("/api/orders/:id/status", (req, res) => {
   db.run(`UPDATE orders SET status = ?, status_updated_at = ? WHERE id = ?`, [req.body.status, getHoraLocalISOString(), req.params.id], () => res.json({ ok: true }));
 });
 
-app.get("/api/users", (req, res) => {
-  db.all(`SELECT id, name, email, role FROM users WHERE company_id = ?`, [req.query.company_id], (err, rows) => res.json({ ok: true, users: rows }));
-});
-
 // Rota para ADICIONAR usuário (POST)
 app.post("/api/users", (req, res) => {
     const { name, email, senha, role, company_id } = req.body;
 
-    // Validação básica
+    // 1. Validação básica
     if (!name || !email || !senha || !company_id) {
         return res.status(400).json({ ok: false, error: "Dados incompletos." });
     }
 
-    const sql = `INSERT INTO users (name, email, senha, role, company_id) VALUES (?, ?, ?, ?, ?)`;
-    const params = [name, email, senha, role, company_id];
+    // 2. CRIPTOGRAFAR A SENHA (Igual você fez no register-company)
+    const hash = bcrypt.hashSync(senha, 10);
 
-    // Usando db.run para inserção (supondo SQLite pelo db.all do exemplo anterior)
+    // 3. Ajustar o nome da coluna para 'senha_hash'
+    const sql = `INSERT INTO users (name, email, senha_hash, role, company_id, created_at) VALUES (?, ?, ?, ?, ?, ?)`;
+    
+    // Adicionei a data de criação também para manter o padrão
+    const params = [name, email, hash, role, company_id, getHoraLocalISOString()];
+
     db.run(sql, params, function(err) {
         if (err) {
+            // Se o email já existir (UNIQUE constraint), vai cair aqui
+            if (err.message.includes("UNIQUE")) {
+                 return res.status(400).json({ ok: false, error: "E-mail já está em uso." });
+            }
             console.error(err);
             return res.status(500).json({ ok: false, error: "Erro ao salvar no banco." });
         }
         
-        // this.lastID pega o ID do usuário criado (no SQLite)
         res.json({ ok: true, id: this.lastID });
     });
 });
