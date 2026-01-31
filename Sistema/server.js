@@ -246,34 +246,49 @@ app.get("/api/users", (req, res) => {
  db.all(`SELECT id, name, email, role FROM users WHERE company_id = ?`, [req.query.company_id], (err, rows) => res.json({ ok: true, users: rows }));
 });
 
-// Rota para ADICIONAR usuário (POST)
+// =============================================================
+// 🗑️ ROTA QUE FALTAVA: DELETAR USUÁRIO
+// =============================================================
+app.delete("/api/users/:id", (req, res) => {
+    const { id } = req.params;
+    
+    // Impede de deletar o Master (segurança)
+    db.get("SELECT email FROM users WHERE id = ?", [id], (err, user) => {
+        if (user && user.email === "admin@master.com") {
+            return res.status(403).json({ ok: false, error: "Não pode deletar o Master!" });
+        }
+
+        db.run(`DELETE FROM users WHERE id = ?`, [id], function(err) {
+            if (err) return res.status(500).json({ ok: false, error: "Erro ao excluir." });
+            res.json({ ok: true });
+        });
+    });
+});
+
+// =============================================================
+// ➕ ROTA DE ADICIONAR (COM CORREÇÃO DO parseInt)
+// =============================================================
 app.post("/api/users", (req, res) => {
     const { name, email, senha, role, company_id } = req.body;
 
-    // 1. Validação básica
     if (!name || !email || !senha || !company_id) {
         return res.status(400).json({ ok: false, error: "Dados incompletos." });
     }
 
-    // 2. CRIPTOGRAFAR A SENHA (Igual você fez no register-company)
     const hash = bcrypt.hashSync(senha, 10);
-
-    // 3. Ajustar o nome da coluna para 'senha_hash'
-    const sql = `INSERT INTO users (name, email, senha_hash, role, company_id, created_at) VALUES (?, ?, ?, ?, ?, ?)`;
     
-    // Adicionei a data de criação também para manter o padrão
-    const params = [name, email, hash, role, company_id, getHoraLocalISOString()];
+    // O parseInt(company_id) aqui é o segredo para o LOGIN funcionar depois!
+    const sql = `INSERT INTO users (name, email, senha_hash, role, company_id, created_at) VALUES (?, ?, ?, ?, ?, ?)`;
+    const params = [name, email, hash, role, parseInt(company_id), getHoraLocalISOString()];
 
     db.run(sql, params, function(err) {
         if (err) {
-            // Se o email já existir (UNIQUE constraint), vai cair aqui
             if (err.message.includes("UNIQUE")) {
                  return res.status(400).json({ ok: false, error: "E-mail já está em uso." });
             }
             console.error(err);
             return res.status(500).json({ ok: false, error: "Erro ao salvar no banco." });
         }
-        
         res.json({ ok: true, id: this.lastID });
     });
 });
