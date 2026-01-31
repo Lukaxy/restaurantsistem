@@ -308,30 +308,48 @@
 
   <a href="javascript:history.back()" class="footer-link">← Voltar para o Sistema</a>
 
-  <script type="module">
-    // Importa a sua função de API que já existe no projeto
+  <div id="modal-pix" style="display:none; position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.8); z-index:999; align-items:center; justify-content:center;">
+    <div style="background:#1a1a1a; padding:30px; border-radius:12px; max-width:400px; text-align:center; border: 1px solid #339af0;">
+        <h3 style="color:white; margin-top:0;">Pagamento via PIX 💠</h3>
+        <p style="color:#ccc;">Escaneie o QR Code abaixo:</p>
+        
+        <img id="img-qr" src="" style="width:200px; height:200px; border-radius:8px; margin-bottom:15px;">
+        
+        <p style="color:#ccc; font-size:0.9rem;">Ou copie o código:</p>
+        <textarea id="text-copy" readonly style="width:100%; height:60px; background:#0d0d0d; color:#fff; border:1px solid #333; border-radius:4px; font-size:0.8rem; padding:5px;"></textarea>
+        
+        <button onclick="copiarCodigo()" class="btn success" style="width:100%; margin-top:10px;">Copiar Código</button>
+        <button onclick="fecharModal()" class="btn cancel" style="width:100%; margin-top:10px;">Fechar</button>
+    </div>
+</div>
+
+<script type="module">
     import { api } from "./js/http.js";
 
-    // Pega o usuário logado
     const user = JSON.parse(localStorage.getItem("user") || "{}");
+    if (!user || !user.company_id) window.location.href = "login.html";
 
-    // Se não estiver logado ou não tiver empresa, manda pro login
-    if (!user || !user.company_id) {
-        alert("Você precisa estar logado.");
-        window.location.href = "login.html";
+    // Função global para fechar
+    window.fecharModal = function() {
+        document.getElementById("modal-pix").style.display = "none";
+        // Recarrega para ver se o plano ativou (depois que implementarmos o webhook)
+        // location.reload(); 
     }
 
-    // Função que chama o Mercado Pago
+    // Função para copiar o código
+    window.copiarCodigo = function() {
+        const copyText = document.getElementById("text-copy");
+        copyText.select();
+        document.execCommand("copy");
+        alert("Código PIX copiado! ✅");
+    }
+
     async function gerarPagamento(dias, valor, btnElement) {
-        
-        // Efeito visual no botão
         const textoOriginal = btnElement.innerText;
-        btnElement.innerText = "Gerando PIX... 🔄";
+        btnElement.innerText = "Gerando...";
         btnElement.disabled = true;
-        btnElement.style.opacity = "0.7";
 
         try {
-            // Chama o seu servidor
             const data = await api("/api/pay/create", {
                 method: "POST",
                 headers: { "Content-Type": "application/json" },
@@ -343,21 +361,23 @@
                 })
             });
 
-            if (!data.ok) throw new Error(data.error || "Erro ao criar pagamento");
+            if (!data.ok) throw new Error(data.error || "Erro ao gerar PIX");
 
-            // SE DEU CERTO: Redireciona para o Mercado Pago
-            window.location.href = data.init_point;
+            // PREENCHE O MODAL COM O QR CODE
+            document.getElementById("img-qr").src = `data:image/png;base64,${data.qr_code_base64}`;
+            document.getElementById("text-copy").value = data.qr_code;
+            
+            // MOSTRA O MODAL
+            document.getElementById("modal-pix").style.display = "flex";
 
         } catch (err) {
             alert("Erro: " + err.message);
-            // Volta o botão ao normal se der erro
+        } finally {
             btnElement.innerText = textoOriginal;
             btnElement.disabled = false;
-            btnElement.style.opacity = "1";
         }
     }
 
-    // Disponibiliza a função para o HTML usar
     window.gerarPagamento = gerarPagamento;
 </script>
 
