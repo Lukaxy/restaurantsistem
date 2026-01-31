@@ -345,8 +345,18 @@
     }
 
     async function gerarPagamento(dias, valor, btnElement) {
+        
+        // 1. PERGUNTA O CPF/CNPJ ANTES DE TUDO
+        const docInput = prompt("Para emitir o PIX, digite o CPF ou CNPJ do pagador (somente números):");
+        
+        // Se a pessoa cancelar ou não digitar nada, para tudo.
+        if (!docInput || docInput.length < 11) {
+            alert("É necessário informar um documento válido para gerar o PIX.");
+            return;
+        }
+
         const textoOriginal = btnElement.innerText;
-        btnElement.innerText = "Gerando...";
+        btnElement.innerText = "Processando...";
         btnElement.disabled = true;
 
         try {
@@ -357,7 +367,8 @@
                     company_id: user.company_id,
                     email: user.email,
                     valor: valor,
-                    dias: dias
+                    dias: dias,
+                    docNumber: docInput // <--- Enviamos o que a pessoa digitou
                 })
             });
 
@@ -366,8 +377,6 @@
             // PREENCHE O MODAL COM O QR CODE
             document.getElementById("img-qr").src = `data:image/png;base64,${data.qr_code_base64}`;
             document.getElementById("text-copy").value = data.qr_code;
-            
-            // MOSTRA O MODAL
             document.getElementById("modal-pix").style.display = "flex";
 
         } catch (err) {
