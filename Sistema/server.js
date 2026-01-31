@@ -369,34 +369,45 @@ app.post("/api/pay/create", async (req, res) => {
 app.post("/api/webhook", async (req, res) => {
     const { type, data } = req.body;
 
-    // Queremos apenas avisos de "payment" (pagamento)
     if (type === "payment") {
         try {
             const paymentId = data.id;
             const payment = new Payment(client);
-            
-            // Busca os detalhes do pagamento no Mercado Pago
             const p = await payment.get({ id: paymentId });
 
-            // Se o status for "approved", liberamos o acesso!
             if (p.status === "approved") {
                 const { company_id, dias_adicionar } = p.metadata;
 
-                // BUSCA A EMPRESA NO SEU BANCO DE DADOS (Exemplo usando SQL)
-                // Aqui você deve adaptar para a sua tabela de empresas
-                const hoje = new Date();
-                
-                // Lógica: Se a empresa já tem dias, soma. Se venceu, começa de hoje.
-                // db.query("UPDATE companies SET validade = DATE_ADD(IF(validade > NOW(), validade, NOW()), INTERVAL ? DAY) WHERE id = ?", [dias_adicionar, company_id]);
-                
-                console.log(`✅ Pagamento Aprovado! Empresa ${company_id} recebeu +${dias_adicionar} dias.`);
+                // 1. Buscamos a empresa para ver a data de expiração atual
+                db.get("SELECT trial_expires_at FROM companies WHERE id = ?", [company_id], (err, row) => {
+                    if (err || !row) return console.error("Empresa não encontrada no Webhook");
+
+                    const hoje = new Date();
+                    const vencimentoAtual = new Date(row.trial_expires_at);
+                    
+                    // 2. Lógica: Se já venceu, soma a partir de hoje. Se não, soma no que já tem.
+                    let novaData = (vencimentoAtual > hoje) ? vencimentoAtual : hoje;
+                    novaData.setDate(novaData.getDate() + parseInt(dias_adicionar));
+
+                    // 3. Atualiza o banco de dados e muda o plano para 'basic' (ou 'pago')
+                    db.run("UPDATE companies SET trial_expires_at = ?, plano = 'basic' WHERE id = ?", 
+                        [novaData.toISOString(), company_id], 
+                        (err) => {
+                            if (err) {
+                                console.error("❌ Erro ao atualizar validade via Webhook:", err);
+                            } else {
+                                console.log(`✅ SUCESSO: Empresa ${company_id} atualizada até ${novaData.toISOString()}`);
+                            }
+                        }
+                    );
+                });
             }
         } catch (error) {
-            console.error("Erro no Webhook:", error);
+            console.error("Erro no processamento do Webhook:", error);
         }
     }
 
-    // O Mercado Pago exige que você responda 200 OK rápido
+    // Responde sempre 200 para o Mercado Pago não ficar reenviando o mesmo aviso
     res.sendStatus(200);
 });
 
