@@ -178,7 +178,46 @@ header {
     background-color: rgba(255, 255, 255, 0.03);
 }
 
-/* ================== ESTRUTURA CENTRALIZADA ================== */
+/* =================================== */
+
+/* --- Estilo para PC (Telas Grandes) --- */
+.main-header {
+    background: #212529;
+    padding: 15px 30px;
+    display: flex;
+    justify-content: space-between; /* Título no meio, botões nas pontas ou espalhados */
+    align-items: center;
+    box-shadow: 0 2px 10px rgba(0,0,0,0.3);
+}
+
+.header-actions {
+    display: flex;
+    gap: 10px;
+}
+
+.btn-purple { background: #845ef7 !important; }
+
+/* --- A Mágica da Responsividade (Telas Pequenas) --- */
+@media (max-width: 768px) {
+    .main-header {
+        flex-direction: column; /* Empilha no celular */
+        padding: 15px 10px;
+        text-align: center;
+    }
+
+    .header-actions {
+        width: 100%;
+        justify-content: center;
+        flex-wrap: wrap; /* Garante que os botões não sumam se a tela for muito pequena */
+    }
+
+    .header-actions .btn {
+        flex: 1; /* Botões dividem o espaço no celular */
+        font-size: 0.8rem;
+        padding: 10px 5px;
+    }
+}
+/*******/
 
 /* Centraliza o conteúdo das páginas internas (Cozinha, Configurações, etc) */
 main {
