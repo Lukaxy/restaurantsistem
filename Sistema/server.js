@@ -390,19 +390,20 @@ app.post("/api/webhook", async (req, res) => {
                     // 2. Lógica: Se já venceu, soma a partir de hoje. Se não, soma no que já tem.
                     let novaData = (vencimentoAtual > hoje) ? vencimentoAtual : hoje;
                     novaData.setDate(novaData.getDate() + parseInt(dias_adicionar));
-
-                    3. Atualiza o banco de dados e muda o plano para 'basic' (ou 'pago')
+                   
+                   // Dentro do app.post("/api/webhook"...)
+                   db.serialize(() => {
                     db.run("UPDATE companies SET trial_expires_at = ?, plano = 'basic' WHERE id = ?", 
-                        [novaData.toISOString(), company_id], 
-                        (err) => {
-                            if (err) {
-                                console.error("❌ Erro ao atualizar validade via Webhook:", err);
-                            } else {
-                                console.log(`✅ SUCESSO: Empresa ${company_id} atualizada até ${novaData.toISOString()}`);
-                            }
-                        }
-                    );
-                });
+                       [novaData.toISOString(), company_id], 
+                       function(err) {
+                       if (err) {
+                          console.error("❌ Erro SQL no Webhook:", err.message);
+                       } else {
+                         console.log(`✅ SUCESSO TOTAL: Empresa ${company_id} agora vence em ${novaData.toISOString()}`);
+            }
+        }
+    );
+});
             }
         } catch (error) {
             console.error("Erro no processamento do Webhook:", error);
