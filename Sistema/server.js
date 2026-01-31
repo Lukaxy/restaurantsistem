@@ -367,6 +367,8 @@ app.post("/api/pay/create", async (req, res) => {
 // 🔔 WEBHOOK: RECEBE AVISO DE PAGAMENTO DO MERCADO PAGO
 // =============================================================
 app.post("/api/webhook", async (req, res) => {
+    console.log("🚀 WEBHOOK RECEBIDO! Corpo da requisição:", JSON.stringify(req.body));
+ 
     const { type, data } = req.body;
 
     if (type === "payment") {
