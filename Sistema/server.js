@@ -6,7 +6,7 @@ const path = require("path");
 const bcrypt = require("bcryptjs");
 const { MercadoPagoConfig, Payment, Preference } = require('mercadopago');
 
-// Configura o cliente pegando o token do Render
+// Configura o cliente pegandoo token do Render
 const client = new MercadoPagoConfig({ 
     accessToken: process.env.MP_ACCESS_TOKEN, 
     options: { timeout: 5000 } 
