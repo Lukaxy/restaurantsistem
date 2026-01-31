@@ -346,12 +346,10 @@
 
     async function gerarPagamento(dias, valor, btnElement) {
         
-        // 1. PERGUNTA O CPF/CNPJ ANTES DE TUDO
-        const docInput = prompt("Para emitir o PIX, digite o CPF ou CNPJ do pagador (somente números):");
+        const docInput = prompt("Digite o CPF do titular do pagamento (apenas números):");
         
-        // Se a pessoa cancelar ou não digitar nada, para tudo.
         if (!docInput || docInput.length < 11) {
-            alert("É necessário informar um documento válido para gerar o PIX.");
+            alert("CPF inválido.");
             return;
         }
 
@@ -366,15 +364,15 @@
                 body: JSON.stringify({
                     company_id: user.company_id,
                     email: user.email,
+                    name: user.name, // <--- ADICIONAMOS ISSO (Envia o nome do usuário logado)
                     valor: valor,
                     dias: dias,
-                    docNumber: docInput // <--- Enviamos o que a pessoa digitou
+                    docNumber: docInput
                 })
             });
 
             if (!data.ok) throw new Error(data.error || "Erro ao gerar PIX");
 
-            // PREENCHE O MODAL COM O QR CODE
             document.getElementById("img-qr").src = `data:image/png;base64,${data.qr_code_base64}`;
             document.getElementById("text-copy").value = data.qr_code;
             document.getElementById("modal-pix").style.display = "flex";
