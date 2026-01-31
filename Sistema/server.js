@@ -363,6 +363,43 @@ app.post("/api/pay/create", async (req, res) => {
     }
 });
 
+// =============================================================
+// 🔔 WEBHOOK: RECEBE AVISO DE PAGAMENTO DO MERCADO PAGO
+// =============================================================
+app.post("/api/webhook", async (req, res) => {
+    const { type, data } = req.body;
+
+    // Queremos apenas avisos de "payment" (pagamento)
+    if (type === "payment") {
+        try {
+            const paymentId = data.id;
+            const payment = new Payment(client);
+            
+            // Busca os detalhes do pagamento no Mercado Pago
+            const p = await payment.get({ id: paymentId });
+
+            // Se o status for "approved", liberamos o acesso!
+            if (p.status === "approved") {
+                const { company_id, dias_adicionar } = p.metadata;
+
+                // BUSCA A EMPRESA NO SEU BANCO DE DADOS (Exemplo usando SQL)
+                // Aqui você deve adaptar para a sua tabela de empresas
+                const hoje = new Date();
+                
+                // Lógica: Se a empresa já tem dias, soma. Se venceu, começa de hoje.
+                // db.query("UPDATE companies SET validade = DATE_ADD(IF(validade > NOW(), validade, NOW()), INTERVAL ? DAY) WHERE id = ?", [dias_adicionar, company_id]);
+                
+                console.log(`✅ Pagamento Aprovado! Empresa ${company_id} recebeu +${dias_adicionar} dias.`);
+            }
+        } catch (error) {
+            console.error("Erro no Webhook:", error);
+        }
+    }
+
+    // O Mercado Pago exige que você responda 200 OK rápido
+    res.sendStatus(200);
+});
+
 const publicPath = path.join(__dirname, "public");
 app.use(express.static(publicPath));
 
