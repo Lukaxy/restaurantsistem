@@ -301,13 +301,14 @@ app.post("/api/users", (req, res) => {
 });
 
 // =============================================================
-// 💰 ROTA PARA GERAR PIX (MERCADO PAGO)
-// =============================================================
-// =============================================================
-// 💰 ROTA PIX DIRETO (SEM REDIRECIONAR)
+// 💰 ROTA PIX DIRETO (COM CORREÇÃO DE E-MAIL E LOGS)
 // =============================================================
 app.post("/api/pay/create", async (req, res) => {
     const { company_id, email, valor, dias } = req.body;
+
+    // O Mercado Pago EXIGE um e-mail válido no payer.
+    // Se o usuário não tiver e-mail (admin antigo), usamos um genérico para não travar.
+    const payerEmail = (email && email.includes("@")) ? email : "cliente@sistema.com";
 
     try {
         const payment = new Payment(client);
@@ -318,29 +319,34 @@ app.post("/api/pay/create", async (req, res) => {
                 description: `Assinatura Sistema - ${dias} Dias`,
                 payment_method_id: 'pix',
                 payer: {
-                    email: email,
-                    first_name: "Cliente", // Opcional, mas bom ter
+                    email: payerEmail,
+                    first_name: "Admin",
+                    last_name: "Sistema"
                 },
                 metadata: {
-                    company_id: company_id,
-                    dias_adicionar: dias
+                    company_id: Number(company_id),
+                    dias_adicionar: Number(dias)
                 }
             }
         });
 
-        // Pegamos os dados do PIX gerado
         const data = result.point_of_interaction.transaction_data;
 
         res.json({ 
             ok: true, 
-            qr_code: data.qr_code,              // O código "Copia e Cola"
-            qr_code_base64: data.qr_code_base64, // A imagem do QR Code
+            qr_code: data.qr_code,
+            qr_code_base64: data.qr_code_base64,
             id: result.id
         });
 
     } catch (error) {
-        console.error(error);
-        res.status(500).json({ ok: false, error: "Erro ao gerar PIX" });
+        // AQUI ESTÁ O SEGREDO: Vamos logar o erro real do Mercado Pago
+        console.error("ERRO MERCADO PAGO:", JSON.stringify(error, null, 2));
+        
+        // Tenta pegar a mensagem de erro específica da API deles
+        const msgErro = error.cause?.[0]?.description || error.message || "Erro desconhecido";
+        
+        res.status(500).json({ ok: false, error: "Falha MP: " + msgErro });
     }
 });
 
