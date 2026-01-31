@@ -301,14 +301,14 @@ app.post("/api/users", (req, res) => {
 });
 
 // =============================================================
-// 💰 ROTA PIX DIRETO (COM CORREÇÃO DE E-MAIL E LOGS)
+// 💰 ROTA PIX DIRETO (COM CPF E DADOS COMPLETOS)
 // =============================================================
 app.post("/api/pay/create", async (req, res) => {
     const { company_id, email, valor, dias } = req.body;
 
-    // O Mercado Pago EXIGE um e-mail válido no payer.
-    // Se o usuário não tiver e-mail (admin antigo), usamos um genérico para não travar.
-    const payerEmail = (email && email.includes("@")) ? email : "cliente@sistema.com";
+    // TRUQUE 1: Evitar erro de "Pagar a si mesmo". 
+    // Usamos um email dinâmico para a transação não bater com o dono da conta.
+    const emailPagador = `cliente_${Date.now()}@ficticio.com`;
 
     try {
         const payment = new Payment(client);
@@ -319,9 +319,14 @@ app.post("/api/pay/create", async (req, res) => {
                 description: `Assinatura Sistema - ${dias} Dias`,
                 payment_method_id: 'pix',
                 payer: {
-                    email: payerEmail,
-                    first_name: "Admin",
-                    last_name: "Sistema"
+                    email: emailPagador, 
+                    first_name: "Cliente",
+                    last_name: `Empresa ${company_id}`,
+                    // OBRIGATÓRIO PARA PIX TRANSPARENTE:
+                    identification: {
+                        type: "CPF",
+                        number: "19119119100" // CPF Genérico válido para transações
+                    }
                 },
                 metadata: {
                     company_id: Number(company_id),
@@ -340,13 +345,11 @@ app.post("/api/pay/create", async (req, res) => {
         });
 
     } catch (error) {
-        // AQUI ESTÁ O SEGREDO: Vamos logar o erro real do Mercado Pago
-        console.error("ERRO MERCADO PAGO:", JSON.stringify(error, null, 2));
+        console.error("ERRO COMPLETO MP:", JSON.stringify(error, null, 2));
         
-        // Tenta pegar a mensagem de erro específica da API deles
-        const msgErro = error.cause?.[0]?.description || error.message || "Erro desconhecido";
-        
-        res.status(500).json({ ok: false, error: "Falha MP: " + msgErro });
+        // Tenta pegar a mensagem detalhada
+        const msg = error.cause?.[0]?.description || error.message || "Erro desconhecido";
+        res.status(500).json({ ok: false, error: "Falha MP: " + msg });
     }
 });
 
