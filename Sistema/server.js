@@ -301,21 +301,27 @@ app.post("/api/users", (req, res) => {
 });
 
 // =============================================================
-// 💰 ROTA PIX REAL (COM CPF/CNPJ DO USUÁRIO)
+// 💰 ROTA PIX REAL (COM DADOS DO USUÁRIO CORRETOS)
 // =============================================================
 app.post("/api/pay/create", async (req, res) => {
-    // Agora recebemos também o 'docNumber' (CPF ou CNPJ)
-    const { company_id, email, valor, dias, docNumber } = req.body;
+    // Agora recebemos 'name' também
+    const { company_id, email, name, valor, dias, docNumber } = req.body;
 
-    // Limpa o documento (deixa só números)
+    // 1. Limpa o CPF/CNPJ (Deixa só números)
     const cleanDoc = docNumber ? docNumber.replace(/\D/g, '') : '';
-    
-    // Descobre se é CPF (11) ou CNPJ (14)
     const docType = cleanDoc.length > 11 ? 'CNPJ' : 'CPF';
 
-    // Email de segurança: Se for o mesmo do dono da conta MP, usamos um alternativo
-    // para evitar erro de "Pagar a si mesmo" durante testes.
-    const emailFinal = email || "cliente@email.com";
+    // 2. Trata o Nome e Sobrenome (O MP exige separado)
+    // Se o nome for "João Silva", first="João", last="Silva"
+    // Se for só "João", first="João", last="Cliente"
+    const partesNome = (name || "Cliente Teste").split(" ");
+    const firstName = partesNome[0];
+    const lastName = partesNome.length > 1 ? partesNome.slice(1).join(" ") : "App";
+
+    // 3. Email de segurança
+    // Se for teste, force um email diferente para não dar conflito com o dono da conta
+    // DICA: Mantenha 'email' se for produção real, mas para testar, use um fake se der erro
+    const emailPayer = email; 
 
     try {
         const payment = new Payment(client);
@@ -326,9 +332,9 @@ app.post("/api/pay/create", async (req, res) => {
                 description: `Assinatura Sistema - ${dias} Dias`,
                 payment_method_id: 'pix',
                 payer: {
-                    email: emailFinal, 
-                    first_name: "Cliente",
-                    // AQUI ESTÁ A MÁGICA: Mandamos o documento real
+                    email: emailPayer,
+                    first_name: firstName,
+                    last_name: lastName,
                     identification: {
                         type: docType,
                         number: cleanDoc
