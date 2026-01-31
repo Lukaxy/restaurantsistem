@@ -131,20 +131,14 @@
 </head>
 
 <body>  
-  <header style="display: flex; flex-direction: column; align-items: center; padding: 10px; gap: 10px; position: relative; height: auto;">
-    
-    <div class="header-title" style="font-size: 1.2rem; font-weight: bold; margin-bottom: 5px;">Gestão da Empresa 🏢</div>
-    
-    <div style="display: flex; justify-content: center; flex-wrap: wrap; gap: 8px; width: 100%;">
-        <button class="btn" onclick="window.location.href='index.html'" style="padding: 8px 12px; font-size: 0.85rem; flex: 1; max-width: 110px;">📙 Cardápio</button>
-        
-        <button id="btn-assinatura" class="btn" style="background: #845ef7; color: white; display: none; padding: 8px 12px; font-size: 0.85rem; flex: 1; max-width: 130px;" onclick="window.location.href='assinaturas.html'">
-            Assinatura 💎 
-        </button>
-        
-        <button class="btn cancel" onclick="logout()" style="padding: 8px 12px; font-size: 0.85rem; flex: 1; max-width: 80px;">Sair</button>
-    </div>
-  </header>
+  <header>
+  <div class="header-title">Gestão da Empresa 🏢</div>
+  <div class="header-actions">
+      <button class="btn" onclick="window.location.href='index.html'">📙 Cardápio</button>
+      <button id="btn-assinatura" class="btn" style="background: #845ef7; display: none;" onclick="window.location.href='assinaturas.html'">Assinatura 💎</button>
+      <button class="btn cancel" onclick="logout()">Sair</button>
+  </div>
+</header>
 
   <main style="padding: 10px;">
     <div class="box">
