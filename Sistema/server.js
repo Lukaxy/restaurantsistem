@@ -107,7 +107,7 @@ app.post("/api/login", (req, res) => {
 });
 
 // =============================================================
-// 📊 ROTA DE HISTÓRICO CORRIGIDA (Aceita mais status)
+// 📊 ROTA DE HISTÓRICO CORRIGIDA
 // =============================================================
 app.get("/api/orders/history", (req, res) => {
   const { company_id } = req.query;
@@ -123,7 +123,6 @@ app.get("/api/orders/history", (req, res) => {
   });
 });
 
-// (Mantive todas as outras rotas de admin-login, register-company, empresas, products, orders, users...)
 // [Abaixo estão as mesmas rotas que você enviou, sem alterações para não quebrar nada]
 
 app.post("/api/admin-login", async (req, res) => {
@@ -137,7 +136,7 @@ app.post("/api/admin-login", async (req, res) => {
 });
 
 app.post("/api/register-company", (req, res) => {
-  // Adicionei 'whatsapp' aqui na leitura
+
   const { name, email, whatsapp, senha } = req.body; 
   
   const hash = bcrypt.hashSync(senha, 10);
@@ -165,7 +164,7 @@ app.post("/api/register-company", (req, res) => {
 });
 
 app.get("/api/empresas", (req, res) => {
-  // Adicionei whatsapp na lista de campos
+  
   db.all(`SELECT id, name, email_admin, whatsapp, plano, trial_expires_at, created_at FROM companies ORDER BY id DESC`, (err, rows) => {
     res.json({ ok: true, empresas: rows });
   });
@@ -245,6 +244,30 @@ app.post("/api/orders/:id/status", (req, res) => {
 
 app.get("/api/users", (req, res) => {
   db.all(`SELECT id, name, email, role FROM users WHERE company_id = ?`, [req.query.company_id], (err, rows) => res.json({ ok: true, users: rows }));
+});
+
+// Rota para ADICIONAR usuário (POST)
+app.post("/api/users", (req, res) => {
+    const { name, email, senha, role, company_id } = req.body;
+
+    // Validação básica
+    if (!name || !email || !senha || !company_id) {
+        return res.status(400).json({ ok: false, error: "Dados incompletos." });
+    }
+
+    const sql = `INSERT INTO users (name, email, senha, role, company_id) VALUES (?, ?, ?, ?, ?)`;
+    const params = [name, email, senha, role, company_id];
+
+    // Usando db.run para inserção (supondo SQLite pelo db.all do exemplo anterior)
+    db.run(sql, params, function(err) {
+        if (err) {
+            console.error(err);
+            return res.status(500).json({ ok: false, error: "Erro ao salvar no banco." });
+        }
+        
+        // this.lastID pega o ID do usuário criado (no SQLite)
+        res.json({ ok: true, id: this.lastID });
+    });
 });
 
 const publicPath = path.join(__dirname, "public");
