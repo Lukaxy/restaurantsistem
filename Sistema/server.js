@@ -303,55 +303,43 @@ app.post("/api/users", (req, res) => {
 // =============================================================
 // 💰 ROTA PARA GERAR PIX (MERCADO PAGO)
 // =============================================================
+// =============================================================
+// 💰 ROTA PIX DIRETO (SEM REDIRECIONAR)
+// =============================================================
 app.post("/api/pay/create", async (req, res) => {
     const { company_id, email, valor, dias } = req.body;
 
     try {
-        const preference = new Preference(client);
-        
-        const result = await preference.create({
+        const payment = new Payment(client);
+
+        const result = await payment.create({
             body: {
-                items: [
-                    {
-                        id: `plano_${dias}dias`,
-                        title: `Assinatura Sistema - ${dias} Dias`,
-                        quantity: 1,
-                        unit_price: Number(valor)
-                    }
-                ],
+                transaction_amount: Number(valor),
+                description: `Assinatura Sistema - ${dias} Dias`,
+                payment_method_id: 'pix',
                 payer: {
-                    email: email
+                    email: email,
+                    first_name: "Cliente", // Opcional, mas bom ter
                 },
-                // Dados escondidos para identificarmos a empresa depois
                 metadata: {
                     company_id: company_id,
                     dias_adicionar: dias
-                },
-                payment_methods: {
-                    excluded_payment_types: [
-                        { id: "credit_card" },
-                        { id: "debit_card" },
-                        { id: "ticket" }, // "ticket" é o famigerado BOLETO
-                        { id: "atm" }
-                    ],
-                    excluded_payment_methods: [
-                        { id: "bolbradesco" },
-                        { id: "pec" }
-                    ],
-                    installments: 1 // Pix não parcela
                 }
             }
         });
 
-        // Devolve o link de pagamento
+        // Pegamos os dados do PIX gerado
+        const data = result.point_of_interaction.transaction_data;
+
         res.json({ 
             ok: true, 
-            init_point: result.init_point, 
-            id: result.id 
+            qr_code: data.qr_code,              // O código "Copia e Cola"
+            qr_code_base64: data.qr_code_base64, // A imagem do QR Code
+            id: result.id
         });
 
     } catch (error) {
-        console.log(error);
+        console.error(error);
         res.status(500).json({ ok: false, error: "Erro ao gerar PIX" });
     }
 });
