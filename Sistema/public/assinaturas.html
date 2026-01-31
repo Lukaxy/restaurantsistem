@@ -308,20 +308,58 @@
 
   <a href="javascript:history.back()" class="footer-link">← Voltar para o Sistema</a>
 
-  <script>
-    // Placeholder para interatividade futura
-    // Quando tivermos os links do Mercado Pago, vamos injetar aqui
-    const botoes = document.querySelectorAll('.btn-plan');
-    botoes.forEach(btn => {
-      btn.addEventListener('click', (e) => {
-        // Se o link for #, mostra alerta (enquanto não configuramos o MP)
-        if(btn.getAttribute('href') === '#') {
-          e.preventDefault();
-          alert("Em breve! Estamos configurando o gateway de pagamento.");
+  <script type="module">
+    // Importa a sua função de API que já existe no projeto
+    import { api } from "./js/http.js";
+
+    // Pega o usuário logado
+    const user = JSON.parse(localStorage.getItem("user") || "{}");
+
+    // Se não estiver logado ou não tiver empresa, manda pro login
+    if (!user || !user.company_id) {
+        alert("Você precisa estar logado.");
+        window.location.href = "login.html";
+    }
+
+    // Função que chama o Mercado Pago
+    async function gerarPagamento(dias, valor, btnElement) {
+        
+        // Efeito visual no botão
+        const textoOriginal = btnElement.innerText;
+        btnElement.innerText = "Gerando PIX... 🔄";
+        btnElement.disabled = true;
+        btnElement.style.opacity = "0.7";
+
+        try {
+            // Chama o seu servidor
+            const data = await api("/api/pay/create", {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({
+                    company_id: user.company_id,
+                    email: user.email,
+                    valor: valor,
+                    dias: dias
+                })
+            });
+
+            if (!data.ok) throw new Error(data.error || "Erro ao criar pagamento");
+
+            // SE DEU CERTO: Redireciona para o Mercado Pago
+            window.location.href = data.init_point;
+
+        } catch (err) {
+            alert("Erro: " + err.message);
+            // Volta o botão ao normal se der erro
+            btnElement.innerText = textoOriginal;
+            btnElement.disabled = false;
+            btnElement.style.opacity = "1";
         }
-      });
-    });
-  </script>
+    }
+
+    // Disponibiliza a função para o HTML usar
+    window.gerarPagamento = gerarPagamento;
+</script>
 
 </body>
 </html>
