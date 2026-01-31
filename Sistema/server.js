@@ -242,6 +242,10 @@ app.post("/api/orders/:id/status", (req, res) => {
   db.run(`UPDATE orders SET status = ?, status_updated_at = ? WHERE id = ?`, [req.body.status, getHoraLocalISOString(), req.params.id], () => res.json({ ok: true }));
 });
 
+app.get("/api/users", (req, res) => {
+ db.all(`SELECT id, name, email, role FROM users WHERE company_id = ?`, [req.query.company_id], (err, rows) => res.json({ ok: true, users: rows }));
+});
+
 // Rota para ADICIONAR usuário (POST)
 app.post("/api/users", (req, res) => {
     const { name, email, senha, role, company_id } = req.body;
