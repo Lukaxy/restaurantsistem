@@ -122,6 +122,36 @@ header {
   gap: 10px;
   min-height: 60px;
 }
+/* --- Ajuste do Header para PC --- */
+.main-header {
+    background: #212529;
+    padding: 10px 20px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between; /* Espalha os elementos */
+    position: relative; /* Importante para o menu se localizar */
+    min-height: 60px;
+}
+
+/* --- Posicionamento do Menu (Três Pontinhos) --- */
+.menu-wrapper {
+    position: relative; /* Deixa de ser absolute para não sumir */
+    display: flex;
+    align-items: center;
+    z-index: 1001;
+}
+
+.menu-dropdown {
+    display: none;
+    position: absolute;
+    top: 100%; /* Abre logo abaixo do botão */
+    left: 0;
+    background: var(--bg-card);
+    border: 1px solid var(--border-color);
+    border-radius: var(--radius);
+    min-width: 200px;
+    box-shadow: var(--shadow);
+}
 
 /* Container que envolve os botões no topo */
 .header-actions {
