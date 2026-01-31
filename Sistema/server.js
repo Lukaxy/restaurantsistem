@@ -391,7 +391,7 @@ app.post("/api/webhook", async (req, res) => {
                     let novaData = (vencimentoAtual > hoje) ? vencimentoAtual : hoje;
                     novaData.setDate(novaData.getDate() + parseInt(dias_adicionar));
                    
-                   // 3. Atualiza o banco de dados e muda o plano para 'basic' (ou 'pago')
+                    // 3. Atualiza o banco de dados e muda o plano para 'basic' (ou 'pago')
                     db.run("UPDATE companies SET trial_expires_at = ?, plano = 'basic' WHERE id = ?", 
                         [novaData.toISOString(), company_id], 
                         (err) => {
@@ -412,16 +412,10 @@ app.post("/api/webhook", async (req, res) => {
     // Responde sempre 200 para o Mercado Pago não ficar reenviando o mesmo aviso
     res.sendStatus(200);
 });
-            }
-        } catch (error) {
-            console.error("Erro no processamento do Webhook:", error);
-        }
-    }
 
-    // Responde sempre 200 para o Mercado Pago não ficar reenviando o mesmo aviso
-    res.sendStatus(200);
-});
-
+// =============================================================
+// CONFIGURAÇÕES FINAIS DO SERVIDOR
+// =============================================================
 const publicPath = path.join(__dirname, "public");
 app.use(express.static(publicPath));
 
