@@ -301,14 +301,21 @@ app.post("/api/users", (req, res) => {
 });
 
 // =============================================================
-// 💰 ROTA PIX DIRETO (COM CPF E DADOS COMPLETOS)
+// 💰 ROTA PIX REAL (COM CPF/CNPJ DO USUÁRIO)
 // =============================================================
 app.post("/api/pay/create", async (req, res) => {
-    const { company_id, email, valor, dias } = req.body;
+    // Agora recebemos também o 'docNumber' (CPF ou CNPJ)
+    const { company_id, email, valor, dias, docNumber } = req.body;
 
-    // TRUQUE 1: Evitar erro de "Pagar a si mesmo". 
-    // Usamos um email dinâmico para a transação não bater com o dono da conta.
-    const emailPagador = `cliente_${Date.now()}@ficticio.com`;
+    // Limpa o documento (deixa só números)
+    const cleanDoc = docNumber ? docNumber.replace(/\D/g, '') : '';
+    
+    // Descobre se é CPF (11) ou CNPJ (14)
+    const docType = cleanDoc.length > 11 ? 'CNPJ' : 'CPF';
+
+    // Email de segurança: Se for o mesmo do dono da conta MP, usamos um alternativo
+    // para evitar erro de "Pagar a si mesmo" durante testes.
+    const emailFinal = email || "cliente@email.com";
 
     try {
         const payment = new Payment(client);
@@ -319,13 +326,12 @@ app.post("/api/pay/create", async (req, res) => {
                 description: `Assinatura Sistema - ${dias} Dias`,
                 payment_method_id: 'pix',
                 payer: {
-                    email: emailPagador, 
+                    email: emailFinal, 
                     first_name: "Cliente",
-                    last_name: `Empresa ${company_id}`,
-                    // OBRIGATÓRIO PARA PIX TRANSPARENTE:
+                    // AQUI ESTÁ A MÁGICA: Mandamos o documento real
                     identification: {
-                        type: "CPF",
-                        number: "19119119100" // CPF Genérico válido para transações
+                        type: docType,
+                        number: cleanDoc
                     }
                 },
                 metadata: {
@@ -345,9 +351,7 @@ app.post("/api/pay/create", async (req, res) => {
         });
 
     } catch (error) {
-        console.error("ERRO COMPLETO MP:", JSON.stringify(error, null, 2));
-        
-        // Tenta pegar a mensagem detalhada
+        console.error("ERRO MP:", JSON.stringify(error, null, 2));
         const msg = error.cause?.[0]?.description || error.message || "Erro desconhecido";
         res.status(500).json({ ok: false, error: "Falha MP: " + msg });
     }
