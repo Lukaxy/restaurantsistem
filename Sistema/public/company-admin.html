@@ -128,63 +128,17 @@
         window.location.href = "login.html";
     }
 
-    // ======== INICIALIZAÇÃO ========
-    document.addEventListener("DOMContentLoaded", () => {
-        carregarUsuarios();
-        if (user.role === "admin" || user.role === "master") {
-            const btn = document.getElementById("btn-assinatura");
-            if (btn) btn.style.display = "inline-block";
-        }
-    });
-
-    document.addEventListener("click", e => {
-        if (!e.target.closest(".menu-wrapper")) {
-            document.getElementById("menuDropdown").classList.remove("show");
-        }
-    });
-   // Pega os dados que já estão salvos no navegador
-const user = JSON.parse(localStorage.getItem("user") || "{}");
-
-if (user.trial_expires_at) {
-    const expiraEm = new Date(user.trial_expires_at);
-    const hoje = new Date();
-    
-    // Cálculo de diferença em dias
-    const diffTempo = expiraEm - hoje;
-    const diffDias = Math.ceil(diffTempo / (1000 * 60 * 60 * 24));
-    
-    const planoNome = document.getElementById("plano-nome");
-    const planoDias = document.getElementById("plano-dias");
-    const planoCard = document.getElementById("plano-card");
-    const planoEmoji = document.getElementById("plano-emoji");
-
-    // Lógica visual: Se for Trial ou VIP
-    if (user.plano === 'trial') {
-        planoNome.textContent = "Período de Teste";
-        planoCard.style.borderLeftColor = "var(--color-amber)";
-        planoEmoji.textContent = "⏳";
-    } else {
-        planoNome.textContent = "Plano Profissional";
-        planoCard.style.borderLeftColor = "var(--color-green)";
-        planoEmoji.textContent = "💎";
-        document.querySelector('.status-timer span').style.color = "var(--color-green)";
-    }
-
-    // Exibe os dias (não deixa mostrar número negativo se vencer)
-    planoDias.textContent = diffDias > 0 ? diffDias : 0;
-
-    // Alerta se estiver acabando (menos de 3 dias)
-    if (diffDias <= 3) {
-        planoCard.style.borderLeftColor = "var(--color-red)";
-        planoNome.style.color = "var(--color-red)";
-        if (diffDias <= 0) planoNome.textContent = "Assinatura Expirada 🛑";
-    }
-}
-    // Torna as funções globais para o HTML encontrar
-    window.toggleMenu = toggleMenu;
-    window.addUser = addUser;
-    window.excluir = excluir;
-    window.logout = logout;
+<div class="status-plan-card" id="plano-card">
+  <div class="status-icon" id="plano-emoji">💎</div>
+  <div class="status-details">
+    <p class="status-label">Status da Assinatura</p>
+    <h4 id="plano-nome" style="margin:0;">Carregando...</h4>
+  </div>
+  <div class="status-timer">
+    <span id="plano-dias">--</span>
+    <small>dias restantes</small>
+  </div>
+</div>
 </script>
 </head>
 
@@ -216,11 +170,11 @@ if (user.trial_expires_at) {
 </header>
 
   <main style="padding: 10px;">
-    <div class="status-plan-card" id="plano-info">
-  <div class="status-icon">💎</div>
+    <div class="status-plan-card" id="plano-card">
+  <div class="status-icon" id="plano-emoji">💎</div>
   <div class="status-details">
     <p class="status-label">Status da Assinatura</p>
-    <h4 id="plano-nome">Carregando...</h4>
+    <h4 id="plano-nome" style="margin:0;">Carregando...</h4>
   </div>
   <div class="status-timer">
     <span id="plano-dias">--</span>
