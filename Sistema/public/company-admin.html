@@ -19,6 +19,22 @@
     }
     .menu-dropdown.show { display: block; }
     .menu-dropdown div { padding: 10px 20px; cursor: pointer; border-bottom: 1px solid #333; }    
+
+    .status-plan-card {
+    background: var(--bg-card);
+    border: 1px solid var(--border-color);
+    border-radius: var(--radius);
+    padding: 15px 20px;
+    display: flex;
+    align-items: center;
+    gap: 15px;
+    margin-bottom: 25px;
+    border-left: 5px solid var(--color-blue); /* Cor muda via JS */
+}
+.status-icon { font-size: 1.8rem; }
+.status-label { font-size: 0.8rem; color: var(--text-secondary); margin: 0; }
+.status-timer { margin-left: auto; text-align: center; border-left: 1px solid var(--border-color); padding-left: 15px; }
+.status-timer span { display: block; font-size: 1.4rem; font-weight: bold; color: var(--color-blue); }
   </style>
 
  <script type="module">
