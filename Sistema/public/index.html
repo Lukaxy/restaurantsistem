@@ -100,8 +100,21 @@
 .modal { display: none; }
 .modal[style*="flex"] { display: flex !important; justify-content: center; align-items: center; }
 .desc { color: #aaa; font-size: 0.9rem; margin: 10px 0; }
+
+.menu-dropdown {
+      display: none;
+      position: absolute;
+      background: #1e1e1e;
+      border: 1px solid var(--border-color);
+      right: 30px;
+      top: 60px;
+      z-index: 100;
+    }
+    .menu-dropdown.show { display: block; }
+    .menu-dropdown div { padding: 10px 20px; cursor: pointer; border-bottom: 1px solid #333; }  
 </style>
 
 </body>
 </html>
+
 
