@@ -125,19 +125,27 @@ header {
 }
 /* --- Ajuste do Header para PC --- */
 .main-header {
-    background: #212529;
-    padding: 10px 20px;
     display: flex;
     align-items: center;
-    justify-content: space-between; /* Espalha os elementos */
-    position: relative; /* Importante para o menu se localizar */
+    justify-content: space-between; /* Distribui os 3 blocos */
+    padding: 10px 15px;
+    background: #212529;
     min-height: 60px;
+}
+
+.header-title {
+    flex: 2; /* Ocupa 2 partes (mais espaço) para garantir o centro */
+    text-align: center;
+    font-size: 1.2rem;
+    font-weight: bold;
+    white-space: nowrap; /* Impede o título de quebrar linha */
 }
 
 /* --- Posicionamento do Menu (Três Pontinhos) --- */
 .menu-wrapper {
-    position: relative;
-    z-index: 1100;
+    flex: 1; /* Ocupa 1 parte do espaço total na esquerda */
+    display: flex;
+    justify-content: flex-start;
 }
 
 .menu-button {
@@ -169,11 +177,9 @@ header {
 
 /* Container que envolve os botões no topo */
 .header-actions {
+    flex: 1; /* Ocupa 1 parte na direita para equilibrar com o menu */
     display: flex;
-    justify-content: center;
-    flex-wrap: wrap; /* Se não couber, ele pula linha sozinho */
-    gap: 8px;
-    width: 100%;
+    justify-content: flex-end;
 }
 
 /* Ajuste do título para não ser esmagado */
