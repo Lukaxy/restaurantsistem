@@ -122,7 +122,27 @@
                 btnAssinatura.style.display = "inline-block";
             }
         }
-    });
+      /*3 pontinho */
+  // Funções de Interface
+  function toggleMenu() {
+    document.getElementById('menuDropdown').classList.toggle('show');
+  }
+
+  function abrirPainelEmpresa() {
+    const user = JSON.parse(localStorage.getItem('user') || '{}');
+    if (user.role === 'admin') {
+      window.location.href = 'company-admin.html';
+    } else {
+      alert('Apenas o administrador pode acessar este painel.');
+    }
+  }
+
+  // Fecha menu ao clicar fora
+  document.addEventListener('click', e => {
+    if (!e.target.closest('.menu-wrapper')) {
+      document.getElementById('menuDropdown').classList.remove('show');
+    }
+ });
 
     window.addUser = addUser;
     window.excluir = excluir;
