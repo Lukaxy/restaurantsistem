@@ -8,76 +8,68 @@
   <link rel="stylesheet" href="css/style.css">
 
   <style>
-      .menu-dropdown {
+    .menu-dropdown {
       display: none;
       position: absolute;
       background: #1a1d21;
       border: 1px solid var(--border-color);
-      right: 30px;
-      top: 60px;
-      z-index: 100;
+      left: 15px; /* Ajustado para alinhar com o menu na esquerda */
+      top: 50px;
+      z-index: 1100;
+      min-width: 200px;
+      border-radius: var(--radius);
+      box-shadow: var(--shadow);
     }
     .menu-dropdown.show { display: block; }
-    .menu-dropdown div { padding: 10px 20px; cursor: pointer; border-bottom: 1px solid #333; }    
+    .menu-dropdown div { padding: 12px 20px; cursor: pointer; border-bottom: 1px solid #333; font-size: 0.9rem; }
+    .menu-dropdown div:hover { background: var(--bg-card); }
 
     .status-plan-card {
-    background: var(--bg-card);
-    border: 1px solid var(--border-color);
-    border-radius: var(--radius);
-    padding: 15px 20px;
-    display: flex;
-    align-items: center;
-    gap: 15px;
-    margin-bottom: 25px;
-    border-left: 5px solid var(--color-blue); /* Cor muda via JS */
-}
-.status-icon { font-size: 1.8rem; }
-.status-label { font-size: 0.8rem; color: var(--text-secondary); margin: 0; }
-.status-timer { margin-left: auto; text-align: center; border-left: 1px solid var(--border-color); padding-left: 15px; }
-.status-timer span { display: block; font-size: 1.4rem; font-weight: bold; color: var(--color-blue); }
+      background: var(--bg-card);
+      border: 1px solid var(--border-color);
+      border-radius: var(--radius);
+      padding: 15px 20px;
+      display: flex;
+      align-items: center;
+      gap: 15px;
+      margin-bottom: 25px;
+      border-left: 5px solid var(--color-blue);
+    }
+    .status-icon { font-size: 1.8rem; }
+    .status-label { font-size: 0.8rem; color: var(--text-secondary); margin: 0; }
+    .status-timer { margin-left: auto; text-align: center; border-left: 1px solid var(--border-color); padding-left: 15px; }
+    .status-timer span { display: block; font-size: 1.4rem; font-weight: bold; color: var(--color-blue); }
   </style>
 
- <script type="module">
+  <script type="module">
     import { api } from "./js/http.js";
 
-    // ======== DADOS DO USUÁRIO LOGADO ========
     const user = JSON.parse(localStorage.getItem("user") || "{}");
 
-    // ======== BLOQUEIA NÃO-ADMINS ========
     if (!user || !user.role || user.role !== "admin") {
         alert("Acesso negado.");
         window.location.href = "login.html";
     }
 
-    // ======== LISTAR USUÁRIOS ========
     async function carregarUsuarios() {
         const list = document.getElementById("users-list");
         list.innerHTML = "<p style='text-align:center;'>Buscando equipe...</p>";
         try {
             const data = await api(`/api/users?company_id=${user.company_id}`);
             if (!data.ok) throw new Error(data.error || "Erro ao carregar usuários");
-            if (!data.users || data.users.length === 0) {
-                list.innerHTML = "<p style='text-align:center; color:var(--text-secondary);'>Nenhum funcionário cadastrado.</p>";
-                return;
-            }
             list.innerHTML = data.users.map(u => `
                 <div style="display: flex; justify-content: space-between; align-items: center; padding: 12px; border-bottom: 1px solid var(--border-color); gap: 10px;">
                     <div>
-                        <strong style="color: var(--text-primary);">${u.name}</strong> <br>
-                        <small style="color: var(--text-secondary);">${u.email}</small> 
-                        <span style="font-size: 0.7rem; background: var(--bg-main); padding: 2px 6px; border-radius: 4px; color: var(--color-blue); margin-left: 5px; text-transform: uppercase;">
-                            ${u.role}
-                        </span>
+                        <strong>${u.name}</strong> <br>
+                        <small>${u.email}</small> 
+                        <span style="font-size: 0.7rem; background: var(--bg-main); padding: 2px 6px; border-radius: 4px; color: var(--color-blue); margin-left: 5px;">${u.role}</span>
                     </div>
-                    ${u.role !== "admin" ? `<button class="btn cancel" onclick="excluir(${u.id})" style="padding: 5px 10px;">🗑️</button>` : `<small style="color:var(--color-amber);">Admin</small>`}
+                    ${u.role !== "admin" ? `<button class="btn cancel" onclick="excluir(${u.id})">🗑️</button>` : `<small style="color:var(--color-amber);">Admin</small>`}
                 </div>
             `).join("");
-        } catch (err) {
-            list.innerHTML = `<p style="color:var(--color-red); text-align:center;">${err.message}</p>`;
-        }
+        } catch (err) { list.innerHTML = `<p style="color:var(--color-red); text-align:center;">${err.message}</p>`; }
     }
 
-    // ======== ADICIONAR USUÁRIO ========
     async function addUser() {
         const name = document.getElementById("name").value.trim();
         const email = document.getElementById("email").value.trim();
@@ -90,7 +82,6 @@
             msg.style.color = "var(--color-amber)";
             return;
         }
-
         try {
             const data = await api("/api/users", {
                 method: "POST",
@@ -98,26 +89,19 @@
             });
             if (!data.ok) throw new Error(data.error || "Erro ao adicionar.");
             msg.style.color = "var(--color-green)";
-            msg.textContent = "Usuário adicionado com sucesso! ✅";
-            ["name", "email", "senha"].forEach(id => document.getElementById(id).value = "");
+            msg.textContent = "Sucesso! ✅";
             carregarUsuarios();
-        } catch (err) {
-            msg.style.color = "var(--color-red)";
-            msg.textContent = "❌ " + err.message;
-        }
+        } catch (err) { msg.textContent = "❌ " + err.message; }
     }
 
-    // ======== EXCLUIR USUÁRIO ========
     async function excluir(id) {
         if (!confirm("Remover este funcionário?")) return;
         try {
-            const data = await api(`/api/users/${id}`, { method: "DELETE" });
-            if (!data.ok) throw new Error(data.error || "Erro ao excluir.");
+            await api(`/api/users/${id}`, { method: "DELETE" });
             carregarUsuarios();
-        } catch (err) { alert("Erro: " + err.message); }
+        } catch (err) { alert(err.message); }
     }
 
-    // ======== MENU E LOGOUT ========
     function toggleMenu(event) {
         if (event) event.stopPropagation();
         document.getElementById("menuDropdown").classList.toggle("show");
@@ -128,80 +112,111 @@
         window.location.href = "login.html";
     }
 
-<div class="status-plan-card" id="plano-card">
-  <div class="status-icon" id="plano-emoji">💎</div>
-  <div class="status-details">
-    <p class="status-label">Status da Assinatura</p>
-    <h4 id="plano-nome" style="margin:0;">Carregando...</h4>
-  </div>
-  <div class="status-timer">
-    <span id="plano-dias">--</span>
-    <small>dias restantes</small>
-  </div>
-</div>
-</script>
+    document.addEventListener("DOMContentLoaded", () => {
+        carregarUsuarios();
+        
+        // --- Lógica do Botão de Assinatura ---
+        if (user.role === "admin" || user.role === "master") {
+            const btn = document.getElementById("btn-assinatura");
+            if (btn) btn.style.display = "inline-block";
+        }
+
+        // --- Lógica do Card de Plano ---
+        if (user.trial_expires_at) {
+            const expiraEm = new Date(user.trial_expires_at);
+            const hoje = new Date();
+            const diffTempo = expiraEm - hoje;
+            const diffDias = Math.ceil(diffTempo / (1000 * 60 * 60 * 24));
+            
+            const pNome = document.getElementById("plano-nome");
+            const pDias = document.getElementById("plano-dias");
+            const pCard = document.getElementById("plano-card");
+            const pEmoji = document.getElementById("plano-emoji");
+
+            if (user.plano === 'trial') {
+                pNome.textContent = "Período de Teste";
+                pCard.style.borderLeftColor = "var(--color-amber)";
+                pEmoji.textContent = "⏳";
+            } else {
+                pNome.textContent = "Plano Profissional";
+                pCard.style.borderLeftColor = "var(--color-green)";
+                pEmoji.textContent = "💎";
+            }
+
+            pDias.textContent = diffDias > 0 ? diffDias : 0;
+            if (diffDias <= 3) {
+                pCard.style.borderLeftColor = "var(--color-red)";
+                pNome.style.color = "var(--color-red)";
+                if (diffDias <= 0) pNome.textContent = "Assinatura Expirada 🛑";
+            }
+        }
+    });
+
+    document.addEventListener("click", e => {
+        if (!e.target.closest(".menu-wrapper")) {
+            document.getElementById("menuDropdown").classList.remove("show");
+        }
+    });
+
+    window.toggleMenu = toggleMenu;
+    window.addUser = addUser;
+    window.excluir = excluir;
+    window.logout = logout;
+  </script>
 </head>
 
 <body>  
   <header class="main-header" style="display: flex; align-items: center; justify-content: space-between; padding: 10px 15px; background: #212529; min-height: 60px;">
-  
-  <div class="menu-wrapper" style="flex: 1; display: flex; justify-content: flex-start;">
-    <button class="menu-button" onclick="toggleMenu(event)" style="background:none; border:none; color:white; font-size: 24px; cursor: pointer;">⋮</button>
-    <div id="menuDropdown" class="menu-dropdown">
-      <div onclick="window.location.href='index.html'">📙 Voltar ao Cardápio</div>
-      <div onclick="window.location.href='meus-pedidos.html'">🧾 Meus pedidos</div>
-      <div onclick="window.location.href='relatorio.html'">📈 Relatório</div>
-      <div onclick="window.location.href='cozinha.html'">👨‍🍳 Cozinha</div>
-      <div onclick="window.location.href='configuracoes.html'">⚙️ Configurações</div>
-      <hr style="border: 0; border-top: 1px solid var(--border-color); margin: 5px 0;">
-      <div onclick="logout()" style="color: var(--color-red);">🚪 Sair do Sistema</div>
+    <div class="menu-wrapper" style="flex: 1; display: flex; justify-content: flex-start;">
+      <button class="menu-button" onclick="toggleMenu(event)">⋮</button>
+      <div id="menuDropdown" class="menu-dropdown">
+        <div onclick="window.location.href='index.html'">📙 Voltar ao Cardápio</div>
+        <div onclick="window.location.href='meus-pedidos.html'">🧾 Meus pedidos</div>
+        <div onclick="window.location.href='relatorio.html'">📈 Relatório</div>
+        <div onclick="window.location.href='cozinha.html'">👨‍🍳 Cozinha</div>
+        <div onclick="window.location.href='configuracoes.html'">⚙️ Configurações</div>
+        <hr style="border: 0; border-top: 1px solid var(--border-color); margin: 5px 0;">
+        <div onclick="logout()" style="color: var(--color-red);">🚪 Sair do Sistema</div>
+      </div>
     </div>
-  </div>
 
-  <div class="header-title" style="flex: 1; text-align: center; font-weight: bold; font-size: 1.1rem; white-space: nowrap;">
-    Gestão da Empresa 🏢
-  </div>
+    <div class="header-title" style="flex: 1; text-align: center; font-weight: bold; font-size: 1.1rem; white-space: nowrap;">
+      Gestão da Empresa 🏢
+    </div>
 
-  <div class="header-actions" style="flex: 1; display: flex; justify-content: flex-end;">
-      <button id="btn-assinatura" class="btn btn-purple" style="display: none; background: #845ef7; color: white; border: none; padding: 8px 12px; border-radius: 8px; font-weight: bold; cursor: pointer;" onclick="window.location.href='assinaturas.html'">
-        Assinatura 💎
-      </button>
-  </div>
-</header>
+    <div class="header-actions" style="flex: 1; display: flex; justify-content: flex-end;">
+        <button id="btn-assinatura" class="btn" style="display: none; background: #845ef7; color: white; border: none; padding: 8px 12px; border-radius: 8px; font-weight: bold; cursor: pointer;" onclick="window.location.href='assinaturas.html'">
+          Assinatura 💎
+        </button>
+    </div>
+  </header>
 
   <main style="padding: 10px;">
     <div class="status-plan-card" id="plano-card">
-  <div class="status-icon" id="plano-emoji">💎</div>
-  <div class="status-details">
-    <p class="status-label">Status da Assinatura</p>
-    <h4 id="plano-nome" style="margin:0;">Carregando...</h4>
-  </div>
-  <div class="status-timer">
-    <span id="plano-dias">--</span>
-    <small>dias restantes</small>
-  </div>
-</div>
+      <div class="status-icon" id="plano-emoji">💎</div>
+      <div class="status-details">
+        <p class="status-label">Status da Assinatura</p>
+        <h4 id="plano-nome" style="margin:0;">Carregando...</h4>
+      </div>
+      <div class="status-timer">
+        <span id="plano-dias">--</span>
+        <small>dias restantes</small>
+      </div>
+    </div>
+
     <div class="box">
-      
       <h3 style="color: var(--color-blue); margin-bottom: 20px; text-align: center;">➕ Cadastrar Funcionário</h3>
-      
       <div class="form-row" style="display: flex; flex-direction: column; gap: 10px;">
-        <input id="name" placeholder="Nome Completo" style="width: 100%;">
-        <select id="role" style="width: 100%; padding: 12px;">
+        <input id="name" placeholder="Nome Completo">
+        <select id="role" style="padding: 12px;">
             <option value="atendente">Atendente 🙋‍♂️</option>
             <option value="cozinha">Cozinha 👨‍🍳</option>
             <option value="admin">Admin 🔑</option>
         </select>
+        <input id="email" placeholder="E-mail" type="email">
+        <input id="senha" placeholder="Senha" type="password">
       </div>
-
-      <div class="form-row" style="display: flex; flex-direction: column; gap: 10px; margin-top: 10px;">
-        <input id="email" placeholder="E-mail de acesso" type="email" style="width: 100%;">
-        <input id="senha" placeholder="Senha" type="password" style="width: 100%;">
-      </div>
-
-      <button class="btn success" onclick="addUser()" style="width: 100%; margin-top: 20px; padding: 15px;">
-        Confirmar Cadastro
-      </button>
+      <button class="btn success" onclick="addUser()" style="width: 100%; margin-top: 20px; padding: 15px;">Confirmar Cadastro</button>
       <p id="msg" style="margin-top:10px; text-align: center; font-weight: bold;"></p>
     </div>
 
