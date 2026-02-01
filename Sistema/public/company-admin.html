@@ -18,12 +18,7 @@
       z-index: 100;
     }
     .menu-dropdown.show { display: block; }
-    .menu-dropdown div { padding: 10px 20px; cursor: pointer; border-bottom: 1px solid #333; }
-
-    header-title {
-      position: center;
-    }
-    
+    .menu-dropdown div { padding: 10px 20px; cursor: pointer; border-bottom: 1px solid #333; }    
   </style>
 
  <script type="module">
@@ -141,9 +136,10 @@
 </head>
 
 <body>  
-  <header class="main-header">
-  <div class="menu-wrapper">
-    <button class="menu-button" onclick="toggleMenu(event)">⋮</button>
+  <header class="main-header" style="display: flex; align-items: center; justify-content: space-between; padding: 10px 15px; background: #212529; min-height: 60px;">
+  
+  <div class="menu-wrapper" style="flex: 1; display: flex; justify-content: flex-start;">
+    <button class="menu-button" onclick="toggleMenu(event)" style="background:none; border:none; color:white; font-size: 24px; cursor: pointer;">⋮</button>
     <div id="menuDropdown" class="menu-dropdown">
       <div onclick="window.location.href='index.html'">📙 Voltar ao Cardápio</div>
       <div onclick="window.location.href='meus-pedidos.html'">🧾 Meus pedidos</div>
@@ -155,10 +151,12 @@
     </div>
   </div>
 
-  <div class="header-title">Gestão da Empresa 🏢</div>
+  <div class="header-title" style="flex: 1; text-align: center; font-weight: bold; font-size: 1.1rem; white-space: nowrap;">
+    Gestão da Empresa 🏢
+  </div>
 
-  <div class="header-actions">
-      <button id="btn-assinatura" class="btn btn-purple" style="display: none;" onclick="window.location.href='assinaturas.html'">
+  <div class="header-actions" style="flex: 1; display: flex; justify-content: flex-end;">
+      <button id="btn-assinatura" class="btn btn-purple" style="display: none; background: #845ef7; color: white; border: none; padding: 8px 12px; border-radius: 8px; font-weight: bold; cursor: pointer;" onclick="window.location.href='assinaturas.html'">
         Assinatura 💎
       </button>
   </div>
