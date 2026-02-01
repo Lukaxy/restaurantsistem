@@ -308,18 +308,27 @@
 
   <a href="javascript:history.back()" class="footer-link">← Voltar para o Sistema</a>
 
-  <div id="modal-pix" style="display:none; position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.8); z-index:999; align-items:center; justify-content:center;">
-    <div style="background:#1a1a1a; padding:30px; border-radius:12px; max-width:400px; text-align:center; border: 1px solid #339af0;">
-        <h3 style="color:white; margin-top:0;">Pagamento via PIX 💠</h3>
-        <p style="color:#ccc;">Escaneie o QR Code abaixo:</p>
+  <div id="modal-pix" class="modal" style="display:none; position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.8); z-index:2000; justify-content:center; align-items:center;">
+    <div class="box" style="max-width: 450px; text-align: center; padding: 30px; background:var(--bg-card); border-radius:16px;">
+        <h3 style="margin-bottom: 5px;">Finalizar Assinatura 🚀</h3>
+        <p style="font-size: 0.85rem; color: var(--text-secondary); margin-bottom: 20px;">Escaneie o QR Code abaixo no seu banco</p>
+
+        <div style="background: rgba(81, 207, 102, 0.1); padding: 15px; border-radius: 12px; margin-bottom: 20px;">
+            <small style="color: var(--text-secondary); text-transform: uppercase; font-size: 0.7rem;">Total a pagar</small>
+            <div id="pix-valor-display" style="font-size: 2.2rem; font-weight: bold; color: var(--color-green);">R$ 0,00</div>
+        </div>
+
+        <img id="qrcode-img" src="" style="width: 220px; background: white; padding: 10px; border-radius: 10px; margin: 0 auto 20px; display: block;">
         
-        <img id="img-qr" src="" style="width:200px; height:200px; border-radius:8px; margin-bottom:15px;">
-        
-        <p style="color:#ccc; font-size:0.9rem;">Ou copie o código:</p>
-        <textarea id="text-copy" readonly style="width:100%; height:60px; background:#0d0d0d; color:#fff; border:1px solid #333; border-radius:4px; font-size:0.8rem; padding:5px;"></textarea>
-        
-        <button onclick="copiarCodigo()" class="btn success" style="width:100%; margin-top:10px;">Copiar Código</button>
-        <button onclick="fecharModal()" class="btn cancel" style="width:100%; margin-top:10px;">Fechar</button>
+        <input type="text" id="pix-copia-cola" style="position: absolute; left: -9999px;">
+
+        <div style="margin-bottom: 20px;">
+            <p style="font-size: 0.8rem; margin-bottom: 5px;">Este QR Code expira em:</p>
+            <div id="pix-timer" style="font-size: 1.2rem; font-weight: bold; color: var(--color-red);">10:00</div>
+        </div>
+
+        <button class="btn-plan btn-primary" onclick="copiarCodigoPix()" style="width: 100%; margin-bottom: 10px;">📋 Copiar Código PIX</button>
+        <button class="btn-plan btn-outline" onclick="fecharModal()" style="width: 100%;">Voltar</button>
     </div>
 </div>
 
@@ -329,25 +338,27 @@
     const user = JSON.parse(localStorage.getItem("user") || "{}");
     if (!user || !user.company_id) window.location.href = "login.html";
 
-    // Função global para fechar
-    window.fecharModal = function() {
-        document.getElementById("modal-pix").style.display = "none";
-        // Recarrega para ver se o plano ativou (depois que implementarmos o webhook)
-        // location.reload(); 
-    }
+    let tempoRestante = 600;
+    let cronometroInterval;
 
-    // Função para copiar o código
-    window.copiarCodigo = function() {
-        const copyText = document.getElementById("text-copy");
-        copyText.select();
-        document.execCommand("copy");
-        alert("Código PIX copiado! ✅");
+    function iniciarCronometro() {
+        tempoRestante = 600;
+        clearInterval(cronometroInterval);
+        cronometroInterval = setInterval(() => {
+            const minutos = Math.floor(tempoRestante / 60);
+            const segundos = tempoRestante % 60;
+            document.getElementById("pix-timer").textContent = `${minutos}:${segundos < 10 ? '0' : ''}${segundos}`;
+            if (tempoRestante <= 0) {
+                clearInterval(cronometroInterval);
+                alert("O QR Code expirou.");
+                fecharModal();
+            }
+            tempoRestante--;
+        }, 1000);
     }
 
     async function gerarPagamento(dias, valor, btnElement) {
-        
-        const docInput = prompt("Digite o CPF do titular do pagamento (apenas números):");
-        
+        const docInput = prompt("Digite o CPF para o PIX (apenas números):");
         if (!docInput || docInput.length < 11) {
             alert("CPF inválido.");
             return;
@@ -360,11 +371,10 @@
         try {
             const data = await api("/api/pay/create", {
                 method: "POST",
-                headers: { "Content-Type": "application/json" },
                 body: JSON.stringify({
                     company_id: user.company_id,
                     email: user.email,
-                    name: user.name, // <--- ADICIONAMOS ISSO (Envia o nome do usuário logado)
+                    name: user.name,
                     valor: valor,
                     dias: dias,
                     docNumber: docInput
@@ -373,9 +383,13 @@
 
             if (!data.ok) throw new Error(data.error || "Erro ao gerar PIX");
 
-            document.getElementById("img-qr").src = `data:image/png;base64,${data.qr_code_base64}`;
-            document.getElementById("text-copy").value = data.qr_code;
+            // Preenche o modal com os dados da API
+            document.getElementById("pix-valor-display").textContent = `R$ ${valor.toFixed(2)}`;
+            document.getElementById("qrcode-img").src = `data:image/png;base64,${data.qr_code_base64}`;
+            document.getElementById("pix-copia-cola").value = data.qr_code;
+            
             document.getElementById("modal-pix").style.display = "flex";
+            iniciarCronometro();
 
         } catch (err) {
             alert("Erro: " + err.message);
@@ -385,8 +399,19 @@
         }
     }
 
+    window.copiarCodigoPix = function() {
+        const input = document.getElementById("pix-copia-cola");
+        input.select();
+        document.execCommand("copy");
+        alert("Código PIX copiado! ✅");
+    };
+
+    window.fecharModal = function() {
+        document.getElementById("modal-pix").style.display = "none";
+        clearInterval(cronometroInterval);
+    };
+
     window.gerarPagamento = gerarPagamento;
 </script>
-
 </body>
 </html>
