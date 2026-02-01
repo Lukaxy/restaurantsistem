@@ -127,26 +127,22 @@ header {
 .main-header {
     display: flex;
     align-items: center;
-    justify-content: space-between; /* Distribui os 3 blocos */
+    justify-content: space-between;
     padding: 10px 15px;
     background: #212529;
     min-height: 60px;
 }
 
 .header-title {
-    flex: 2; /* Ocupa 2 partes (mais espaço) para garantir o centro */
+    flex: 2; /* O meio ocupa o dobro, garantindo que o centro seja o título */
     text-align: center;
-    font-size: 1.2rem;
     font-weight: bold;
-    white-space: nowrap; /* Impede o título de quebrar linha */
+    white-space: nowrap;
 }
 
 /* --- Posicionamento do Menu (Três Pontinhos) --- */
-.menu-wrapper {
-    flex: 1; /* Ocupa 1 parte do espaço total na esquerda */
-    display: flex;
-    justify-content: flex-start;
-}
+.menu-wrapper { justify-content: flex-start; }
+.header-actions { justify-content: flex-end; }
 
 .menu-button {
     background: none;
@@ -177,9 +173,8 @@ header {
 
 /* Container que envolve os botões no topo */
 .header-actions {
-    flex: 1; /* Ocupa 1 parte na direita para equilibrar com o menu */
+    flex: 1; /* Ambos os lados ocupam 1 parte do espaço */
     display: flex;
-    justify-content: flex-end;
 }
 
 /* Ajuste do título para não ser esmagado */
