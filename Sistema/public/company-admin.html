@@ -116,13 +116,24 @@
         alert("Erro: " + err.message);
       }
     }
+/*menu*/
+  function abrirPainelEmpresa() {
+  const u = JSON.parse(localStorage.getItem("user") || "{}");
+  if (u.role === "admin" || u.role === "master") {
+    window.location.href = "company-admin.html";
+  } else {
+    alert("Apenas o administrador da empresa pode acessar este painel.");
+  }
+}
 
-// ======== LOGOUT ========
-    function logout() {
-      localStorage.clear();
-      window.location.href = "login.html";
-    }
+function toggleMenu() {
+  document.getElementById("menuDropdown").classList.toggle("show");
+}
 
+document.addEventListener("click", e => {
+  if (!e.target.closest(".menu-wrapper")) {
+    document.getElementById("menuDropdown").classList.remove("show");
+  }
     // ==== AQUI É O LUGAR CERTO! ====
     document.addEventListener("DOMContentLoaded", () => {
         // 1. Carrega a lista de funcionários
