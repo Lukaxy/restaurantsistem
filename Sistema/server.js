@@ -301,6 +301,28 @@ app.post("/api/users", (req, res) => {
 });
 
 // =============================================================
+// 🏢 ROTA PARA BUSCAR DADOS ÚNICOS DA EMPRESA (Plano e Validade)
+// =============================================================
+app.get("/api/companies/:id", (req, res) => {
+    const { id } = req.params;
+    
+    const sql = `SELECT plano, trial_expires_at, name FROM companies WHERE id = ?`;
+    
+    db.get(sql, [id], (err, row) => {
+        if (err) {
+            console.error("Erro ao buscar empresa:", err);
+            return res.status(500).json({ ok: false, error: "Erro interno no servidor" });
+        }
+        
+        if (!row) {
+            return res.status(404).json({ ok: false, error: "Empresa não encontrada" });
+        }
+        
+        res.json({ ok: true, company: row });
+    });
+});
+
+// =============================================================
 // 💰 ROTA PIX REAL (COM DADOS DO USUÁRIO CORRETOS)
 // =============================================================
 app.post("/api/pay/create", async (req, res) => {
