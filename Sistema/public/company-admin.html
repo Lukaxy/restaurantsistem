@@ -142,7 +142,44 @@
             document.getElementById("menuDropdown").classList.remove("show");
         }
     });
+   // Pega os dados que já estão salvos no navegador
+const user = JSON.parse(localStorage.getItem("user") || "{}");
 
+if (user.trial_expires_at) {
+    const expiraEm = new Date(user.trial_expires_at);
+    const hoje = new Date();
+    
+    // Cálculo de diferença em dias
+    const diffTempo = expiraEm - hoje;
+    const diffDias = Math.ceil(diffTempo / (1000 * 60 * 60 * 24));
+    
+    const planoNome = document.getElementById("plano-nome");
+    const planoDias = document.getElementById("plano-dias");
+    const planoCard = document.getElementById("plano-card");
+    const planoEmoji = document.getElementById("plano-emoji");
+
+    // Lógica visual: Se for Trial ou VIP
+    if (user.plano === 'trial') {
+        planoNome.textContent = "Período de Teste";
+        planoCard.style.borderLeftColor = "var(--color-amber)";
+        planoEmoji.textContent = "⏳";
+    } else {
+        planoNome.textContent = "Plano Profissional";
+        planoCard.style.borderLeftColor = "var(--color-green)";
+        planoEmoji.textContent = "💎";
+        document.querySelector('.status-timer span').style.color = "var(--color-green)";
+    }
+
+    // Exibe os dias (não deixa mostrar número negativo se vencer)
+    planoDias.textContent = diffDias > 0 ? diffDias : 0;
+
+    // Alerta se estiver acabando (menos de 3 dias)
+    if (diffDias <= 3) {
+        planoCard.style.borderLeftColor = "var(--color-red)";
+        planoNome.style.color = "var(--color-red)";
+        if (diffDias <= 0) planoNome.textContent = "Assinatura Expirada 🛑";
+    }
+}
     // Torna as funções globais para o HTML encontrar
     window.toggleMenu = toggleMenu;
     window.addUser = addUser;
