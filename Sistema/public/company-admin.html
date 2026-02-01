@@ -7,6 +7,20 @@
   
   <link rel="stylesheet" href="css/style.css">
 
+  <style>
+        .menu-dropdown {
+      display: none;
+      position: absolute;
+      background: #1e1e1e;
+      border: 1px solid var(--border-color);
+      right: 30px;
+      top: 60px;
+      z-index: 100;
+    }
+    .menu-dropdown.show { display: block; }
+    .menu-dropdown div { padding: 10px 20px; cursor: pointer; border-bottom: 1px solid #333; }
+  </style>
+
   <script type="module">
     import { api } from "./js/http.js";
 
