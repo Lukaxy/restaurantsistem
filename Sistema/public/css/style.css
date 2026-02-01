@@ -133,6 +133,40 @@ header {
     position: relative; /* Importante para o menu se localizar */
     min-height: 60px;
 }
+
+/* --- Posicionamento do Menu (Três Pontinhos) --- */
+.menu-wrapper {
+    position: relative;
+    z-index: 1100;
+}
+
+.menu-button {
+    background: none;
+    border: none;
+    color: white;
+    font-size: 28px;
+    cursor: pointer;
+    padding: 5px 10px;
+    line-height: 1;
+}
+
+.menu-dropdown {
+    display: none; /* Escondido por padrão */
+    position: absolute;
+    top: 100%;
+    left: 0;
+    background: var(--bg-card);
+    border: 1px solid var(--border-color);
+    border-radius: var(--radius);
+    min-width: 220px;
+    box-shadow: var(--shadow);
+    z-index: 1200;
+}
+
+.menu-dropdown.show {
+    display: block !important;
+}
+
 .header-title { 
     font-size: 1.1rem; 
     font-weight: bold;
