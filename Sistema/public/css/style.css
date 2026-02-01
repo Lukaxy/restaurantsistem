@@ -155,16 +155,39 @@ header {
 }
 
 .menu-dropdown {
-    display: none; /* Escondido por padrão */
+    display: none;
     position: absolute;
     top: 100%;
     left: 0;
     background: var(--bg-card);
     border: 1px solid var(--border-color);
     border-radius: var(--radius);
-    min-width: 220px;
+    min-width: 200px; /* Define um tamanho fixo para não esticar */
+    max-width: 250px;
     box-shadow: var(--shadow);
     z-index: 1200;
+    overflow: hidden; /* Garante que o hover respeite o arredondamento */
+}
+
+.menu-dropdown div {
+    padding: 12px 15px; /* Espaçamento interno mais equilibrado */
+    cursor: pointer;
+    border-bottom: 1px solid var(--border-color);
+    color: var(--text-primary);
+    font-size: 0.95rem; /* Fonte um pouco menor para ficar elegante */
+    transition: background 0.2s;
+    white-space: nowrap; /* Impede que o texto quebre linha */
+    text-align: left; /* Garante que o texto fique alinhado à esquerda */
+}
+
+/* Efeito de destaque ao passar o mouse */
+.menu-dropdown div:hover {
+    background-color: var(--color-blue);
+    color: white;
+}
+/* Remove a borda do último item para não ficar sobrando */
+.menu-dropdown div:last-child {
+    border-bottom: none;
 }
 
 .menu-dropdown.show {
