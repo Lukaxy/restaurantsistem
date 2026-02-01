@@ -13,7 +13,7 @@
       position: absolute;
       background: #1a1d21;
       border: 1px solid var(--border-color);
-      left: 15px; /* Ajustado para alinhar com o menu na esquerda */
+      left: 15px;
       top: 50px;
       z-index: 1100;
       min-width: 200px;
@@ -112,49 +112,75 @@
         window.location.href = "login.html";
     }
 
-    document.addEventListener("DOMContentLoaded", () => {
-        carregarUsuarios();
+    // Função para atualizar o Card
+    function renderizarCardPlano(userData) {
+        if (!userData.trial_expires_at) return;
+
+        const expiraEm = new Date(userData.trial_expires_at);
+        const hoje = new Date();
+        const diffTempo = expiraEm - hoje;
+        const diffDias = Math.ceil(diffTempo / (1000 * 60 * 60 * 24));
         
-        // --- Lógica do Botão de Assinatura ---
+        const pNome = document.getElementById("plano-nome");
+        const pDias = document.getElementById("plano-dias");
+        const pCard = document.getElementById("plano-card");
+        const pEmoji = document.getElementById("plano-emoji");
+
+        if (userData.plano === 'vitalicio' || diffDias > 5000) {
+            pNome.textContent = "Plano Vitalício 👑";
+            pDias.textContent = "∞";
+            pCard.style.borderLeftColor = "#fcc419";
+            pEmoji.textContent = "👑";
+            return;
+        }
+
+        if (userData.plano === 'trial') {
+            pNome.textContent = "Período de Teste";
+            pCard.style.borderLeftColor = "var(--color-amber)";
+            pEmoji.textContent = "⏳";
+        } else {
+            pNome.textContent = "Plano Profissional";
+            pCard.style.borderLeftColor = "var(--color-green)";
+            pEmoji.textContent = "💎";
+            pDias.style.color = "var(--color-green)";
+        }
+
+        pDias.textContent = diffDias > 0 ? diffDias : 0;
+        
+        if (diffDias <= 3 && userData.plano !== 'vitalicio') {
+            pCard.style.borderLeftColor = "var(--color-red)";
+            pNome.style.color = "var(--color-red)";
+            if (diffDias <= 0) pNome.textContent = "Assinatura Expirada 🛑";
+        }
+    }
+
+    document.addEventListener("DOMContentLoaded", async () => {
+        carregarUsuarios();
+
+        // BUSCA EM TEMPO REAL NO BANCO
+        try {
+            const res = await api(`/api/companies/${user.company_id}`); 
+            if (res.ok) {
+                const updatedUser = { ...user, ...res.company };
+                localStorage.setItem("user", JSON.stringify(updatedUser));
+                renderizarCardPlano(updatedUser);
+            } else {
+                renderizarCardPlano(user);
+            }
+        } catch (err) {
+            renderizarCardPlano(user);
+        }
+
         if (user.role === "admin" || user.role === "master") {
             const btn = document.getElementById("btn-assinatura");
             if (btn) btn.style.display = "inline-block";
-        }
-
-        // --- Lógica do Card de Plano ---
-        if (user.trial_expires_at) {
-            const expiraEm = new Date(user.trial_expires_at);
-            const hoje = new Date();
-            const diffTempo = expiraEm - hoje;
-            const diffDias = Math.ceil(diffTempo / (1000 * 60 * 60 * 24));
-            
-            const pNome = document.getElementById("plano-nome");
-            const pDias = document.getElementById("plano-dias");
-            const pCard = document.getElementById("plano-card");
-            const pEmoji = document.getElementById("plano-emoji");
-
-            if (user.plano === 'trial') {
-                pNome.textContent = "Período de Teste";
-                pCard.style.borderLeftColor = "var(--color-amber)";
-                pEmoji.textContent = "⏳";
-            } else {
-                pNome.textContent = "Plano Profissional";
-                pCard.style.borderLeftColor = "var(--color-green)";
-                pEmoji.textContent = "💎";
-            }
-
-            pDias.textContent = diffDias > 0 ? diffDias : 0;
-            if (diffDias <= 3) {
-                pCard.style.borderLeftColor = "var(--color-red)";
-                pNome.style.color = "var(--color-red)";
-                if (diffDias <= 0) pNome.textContent = "Assinatura Expirada 🛑";
-            }
         }
     });
 
     document.addEventListener("click", e => {
         if (!e.target.closest(".menu-wrapper")) {
-            document.getElementById("menuDropdown").classList.remove("show");
+            const dropdown = document.getElementById("menuDropdown");
+            if (dropdown) dropdown.classList.remove("show");
         }
     });
 
