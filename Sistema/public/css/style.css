@@ -167,13 +167,6 @@ header {
     display: block !important;
 }
 
-.header-title { 
-    font-size: 1.1rem; 
-    font-weight: bold;
-    flex-grow: 1;
-    text-align: center;
-}
-
 /* Container que envolve os botões no topo */
 .header-actions {
     display: flex;
