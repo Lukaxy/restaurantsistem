@@ -107,5 +107,16 @@
   });
 </script>
 
+<div id="confirmModal" class="modal" style="display:none; position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.8); z-index:9999; justify-content:center; align-items:center;">
+    <div class="box" style="max-width: 400px; text-align: center; padding: 30px;">
+        <h3>Excluir Produto? 🗑️</h3>
+        <p style="color: var(--text-secondary); margin: 15px 0;">Esta ação não pode ser desfeita. Deseja continuar?</p>
+        <div style="display: flex; gap: 10px; margin-top: 20px;">
+            <button id="confirmBtn" class="btn success" style="flex:1; background: var(--color-red);">Sim, Excluir</button>
+            <button onclick="fecharConfirm()" class="btn cancel" style="flex:1;">Cancelar</button>
+        </div>
+    </div>
+</div>  
+
 </body>
 </html>
