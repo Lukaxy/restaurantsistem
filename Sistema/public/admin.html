@@ -23,24 +23,6 @@
       background: var(--bg-main);
       color: var(--text-primary);
       margin: 0; padding: 0;
-      overflow-x: hidden;
-    }
-
-    /* --- ANIMAÇÕES --- */
-    @keyframes fadeInUp {
-      from { opacity: 0; transform: translateY(20px); }
-      to { opacity: 1; transform: translateY(0); }
-    }
-
-    @keyframes slideInRight {
-      from { opacity: 0; transform: translateX(100px); }
-      to { opacity: 1; transform: translateX(0); }
-    }
-
-    @keyframes pulseBlue {
-      0% { box-shadow: 0 0 0 0 rgba(51, 154, 240, 0.4); }
-      70% { box-shadow: 0 0 0 10px rgba(51, 154, 240, 0); }
-      100% { box-shadow: 0 0 0 0 rgba(51, 154, 240, 0); }
     }
 
     header {
@@ -50,272 +32,237 @@
       background: #1e1e1e;
       padding: 15px 20px;
       border-bottom: 2px solid var(--color-blue);
-      animation: fadeInUp 0.5s ease-out;
     }
 
-    main { padding: 20px; max-width: 1100px; margin: 0 auto; }
+    main { padding: 15px; max-width: 1100px; margin: 0 auto; }
+
+    /* --- AJUSTE MOBILE (FIX DE LAYOUT) --- */
+    @media (max-width: 600px) {
+      .form-row { flex-direction: column; }
+      input, select { width: 100% !important; min-width: unset !important; }
+      .box-empresa-header { flex-direction: column; gap: 10px; }
+      .actions-row { flex-wrap: wrap; justify-content: center; }
+      .btn.action { flex: 1; text-align: center; min-width: 80px; }
+    }
 
     .box {
       background: var(--bg-box);
       padding: 20px;
-      border-radius: 10px;
+      border-radius: 12px;
       border: 1px solid var(--border-color);
       margin-bottom: 20px;
-      transition: all 0.3s ease;
-    }
-
-    .box-empresa {
-      animation: fadeInUp 0.5s ease-out both;
-    }
-
-    .box-empresa:hover {
-      border-color: var(--color-blue);
-      transform: scale(1.01);
-      box-shadow: 0 5px 15px rgba(0,0,0,0.4);
+      transition: 0.3s;
     }
 
     .form-row { display: flex; gap: 10px; flex-wrap: wrap; margin-bottom: 15px; }
     
     input, select {
-      flex: 1; min-width: 200px;
-      padding: 12px;
-      border-radius: 6px;
+      flex: 1; padding: 12px;
+      border-radius: 8px;
       border: 1px solid var(--border-color);
       background: #2b2b2b;
       color: white;
-      outline: none;
-      transition: 0.3s;
     }
 
-    input:focus { border-color: var(--color-blue); }
-
     .btn {
-      border: none; padding: 10px 20px;
-      border-radius: 6px; cursor: pointer;
+      border: none; padding: 12px 20px;
+      border-radius: 8px; cursor: pointer;
       font-weight: bold; color: white; transition: 0.3s;
     }
     .btn.success { background: var(--color-green); width: 100%; }
-    .btn.success:hover { background: #40c057; transform: translateY(-2px); }
-    
     .btn.cancel { background: var(--color-red); }
-    .btn.cancel:hover { background: #fa5252; }
-
-    .btn.action { background: #444; font-size: 0.85rem; padding: 5px 10px; }
-    .btn.action:hover { background: var(--color-blue); color: #000; }
+    .btn.action { 
+        background: #2b2b2b; font-size: 0.85rem; padding: 8px 12px; 
+        display: flex; align-items: center; gap: 5px; border: 1px solid #444;
+    }
     
     .badge {
       font-size: 0.7rem; padding: 3px 8px;
-      border-radius: 4px; margin-left: 10px;
-      text-transform: uppercase;
-      font-weight: 800;
+      border-radius: 4px; text-transform: uppercase; font-weight: bold;
     }
     
-    .actions-row { margin-top: 10px; display: flex; gap: 8px; }
+    .actions-row { margin-top: 15px; display: flex; gap: 8px; }
 
-    /* --- TOAST --- */
-    #toast-container { position: fixed; top: 20px; right: 20px; z-index: 9999; }
-    .toast {
-      background: #1a1a1a; color: white; padding: 15px 25px; border-radius: 10px;
-      border-left: 4px solid var(--color-green); box-shadow: 0 10px 30px rgba(0,0,0,0.5);
-      margin-bottom: 10px; animation: slideInRight 0.4s ease-out forwards;
-    }
+    /* --- TOAST & MODAL ANIMATION --- */
+    @keyframes slideIn { from { transform: translateX(100%); opacity: 0; } to { transform: translateX(0); opacity: 1; } }
+    @keyframes popIn { from { transform: scale(0.9); opacity: 0; } to { transform: scale(1); opacity: 1; } }
   </style>
 
   <script type="module">
     import { api } from "./js/http.js";
 
-    // --- UTILITÁRIOS ---
-    function showToast(msg, color = 'var(--color-green)') {
-      const container = document.getElementById("toast-container");
-      const div = document.createElement("div");
-      div.className = "toast";
-      div.style.borderLeftColor = color;
-      div.innerHTML = msg;
-      container.appendChild(div);
-      setTimeout(() => div.remove(), 3000);
-    }
-
-    // --- PROTEÇÃO DE ACESSO ---
+    // --- VARIÁVEIS DE ESTADO ---
     const user = JSON.parse(localStorage.getItem("user") || "{}");
+    let empresaAlvoID = null;
+
+    // --- SEGURANÇA ---
     if (!user || user.role !== "master") {
       window.location.href = "admin-login.html";
     }
 
-    // --- CONTADOR ANIMADO ---
-    function animarNumero(id, valorFinal) {
-      const el = document.getElementById(id);
-      let valorAtual = 0;
-      const incremento = valorFinal / 30;
-      const timer = setInterval(() => {
-        valorAtual += incremento;
-        if (valorAtual >= valorFinal) {
-          el.textContent = valorFinal;
-          clearInterval(timer);
-        } else {
-          el.textContent = Math.floor(valorAtual);
-        }
-      }, 30);
+    // --- FUNÇÕES DE INTERFACE (SUBSTITUINDO ALERTS) ---
+    function showToast(msg, tipo = 'sucesso') {
+      let container = document.getElementById("toast-container");
+      if (!container) {
+        container = document.createElement("div");
+        container.id = "toast-container";
+        container.style.cssText = "position:fixed; top:20px; right:20px; z-index:10000;";
+        document.body.appendChild(container);
+      }
+      const toast = document.createElement("div");
+      toast.style.cssText = `background:#1a1a1a; color:white; padding:15px 25px; border-radius:10px; border-left:4px solid ${tipo === 'sucesso' ? '#51cf66' : '#ff6b6b'}; box-shadow:0 10px 30px rgba(0,0,0,0.5); margin-bottom:10px; animation:slideIn 0.4s ease forwards;`;
+      toast.innerHTML = msg;
+      container.appendChild(toast);
+      setTimeout(() => toast.remove(), 3000);
     }
 
-    // --- CARREGAR EMPRESAS ---
+    // --- CARREGAR DADOS ---
     async function carregarEmpresas() {
       const list = document.getElementById("empresas-list");
       try {
         const data = await api("/api/empresas");
-        if (!data.ok) throw new Error(data.error);
-
-        animarNumero("total-count", data.empresas.length);
+        document.getElementById("total-count").textContent = data.empresas.length;
         
-        list.innerHTML = data.empresas.map((e, index) => {
-          const hoje = new Date();
-          const expira = new Date(e.trial_expires_at || e.data_vencimento || hoje); 
-          const isExpirado = expira < hoje;
-          const isVip = e.plano === 'vitalicio';
-          
-          let statusLabel = isVip ? "💎 VIP" : isExpirado ? "🛑 VENCIDO" : (e.plano === 'trial' ? "🟡 TESTE" : "🟢 ATIVO");
-          let statusColor = isVip ? "var(--color-blue)" : isExpirado ? "var(--color-red)" : (e.plano === 'trial' ? "var(--color-amber)" : "var(--color-green)");
-
-          const safeName = (e.name || "").replace(/'/g, ""); 
-          const safeEmail = (e.email_admin || "").replace(/'/g, "");
-          const safePlano = e.plano || "trial";
-          const safeDate = e.trial_expires_at || new Date().toISOString();
+        list.innerHTML = data.empresas.map(e => {
+          const expira = new Date(e.trial_expires_at || e.data_vencimento || new Date()); 
+          const isExpirado = expira < new Date();
+          const statusColor = e.plano === 'vitalicio' ? "var(--color-blue)" : isExpirado ? "var(--color-red)" : "var(--color-green)";
 
           return `
-            <div class="box box-empresa" style="border-left: 5px solid ${statusColor}; animation-delay: ${index * 0.1}s">
-              <div style="display: flex; justify-content: space-between; align-items: flex-start;">
-                <div style="flex: 2;">
+            <div class="box" style="border-left: 5px solid ${statusColor}">
+              <div class="box-empresa-header" style="display: flex; justify-content: space-between; align-items: flex-start;">
+                <div style="flex: 1;">
                   <strong style="font-size: 1.1em">${e.name}</strong> 
-                  <span class="badge" style="background:${statusColor}; color: #000;">${statusLabel}</span>
-                  <div style="margin-top: 5px; color: var(--text-secondary); font-size: 0.9em;">
+                  <span class="badge" style="background:${statusColor}; color: #000;">${e.plano}</span>
+                  <div style="margin-top: 8px; color: var(--text-secondary); font-size: 0.85em; line-height: 1.5;">
                     📧 ${e.email_admin} <br>
-                    📱 ${e.whatsapp || 'Sem Whats'} <br>
+                    📱 ${e.whatsapp || '---'} <br>
                     📅 Validade: <strong>${expira.toLocaleDateString()}</strong>
-                  </div>
-                  <div class="actions-row">
-                    <button class="btn action" onclick="window.logarComo(${e.id}, '${safeName}', '${safeEmail}', '${safePlano}', '${safeDate}')">🔑 Entrar</button>
-                    <button class="btn action" onclick="window.adicionarDias(${e.id})">📅 + Dias</button>
-                    <a href="https://wa.me/55${(e.whatsapp || '').replace(/\D/g,'')}?text=Oi, seu plano venceu!" target="_blank" class="btn action" style="text-decoration:none; background: #25D366;">💬 Zap</a>
                   </div>
                 </div>
                 <div style="text-align: right;">
-                  <select onchange="window.alterarPlano(${e.id}, this.value)" style="width: auto; padding: 5px; margin-bottom: 5px;">
-                    <option value="trial" ${e.plano === 'trial' ? 'selected' : ''}>Teste Grátis</option>
-                    <option value="basic" ${e.plano === 'basic' ? 'selected' : ''}>Mensal (Pago)</option>
-                    <option value="vitalicio" ${e.plano === 'vitalicio' ? 'selected' : ''}>Vitalício</option>
-                  </select>
-                  <br>
-                  <button class="btn cancel" onclick="window.excluirEmpresa(${e.id})" style="padding: 5px 10px; font-size: 0.8rem;">🗑️ Excluir</button>
+                    <select onchange="window.alterarPlano(${e.id}, this.value)" style="padding: 5px; font-size: 0.8rem; width: auto;">
+                        <option value="trial" ${e.plano === 'trial' ? 'selected' : ''}>Teste</option>
+                        <option value="basic" ${e.plano === 'basic' ? 'selected' : ''}>Pago</option>
+                        <option value="vitalicio" ${e.plano === 'vitalicio' ? 'selected' : ''}>VIP</option>
+                    </select>
                 </div>
+              </div>
+              <div class="actions-row">
+                <button class="btn action" onclick="window.logarComo(${e.id}, '${e.name}')">🔑 Entrar</button>
+                <button class="btn action" onclick="window.abrirModalDias(${e.id})">📅 + Dias</button>
+                <button class="btn action cancel" onclick="window.abrirModalExcluir(${e.id})" style="padding: 8px 10px;">🗑️</button>
               </div>
             </div>
           `;
         }).join("");
-      } catch (err) { console.error(err); showToast("Erro ao carregar lista", "var(--color-red)"); }
+      } catch (err) { showToast("Erro ao carregar dados", "erro"); }
     }
 
-    // --- FUNÇÕES GLOBAIS ---
+    // --- MODAIS CUSTOMIZADOS (SEM PROMPTS) ---
+    window.abrirModalDias = (id) => {
+        empresaAlvoID = id;
+        document.getElementById('modalDias').style.display = 'flex';
+    };
+
+    window.abrirModalExcluir = (id) => {
+        empresaAlvoID = id;
+        document.getElementById('modalExcluir').style.display = 'flex';
+    };
+
+    window.adicionarDias = async () => {
+        const dias = document.getElementById('inputDias').value;
+        if (!dias) return;
+        const res = await api(`/api/empresas/${empresaAlvoID}/add-days`, { method: "POST", body: JSON.stringify({ dias: parseInt(dias) }) });
+        if (res.ok) {
+            showToast("Dias adicionados! 📅");
+            carregarEmpresas();
+            document.getElementById('modalDias').style.display = 'none';
+        }
+    };
+
+    window.excluirEmpresa = async () => {
+        const res = await api(`/api/empresas/${empresaAlvoID}`, { method: "DELETE" });
+        if (res.ok) {
+            showToast("Empresa removida! 🗑️");
+            carregarEmpresas();
+            document.getElementById('modalExcluir').style.display = 'none';
+        }
+    };
+
+    window.logarComo = (id, nome) => {
+        const godUser = { ...user, company_id: id, name: "👑 Master: " + nome, role: "admin" };
+        localStorage.setItem("user", JSON.stringify(godUser));
+        window.open("company-admin.html", "_blank");
+    };
+
     window.criarEmpresa = async () => {
-      const body = {
-        name: document.getElementById("nome").value,
-        email: document.getElementById("email").value,
-        whatsapp: document.getElementById("whatsapp").value, 
-        senha: document.getElementById("senha").value
-      };
-      
-      if(!body.name || !body.whatsapp) return showToast("Preencha Nome e Whats!", "var(--color-red)");
-
-      const res = await api("/api/register-company", { method: "POST", body: JSON.stringify(body) });
-      if(res.ok) { 
-          showToast("Empresa Ativada com Sucesso! 🚀"); 
-          carregarEmpresas(); 
-          document.querySelectorAll("input").forEach(i => i.value = "");
-      }
-    };
-
-    window.logarComo = (id, nome, email, plano, trial_expires_at) => {
-        document.getElementById('modal-title').innerText = nome;
-        document.getElementById('customModal').style.display = 'flex';
-        
-        window.confirmarAcesso = () => {
-          const godModeUser = {
-              id: 999999, company_id: id,
-              name: "👑 Master: " + nome, email: email, role: "admin", plano: plano,
-              trial_expires_at: trial_expires_at 
-          };
-          localStorage.setItem("user", JSON.stringify(godModeUser));
-          window.open("company-admin.html", "_blank");
-          document.getElementById('customModal').style.display = 'none';
-        }
-    };
-
-    window.adicionarDias = async (id) => {
-        const dias = prompt("Quantos dias extras para este cliente?");
-        if (dias && !isNaN(dias)) {
-            const res = await api(`/api/empresas/${id}/add-days`, { 
-                method: "POST", body: JSON.stringify({ dias: parseInt(dias) }) 
-            });
-            if (res.ok) { showToast("Calendário atualizado! 📅"); carregarEmpresas(); }
-        }
+        const body = { 
+            name: document.getElementById("nome").value, 
+            email: document.getElementById("email").value, 
+            whatsapp: document.getElementById("whatsapp").value, 
+            senha: document.getElementById("senha").value 
+        };
+        const res = await api("/api/register-company", { method: "POST", body: JSON.stringify(body) });
+        if(res.ok) { showToast("Cliente Ativado! 🚀"); carregarEmpresas(); }
     };
 
     window.alterarPlano = async (id, plano) => {
-      const res = await api(`/api/empresas/${id}/plano`, { method: "POST", body: JSON.stringify({ plano }) });
-      if(res.ok) { showToast("Plano Alterado!"); carregarEmpresas(); }
-    };
-
-    window.excluirEmpresa = async (id) => {
-      if(confirm("⚠️ EXCLUIR DEFINITIVAMENTE?")) {
-        await api(`/api/empresas/${id}`, { method: "DELETE" });
-        showToast("Empresa removida do Império.", "var(--color-red)");
+        await api(`/api/empresas/${id}/plano`, { method: "POST", body: JSON.stringify({ plano }) });
+        showToast("Plano atualizado!");
         carregarEmpresas();
-      }
     };
 
-    window.logout = () => { localStorage.clear(); window.location.href="admin-login.html"; };
     document.addEventListener("DOMContentLoaded", carregarEmpresas);
   </script>
 </head>
 <body>
-  <div id="toast-container"></div>
-
   <header>
-    <div style="font-size: 1.5rem;">👑 <strong>Painel Master</strong></div>
-    <button class="btn cancel" onclick="logout()">Sair</button>
+    <div style="font-size: 1.2rem;">👑 <strong>Painel Master</strong></div>
+    <button class="btn cancel" onclick="localStorage.clear(); window.location.href='login.html'" style="padding: 8px 15px;">Sair</button>
   </header>
 
   <main>
-    <div class="box" style="text-align: center; animation: pulseBlue 2s infinite;">
-      <small style="color: var(--text-secondary)">Total de Clientes no Império</small>
-      <h2 id="total-count" style="margin: 5px 0; font-size: 3rem; color: var(--color-blue);">0</h2>
+    <div class="box" style="text-align: center;">
+      <small style="color: var(--text-secondary)">Clientes no Império</small>
+      <h2 id="total-count" style="margin: 5px 0; font-size: 2.2rem; color: var(--color-blue);">0</h2>
     </div>
 
-    <section class="box" style="border-top: 3px solid var(--color-green);">
-      <h3 style="color: var(--color-green)">Ativar Novo Cliente 🏢</h3>
+    <section class="box">
+      <h3 style="color: var(--color-green); margin-top: 0;">Ativar Novo Cliente 🚀</h3>
       <div class="form-row">
         <input id="nome" placeholder="Nome do Restaurante">
+        <input id="whatsapp" placeholder="WhatsApp" type="tel">
         <input id="email" placeholder="E-mail de Login">
-        <input id="whatsapp" placeholder="WhatsApp (ex: 11999999999)" type="tel"> 
         <input id="senha" placeholder="Senha" type="password">
       </div>
-      <button class="btn success" onclick="criarEmpresa()">Ativar Agora 🚀</button>
+      <button class="btn success" onclick="criarEmpresa()">Ativar Agora</button>
     </section>
 
-    <h2 style="margin: 30px 0 15px 0; display: flex; align-items: center; gap: 10px;">
-       Gestão de Empresas <span style="font-size: 0.8rem; background: #333; padding: 5px 10px; border-radius: 20px; color: var(--text-secondary);">Monitoramento em Tempo Real</span>
-    </h2>
     <div id="empresas-list"></div>
   </main>
 
-  <div id="customModal" style="display:none; position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.9); z-index:10000; justify-content:center; align-items:center; backdrop-filter: blur(5px);">
-      <div class="box" style="width: 320px; text-align: center; border: 2px solid var(--color-blue);">
-          <h3 style="margin-top:0;">Acessar Painel?</h3>
-          <p id="modal-title" style="color: var(--color-blue); font-weight: bold;"></p>
-          <p style="font-size: 0.8rem; color: var(--text-secondary);">Você entrará como administrador desta empresa.</p>
-          <div style="display: flex; gap: 10px; margin-top: 20px;">
-              <button onclick="window.confirmarAcesso()" class="btn success" style="flex:1;">Sim, Entrar</button>
-              <button onclick="document.getElementById('customModal').style.display='none'" class="btn action" style="flex:1;">Cancelar</button>
+  <div id="modalDias" style="display:none; position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.85); z-index:10000; justify-content:center; align-items:center; backdrop-filter:blur(5px);">
+      <div class="box" style="width: 300px; text-align: center; animation: popIn 0.3s ease;">
+          <h3>Adicionar Dias 📅</h3>
+          <input type="number" id="inputDias" placeholder="Ex: 30" style="width: 100%; margin-bottom: 15px; text-align: center; font-size: 1.2rem;">
+          <div style="display: flex; gap: 10px;">
+              <button onclick="adicionarDias()" class="btn success" style="flex:1;">Salvar</button>
+              <button onclick="document.getElementById('modalDias').style.display='none'" class="btn cancel" style="flex:1;">Voltar</button>
           </div>
       </div>
   </div>
+
+  <div id="modalExcluir" style="display:none; position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.85); z-index:10000; justify-content:center; align-items:center; backdrop-filter:blur(5px);">
+      <div class="box" style="width: 300px; text-align: center; border: 2px solid var(--color-red); animation: popIn 0.3s ease;">
+          <h3 style="color: var(--color-red);">CUIDADO! ⚠️</h3>
+          <p>Deseja realmente excluir este cliente permanentemente?</p>
+          <div style="display: flex; gap: 10px;">
+              <button onclick="excluirEmpresa()" class="btn success" style="background: var(--color-red); flex:1;">EXCLUIR</button>
+              <button onclick="document.getElementById('modalExcluir').style.display='none'" class="btn cancel" style="background:#444; flex:1;">CANCELAR</button>
+          </div>
+      </div>
+  </div>
+
 </body>
 </html>
