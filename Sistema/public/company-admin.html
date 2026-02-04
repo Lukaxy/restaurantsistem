@@ -77,16 +77,24 @@
     `;
     document.head.appendChild(animStyle);
 
-    // --- LÓGICA DO SISTEMA ---
+    // --- SEGURANÇA INICIAL ---
     const user = JSON.parse(localStorage.getItem("user") || "{}");
-    let idUsuarioParaExcluir = null;
-
+    
     if (!user || !user.role || user.role !== "admin") {
-        window.location.href = "login.html";
+        document.addEventListener("DOMContentLoaded", () => {
+            showToast("🚫 Acesso negado! Área restrita ao Chef.", "erro");
+            setTimeout(() => {
+                window.location.href = "index.html";
+            }, 2500);
+        });
     }
 
+    let idUsuarioParaExcluir = null;
+
+    // --- LISTAR USUÁRIOS ---
     async function carregarUsuarios() {
         const list = document.getElementById("users-list");
+        if(!list) return;
         list.innerHTML = "<p style='text-align:center;'>Buscando equipe...</p>";
         try {
             const data = await api(`/api/users?company_id=${user.company_id}`);
@@ -106,6 +114,7 @@
         }
     }
 
+    // --- ADICIONAR USUÁRIO ---
     async function addUser() {
         const name = document.getElementById("name").value.trim();
         const email = document.getElementById("email").value.trim();
@@ -133,7 +142,7 @@
         }
     }
 
-    // Função de Exclusão com Modal
+    // --- MODAL DE EXCLUSÃO ---
     window.prepararExclusao = (id) => {
         idUsuarioParaExcluir = id;
         document.getElementById('confirmModal').style.display = 'flex';
@@ -144,8 +153,9 @@
         idUsuarioParaExcluir = null;
     };
 
+    // --- CARD DE PLANO ---
     function renderizarCardPlano(userData) {
-        if (!userData.trial_expires_at) return;
+        if (!userData || !userData.trial_expires_at) return;
 
         const expiraEm = new Date(userData.trial_expires_at);
         const hoje = new Date();
@@ -170,34 +180,35 @@
         pCard.style.borderLeftColor = diffDias <= 3 ? "var(--color-red)" : (userData.plano === 'trial' ? "var(--color-amber)" : "var(--color-green)");
     }
 
+    // --- INICIALIZAÇÃO ---
     document.addEventListener("DOMContentLoaded", async () => {
-        carregarUsuarios();
-        renderizarCardPlano(user);
+        if (user.role === "admin") {
+            carregarUsuarios();
+            renderizarCardPlano(user);
 
-        // Busca atualização do plano no servidor
-        try {
-            const res = await api(`/api/companies/${user.company_id}`); 
-            if (res.ok) {
-                const updatedUser = { ...user, ...res.company };
-                localStorage.setItem("user", JSON.stringify(updatedUser));
-                renderizarCardPlano(updatedUser);
-            }
-        } catch (err) { console.log("Erro ao atualizar card"); }
-
-        // Configura botão do Modal
-        document.getElementById('confirmBtn').onclick = async () => {
-            if (!idUsuarioParaExcluir) return;
             try {
-                await api(`/api/users/${idUsuarioParaExcluir}`, { method: "DELETE" });
-                showToast("Funcionário removido! 🗑️");
-                fecharConfirm();
-                carregarUsuarios();
-            } catch (err) { showToast(err.message, "erro"); }
-        };
+                const res = await api(`/api/companies/${user.company_id}`); 
+                if (res.ok) {
+                    const updatedUser = { ...user, ...res.company };
+                    localStorage.setItem("user", JSON.stringify(updatedUser));
+                    renderizarCardPlano(updatedUser);
+                }
+            } catch (err) { console.log("Erro ao atualizar card"); }
 
-        if (user.role === "admin" || user.role === "master") {
+            document.getElementById('confirmBtn').onclick = async () => {
+                if (!idUsuarioParaExcluir) return;
+                try {
+                    await api(`/api/users/${idUsuarioParaExcluir}`, { method: "DELETE" });
+                    showToast("Funcionário removido! 🗑️");
+                    fecharConfirm();
+                    carregarUsuarios();
+                } catch (err) { showToast(err.message, "erro"); }
+            };
+
             const btn = document.getElementById("btn-assinatura");
-            if (btn) btn.style.display = "inline-block";
+            if (btn && (user.role === "admin" || user.role === "master")) {
+                btn.style.display = "inline-block";
+            }
         }
     });
 
