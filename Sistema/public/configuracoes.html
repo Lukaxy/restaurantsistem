@@ -8,15 +8,51 @@
   <link rel="stylesheet" href="css/style.css" />
 
   <script>
+    // === SEGURANÇA COM TOAST PERSONALIZADO ===
     (function () {
-      try {
-        const user = JSON.parse(localStorage.getItem("user"));
-        if (!user || user.role !== "admin") {
-          alert("Apenas o administrador pode acessar este painel.");
-          window.location.replace("index.html");
-        }
-      } catch {
-        window.location.replace("index.html");
+      const user = JSON.parse(localStorage.getItem("user") || "null");
+      
+      if (!user || user.role !== "admin") {
+        // Cria o visual do erro na hora
+        document.addEventListener("DOMContentLoaded", () => {
+          // Injeta o CSS das animações se não existirem
+          const style = document.createElement('style');
+          style.innerHTML = `
+            @keyframes slideIn { from { transform: translateX(100%); opacity: 0; } to { transform: translateX(0); opacity: 1; } }
+            @keyframes fadeOut { from { opacity: 1; } to { opacity: 0; transform: translateY(-20px); } }
+          `;
+          document.head.appendChild(style);
+
+          // Mostra o Toast de Barrado
+          let container = document.getElementById('toast-container');
+          if (!container) {
+            container = document.createElement('div');
+            container.id = 'toast-container';
+            container.style.cssText = "position:fixed; top:20px; right:20px; z-index:10000;";
+            document.body.appendChild(container);
+          }
+
+          const toast = document.createElement('div');
+          toast.style.cssText = `
+            background: #1a1a1a; color: white; padding: 20px; border-radius: 12px; 
+            border-left: 5px solid #ff6b6b; box-shadow: 0 10px 30px rgba(0,0,0,0.5);
+            display: flex; align-items: center; gap: 15px; font-family: 'Poppins', sans-serif;
+            animation: slideIn 0.5s ease forwards;
+          `;
+          toast.innerHTML = `
+            <span style="font-size: 1.5rem;">🚫</span> 
+            <div>
+                <strong style="display:block;">Acesso Negado!</strong>
+                <small>Área exclusiva para Admins. Voltando...</small>
+            </div>
+          `;
+          container.appendChild(toast);
+
+          // Expulsa o intruso após 2.5 segundos
+          setTimeout(() => {
+            window.location.replace("index.html");
+          }, 2500);
+        });
       }
     })();
   </script>
@@ -40,21 +76,19 @@
   <div class="header-title">Configurações do Cardápio ⚙️</div>
 </header>
 
-  <style>   
-    .menu-dropdown {
-      display: none;
-      position: absolute;
-      background: #1a1d21;
-      border: 1px solid var(--border-color);
-      right: 30px;
-      top: 60px;
-      z-index: 100;
-    }
-    .menu-dropdown.show { display: block; }
-    .menu-dropdown div { padding: 10px 20px; cursor: pointer; border-bottom: 1px solid #333;
-    }
-    
-  </style>
+<style>   
+  .menu-dropdown {
+    display: none;
+    position: absolute;
+    background: #1a1d21;
+    border: 1px solid var(--border-color);
+    right: 30px;
+    top: 60px;
+    z-index: 100;
+  }
+  .menu-dropdown.show { display: block; }
+  .menu-dropdown div { padding: 10px 20px; cursor: pointer; border-bottom: 1px solid #333; }
+</style>
 
 <main>
   <div class="box">
@@ -85,7 +119,32 @@
 <script src="js/configuracoes.js"></script>
 
 <script>
-  // Funções de Interface
+  // === NOTIFICAÇÕES (TOAST) GLOBAIS ===
+  function showToast(mensagem, tipo = 'sucesso') {
+      let container = document.getElementById('toast-container');
+      if (!container) {
+          container = document.createElement('div');
+          container.id = 'toast-container';
+          container.style.cssText = "position:fixed; top:20px; right:20px; z-index:10000;";
+          document.body.appendChild(container);
+      }
+      const toast = document.createElement('div');
+      toast.style.cssText = `
+          background: #1a1a1a; color: white; padding: 15px 25px; border-radius: 10px; 
+          border-left: 4px solid ${tipo === 'sucesso' ? '#51cf66' : '#ff6b6b'};
+          box-shadow: 0 10px 30px rgba(0,0,0,0.5); margin-bottom: 10px;
+          display: flex; align-items: center; gap: 10px; font-family: 'Poppins', sans-serif;
+          animation: slideIn 0.5s ease forwards;
+      `;
+      toast.innerHTML = `<span>${tipo === 'sucesso' ? '✅' : '❌'}</span> <span>${mensagem}</span>`;
+      container.appendChild(toast);
+      setTimeout(() => {
+          toast.style.animation = "fadeOut 0.5s ease forwards";
+          setTimeout(() => toast.remove(), 500);
+      }, 3000);
+  }
+
+  // Interface
   function toggleMenu() {
     document.getElementById('menuDropdown').classList.toggle('show');
   }
@@ -95,7 +154,7 @@
     if (user.role === 'admin') {
       window.location.href = 'company-admin.html';
     } else {
-      alert('Apenas o administrador pode acessar este painel.');
+      showToast('Apenas administradores podem acessar!', 'erro');
     }
   }
 
