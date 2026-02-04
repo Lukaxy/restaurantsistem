@@ -329,3 +329,29 @@ main {
   50% { transform: scale(1.02); opacity: 0.8; }
   100% { transform: scale(1); opacity: 1; }
 }
+
+#toast-container {
+    position: fixed;
+    top: 20px;
+    right: 20px;
+    z-index: 10000;
+}
+
+.toast {
+    background: #1a1a1a;
+    color: white;
+    padding: 16px 24px;
+    border-radius: 12px;
+    border-left: 4px solid #51cf66;
+    box-shadow: 0 10px 30px rgba(0,0,0,0.5);
+    margin-bottom: 10px;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    animation: slideIn 0.5s ease forwards;
+}
+
+@keyframes slideIn {
+    from { transform: translateX(100%); opacity: 0; }
+    to { transform: translateX(0); opacity: 1; }
+}
