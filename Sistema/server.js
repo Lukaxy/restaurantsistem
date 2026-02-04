@@ -4,7 +4,7 @@ const cors = require("cors");
 const path = require("path");
 const bcrypt = require("bcryptjs");
 const { MercadoPagoConfig, Payment } = require('mercadopago');
-const { createClient } = require("@libsql/client/web");
+const { createClient } = require("@libsql/client/http");
 // =============================================================
 // 🔧 CONFIGURAÇÕES
 // =============================================================
