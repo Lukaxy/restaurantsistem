@@ -77,16 +77,6 @@
   function toggleMenu() {
     document.getElementById("menuDropdown").classList.toggle("show");
   }
-  
-  function abrirPainelEmpresa() {
-    // Reutiliza a função do auth.js ou lê direto
-    const u = JSON.parse(localStorage.getItem("user") || "{}");
-    if (u.role === "admin" || u.role === "master") {
-      window.location.href = "company-admin.html";
-    } else {
-      alert("Acesso negado.");
-    }
-  }
 
   // Fecha menu ao clicar fora
   document.addEventListener("click", e => {
@@ -117,6 +107,7 @@
 
 </body>
 </html>
+
 
 
 
