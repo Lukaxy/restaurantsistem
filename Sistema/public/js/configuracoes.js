@@ -1,3 +1,47 @@
+function showToast(mensagem, tipo = 'sucesso') {
+    let container = document.getElementById('toast-container');
+    if (!container) {
+        container = document.createElement('div');
+        container.id = 'toast-container';
+        // Adicionando o estilo básico via JS para garantir que funcione
+        container.style.cssText = "position:fixed; top:20px; right:20px; z-index:9999;";
+        document.body.appendChild(container);
+    }
+
+    const toast = document.createElement('div');
+    // Estilização baseada no seu sistema Dark
+    toast.style.cssText = `
+        background: #1a1a1a; 
+        color: white; 
+        padding: 15px 25px; 
+        border-radius: 10px; 
+        border-left: 4px solid ${tipo === 'sucesso' ? '#51cf66' : '#ff6b6b'};
+        box-shadow: 0 10px 30px rgba(0,0,0,0.5);
+        margin-bottom: 10px;
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        font-family: 'Poppins', sans-serif;
+        animation: slideIn 0.5s ease forwards;
+    `;
+
+    toast.innerHTML = `<span>${tipo === 'sucesso' ? '✅' : '❌'}</span> <span>${mensagem}</span>`;
+    container.appendChild(toast);
+
+    // Remove automaticamente
+    setTimeout(() => {
+        toast.style.animation = "fadeOut 0.5s ease forwards";
+        setTimeout(() => toast.remove(), 500);
+    }, 3000);
+}
+
+// Estilos de animação injetados no head
+const style = document.createElement('style');
+style.innerHTML = `
+    @keyframes slideIn { from { transform: translateX(100%); opacity: 0; } to { transform: translateX(0); opacity: 1; } }
+    @keyframes fadeOut { from { opacity: 1; } to { opacity: 0; transform: translateY(-20px); } }
+`;
+document.head.appendChild(style);
 // ==================== VARIÁVEIS GLOBAIS ====================
 let user = null;
 const list = document.getElementById('productList');
@@ -85,7 +129,7 @@ window.addProduct = async function() {
         document.getElementById('newDescription').value = '';
 
         await carregarProdutos();
-        alert('✅ Produto cadastrado com sucesso!');
+        showToast('Produto cadastrado com sucesso! 🚀');
 
     } catch (err) {
         console.error(err);
