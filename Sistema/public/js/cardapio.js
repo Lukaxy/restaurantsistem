@@ -1,6 +1,69 @@
 let menu = [];
 const cart = [];
 
+// ==================== FUNÇÕES DE INTERFACE (TOAST & ANIMAÇÃO) ====================
+
+function showToast(mensagem, tipo = 'sucesso') {
+    let container = document.getElementById('toast-container');
+    if (!container) {
+        container = document.createElement('div');
+        container.id = 'toast-container';
+        container.style.cssText = "position:fixed; top:20px; right:20px; z-index:20001;";
+        document.body.appendChild(container);
+    }
+    const toast = document.createElement('div');
+    toast.style.cssText = `
+        background: #1a1a1a; color: white; padding: 15px 25px; border-radius: 10px; 
+        border-left: 4px solid ${tipo === 'sucesso' ? '#51cf66' : '#ff6b6b'};
+        box-shadow: 0 10px 30px rgba(0,0,0,0.5); margin-bottom: 10px;
+        display: flex; align-items: center; gap: 10px; font-family: 'Poppins', sans-serif;
+        animation: slideIn 0.5s ease forwards;
+    `;
+    toast.innerHTML = `<span>${tipo === 'sucesso' ? '✅' : '❌'}</span> <span>${mensagem}</span>`;
+    container.appendChild(toast);
+    setTimeout(() => {
+        toast.style.animation = "fadeOut 0.5s ease forwards";
+        setTimeout(() => toast.remove(), 500);
+    }, 3000);
+}
+
+// Animação central de Pedido Concluído
+window.animarPedidoConcluido = function() {
+    let overlay = document.getElementById('order-success-overlay');
+    if (!overlay) {
+        // Cria o overlay se não existir no HTML
+        overlay = document.createElement('div');
+        overlay.id = 'order-success-overlay';
+        overlay.innerHTML = `
+            <div class="success-circle" style="width:120px; height:120px; background:#51cf66; border-radius:50%; display:flex; justify-content:center; align-items:center; font-size:4rem; color:white; box-shadow:0 0 50px rgba(81,207,102,0.4); animation: popIn 0.6s cubic-bezier(0.17, 0.89, 0.32, 1.49) forwards;">✓</div>
+            <div class="success-text" style="margin-top:20px; color:white; font-size:1.5rem; font-weight:bold; animation: fadeInUp 0.5s ease 0.3s both;">Pedido Enviado! 🚀</div>
+        `;
+        overlay.style.cssText = "position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.85); display:none; flex-direction:column; justify-content:center; align-items:center; z-index:30000; backdrop-filter:blur(8px);";
+        document.body.appendChild(overlay);
+    }
+
+    overlay.style.display = 'flex';
+
+    setTimeout(() => {
+        overlay.style.opacity = '0';
+        overlay.style.transition = '0.5s';
+        setTimeout(() => {
+            overlay.style.display = 'none';
+            overlay.style.opacity = '1';
+        }, 500);
+    }, 3000);
+}
+
+// Injeção de Keyframes para as animações
+const styleTag = document.createElement('style');
+styleTag.innerHTML = `
+    @keyframes popIn { from { transform: scale(0); opacity: 0; } to { transform: scale(1); opacity: 1; } }
+    @keyframes fadeInUp { from { transform: translateY(20px); opacity: 0; } to { transform: translateY(0); opacity: 1; } }
+    @keyframes slideIn { from { transform: translateX(100%); opacity: 0; } to { transform: translateX(0); opacity: 1; } }
+    @keyframes fadeOut { from { opacity: 1; } to { opacity: 0; transform: translateY(-20px); } }
+`;
+document.head.appendChild(styleTag);
+
 /* ======== AGRUPAR POR CATEGORIA ======== */
 function groupByCategory(items) {
   const grouped = {};
@@ -16,21 +79,18 @@ function groupByCategory(items) {
 function renderItems() {
   const el = document.getElementById('categories');
   if (!el) return;
-
   el.innerHTML = '';
 
   if (!menu.length) {
-    el.innerHTML = '<p style="text-align:center;margin-top:20px;"> Nenhum item disponível no cardápio 🍽️</p>';
+    el.innerHTML = '<p style="text-align:center;margin-top:20px;"> Nenhum item disponível 🍽️</p>';
     return;
   }
 
   const grouped = groupByCategory(menu);
-
   for (const category in grouped) {
     const catDiv = document.createElement('div');
     catDiv.className = 'category-block';
     catDiv.innerHTML = `<h3>${category}</h3>`;
-
     const itemsDiv = document.createElement('div');
     itemsDiv.className = 'grid';
 
@@ -41,37 +101,31 @@ function renderItems() {
         <h4>${i.name}</h4>
         <div class="price">R$ ${Number(i.price).toFixed(2).replace(".", ",")}</div>
       `;
-      // Chama a função global ou local (depende de como está o escopo, mas aqui funciona)
       div.onclick = () => abrirModalProduto(i);
       itemsDiv.appendChild(div);
     });
-
     catDiv.appendChild(itemsDiv);
     el.appendChild(catDiv);
   }
 }
 
 /* ======== MODAL DO PRODUTO ======== */
-// Tornei a função global (window) caso precise ser chamada de fora, 
-// mas o onclick acima já resolve.
 window.abrirModalProduto = function(produto) {
   const modal = document.getElementById('productModal');
   if (!modal) return;
 
   document.getElementById('productName').innerText = produto.name;
-  document.getElementById('productDescription').innerText =
-    produto.description || "Sem descrição disponível.";
-  document.getElementById('productPrice').innerText =
-    "R$ " + Number(produto.price).toFixed(2).replace(".", ",");
+  document.getElementById('productDescription').innerText = produto.description || "Sem descrição disponível.";
+  document.getElementById('productPrice').innerText = "R$ " + Number(produto.price).toFixed(2).replace(".", ",");
 
   const btnAdd = document.getElementById('addToCartBtn');
   if (btnAdd) {
       btnAdd.onclick = () => {
         addToCart(produto.id);
         fecharModalProduto();
+        showToast(`${produto.name} adicionado!`);
       };
   }
-
   modal.style.display = 'flex';
 }
 
@@ -84,11 +138,9 @@ window.fecharModalProduto = function() {
 function addToCart(id) {
   const item = menu.find(i => i.id === id);
   if (!item) return;
-
   const found = cart.find(c => c.id === id);
   if (found) found.qty++;
   else cart.push({ ...item, qty: 1 });
-
   updateCartCount();
 }
 
@@ -101,30 +153,27 @@ function updateCartCount() {
 function renderCart() {
   const el = document.getElementById('cartList');
   if (!el) return;
-
   if (!cart.length) {
-    el.innerHTML = '<p>Carrinho vazio</p>';
+    el.innerHTML = '<p style="text-align:center; color:gray;">Carrinho vazio</p>';
     return;
   }
-
   el.innerHTML = cart.map(i => `
-    <div style="padding:6px 0;border-bottom:1px solid #eee">
-      <b>${i.name}</b>
-      <span style="float:right">R$ ${(i.price * i.qty).toFixed(2)}</span><br>
-      <small>Qtd: ${i.qty}</small>
+    <div style="padding:10px 0; border-bottom:1px solid #333; display:flex; justify-content:space-between; align-items:center;">
+      <div>
+        <b>${i.name}</b> <br>
+        <small>Qtd: ${i.qty}</small>
+      </div>
+      <span style="font-weight:bold;">R$ ${(i.price * i.qty).toFixed(2).replace(".", ",")}</span>
     </div>
   `).join('');
 }
 
-/* ======== AO CARREGAR (CORRIGIDO AQUI 👇) ======== */
+/* ======== INICIALIZAÇÃO ======== */
 document.addEventListener('DOMContentLoaded', async () => {
-  // Tenta pegar o user. Se getUser não existir (por causa do module), tenta ler direto.
   let user;
   try {
-    user = typeof getUser === 'function' ? getUser() : JSON.parse(localStorage.getItem('user'));
-  } catch (e) {
-    user = null;
-  }
+    user = JSON.parse(localStorage.getItem('user'));
+  } catch (e) { user = null; }
 
   if (!user || !user.company_id) {
     const el = document.getElementById('categories');
@@ -135,102 +184,56 @@ document.addEventListener('DOMContentLoaded', async () => {
   try {
     const res = await fetch(`/api/products?company_id=${user.company_id}`);
     const data = await res.json();
-
-    if (!Array.isArray(data)) {
-      throw new Error("Resposta inválida do servidor");
-    }
-
-    menu = data;
+    menu = Array.isArray(data) ? data : [];
     renderItems();
-
   } catch (err) {
-    console.error(err);
-    const el = document.getElementById('categories');
-    if (el) el.innerHTML = `<p style="color:red;">Erro ao carregar cardápio.</p>`;
+    showToast("Erro ao carregar cardápio.", "erro");
   }
 
-  // ✅ CORREÇÃO: Verificação segura dos botões
-  const btnOpen = document.getElementById('openCart');
-  if (btnOpen) {
-    btnOpen.onclick = () => {
+  // Eventos de Modal
+  document.getElementById('openCart')?.addEventListener('click', () => {
       renderCart();
-      const modal = document.getElementById('cartModal');
-      if (modal) modal.style.display = 'flex';
-    };
-  }
+      document.getElementById('cartModal').style.display = 'flex';
+  });
 
-  const btnClose = document.getElementById('closeCart');
-  if (btnClose) {
-    btnClose.onclick = () => {
-      const modal = document.getElementById('cartModal');
-      if (modal) modal.style.display = 'none';
-    };
-  }
+  document.getElementById('closeCart')?.addEventListener('click', () => {
+      document.getElementById('cartModal').style.display = 'none';
+  });
 
-  // ... (código anterior dos outros botões)
+  document.getElementById('productModal')?.addEventListener('click', (e) => {
+      if (e.target.id === 'productModal') fecharModalProduto();
+  });
 
-  // 👇 ADICIONE ISSO AQUI ANTES DE FECHAR O BLOCO DO DOMContentLoaded
-  
-  const btnCloseProd = document.getElementById('closeProductModal');
-  if (btnCloseProd) {
-    btnCloseProd.onclick = () => {
-      // Esconde a div do modal
-      const modal = document.getElementById('productModal');
-      if (modal) modal.style.display = 'none';
-    };
-  }
-
-  // Bônus de UX: Fechar se clicar fora da caixinha (no fundo escuro)
-  const modalProd = document.getElementById('productModal');
-  if (modalProd) {
-    modalProd.onclick = (e) => {
-      if (e.target === modalProd) {
-        modalProd.style.display = 'none';
-      }
-    };
-  }
-
-  // ... (código dos outros botões acima)
-
-  // 👇 AQUI COMEÇA A MÁGICA DO ENVIAR PEDIDO 👇
+  // ==================== ENVIAR PEDIDO COM ANIMAÇÃO ====================
   const btnSend = document.getElementById('sendOrder');
   if (btnSend) {
     btnSend.onclick = async () => {
-      // 1. Validações básicas
       if (cart.length === 0) {
-        alert("Seu carrinho está vazio!");
+        showToast("Seu carrinho está vazio!", "erro");
         return;
       }
 
       const tableName = document.getElementById('tableName').value;
       if (!tableName) {
-        alert("Por favor, informe a Mesa ou Nome do cliente.");
+        showToast("Informe a Mesa ou Nome.", "erro");
         return;
       }
 
       const notes = document.getElementById('notes').value;
-
-      // 2. Prepara os dados
-      // Precisamos pegar o company_id de novo (garantia)
-      const userAtual = JSON.parse(localStorage.getItem('user') || '{}');
-      
       const total = cart.reduce((acc, item) => acc + (item.price * item.qty), 0);
-
       const pedido = {
-        company_id: userAtual.company_id,
-        items: cart, // O backend vai converter pra string, lembra?
+        company_id: user.company_id,
+        items: cart,
         total: total,
         table_name: tableName,
         notes: notes
       };
 
-      // 3. Muda o texto do botão pra avisar que está trabalhando
       const btnOriginalText = btnSend.innerText;
       btnSend.innerText = "Enviando...";
       btnSend.disabled = true;
 
       try {
-        // 4. Envia pro servidor
         const res = await fetch('/api/orders', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
@@ -240,28 +243,23 @@ document.addEventListener('DOMContentLoaded', async () => {
         const data = await res.json();
 
         if (data.ok) {
-          alert("✅ Pedido enviado com sucesso!");
+          // FECHA O CARRINHO E DISPARA A ANIMAÇÃO CENTRAL
+          document.getElementById('cartModal').style.display = 'none';
+          animarPedidoConcluido(); 
           
-          // 5. Limpa tudo
-          cart.length = 0; // Zera o array do carrinho
+          // Limpa tudo
+          cart.length = 0;
           updateCartCount();
-          renderCart();
           document.getElementById('tableName').value = "";
           document.getElementById('notes').value = "";
-          
-          // Fecha o modal
-          const modal = document.getElementById('cartModal');
-          if (modal) modal.style.display = 'none';
 
         } else {
-          alert("Erro ao enviar: " + (data.error || "Desconhecido"));
+          showToast(data.error || "Erro ao enviar", "erro");
         }
 
       } catch (erro) {
-        console.error(erro);
-        alert("Erro de conexão com a cozinha.");
+          showToast("Erro de conexão com a cozinha.", "erro");
       } finally {
-        // 6. Restaura o botão
         btnSend.innerText = btnOriginalText;
         btnSend.disabled = false;
       }
