@@ -50,6 +50,7 @@ window.animarPedidoConcluido = function() {
         setTimeout(() => {
             overlay.style.display = 'none';
             overlay.style.opacity = '1';
+            window.location.href = 'meus-pedidos.html';
         }, 500);
     }, 3000);
 }
