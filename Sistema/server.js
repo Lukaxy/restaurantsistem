@@ -70,6 +70,7 @@ db.serialize(() => {
     name TEXT,
     price REAL,
     category TEXT,
+    description TEXT,
     FOREIGN KEY(company_id) REFERENCES companies(id)
   )`);
 
@@ -218,8 +219,20 @@ app.get("/api/products", (req, res) => {
 });
 
 app.post("/api/products", (req, res) => {
-  const { company_id, name, price, category } = req.body;
-  db.run(`INSERT INTO products (company_id, name, price, category) VALUES (?,?,?,?)`, [company_id, name, price, category], function() {
+  // 1. Pegamos a descrição aqui (você já estava fazendo isso, ok!)
+  const { company_id, name, price, category, description } = req.body;
+
+  // 2. "description" no nome das colunas e mais um "?" no final
+  const sql = `INSERT INTO products (company_id, name, price, category, description) VALUES (?,?,?,?,?)`;
+  
+  // 3. "description" na lista de valores que preenchem as interrogações
+  const params = [company_id, name, price, category, description];
+
+  db.run(sql, params, function(err) {
+    if (err) {
+      console.error(err.message);
+      return res.status(500).json({ ok: false, error: "Erro ao salvar no banco." });
+    }
     res.json({ ok: true, id: this.lastID });
   });
 });
