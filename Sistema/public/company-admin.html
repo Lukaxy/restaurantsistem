@@ -44,19 +44,46 @@
   <script type="module">
     import { api } from "./js/http.js";
 
-    const user = JSON.parse(localStorage.getItem("user") || "{}");
+    // Reutilizando sua função Toast para manter o padrão
+    function showToast(mensagem, tipo = 'sucesso') {
+        let container = document.getElementById('toast-container');
+        if (!container) {
+            container = document.createElement('div');
+            container.id = 'toast-container';
+            container.style.cssText = "position:fixed; top:20px; right:20px; z-index:10000;";
+            document.body.appendChild(container);
+        }
+        const toast = document.createElement('div');
+        toast.style.cssText = `
+            background: #1a1a1a; color: white; padding: 15px 25px; border-radius: 10px; 
+            border-left: 4px solid ${tipo === 'sucesso' ? '#51cf66' : '#ff6b6b'};
+            box-shadow: 0 10px 30px rgba(0,0,0,0.5); margin-bottom: 10px;
+            display: flex; align-items: center; gap: 10px; font-family: 'Poppins', sans-serif;
+            animation: slideIn 0.5s ease forwards;
+        `;
+        toast.innerHTML = `<span>${tipo === 'sucesso' ? '✅' : '❌'}</span> <span>${mensagem}</span>`;
+        container.appendChild(toast);
+        setTimeout(() => {
+            toast.style.animation = "fadeOut 0.5s ease forwards";
+            setTimeout(() => toast.remove(), 500);
+        }, 3000);
+    }
 
-    if (!user || !user.role || user.role !== "admin") {
-        alert("Acesso negado.");
+    const user = JSON.parse(localStorage.getItem("user") || "{}");
+    let idUsuarioParaExcluir = null;
+
+    if (!user || user.role !== "admin") {
         window.location.href = "login.html";
     }
 
+    // ======== LISTAR USUÁRIOS ========
     async function carregarUsuarios() {
         const list = document.getElementById("users-list");
         list.innerHTML = "<p style='text-align:center;'>Buscando equipe...</p>";
         try {
             const data = await api(`/api/users?company_id=${user.company_id}`);
-            if (!data.ok) throw new Error(data.error || "Erro ao carregar usuários");
+            if (!data.ok) throw new Error(data.error || "Erro ao carregar");
+            
             list.innerHTML = data.users.map(u => `
                 <div style="display: flex; justify-content: space-between; align-items: center; padding: 12px; border-bottom: 1px solid var(--border-color); gap: 10px;">
                     <div>
@@ -64,131 +91,80 @@
                         <small>${u.email}</small> 
                         <span style="font-size: 0.7rem; background: var(--bg-main); padding: 2px 6px; border-radius: 4px; color: var(--color-blue); margin-left: 5px;">${u.role}</span>
                     </div>
-                    ${u.role !== "admin" ? `<button class="btn cancel" onclick="excluir(${u.id})">🗑️</button>` : `<small style="color:var(--color-amber);">Admin</small>`}
+                    ${u.role !== "admin" ? `<button class="btn cancel" onclick="prepararExclusao(${u.id})">🗑️</button>` : `<small style="color:var(--color-amber);">Admin</small>`}
                 </div>
             `).join("");
-        } catch (err) { list.innerHTML = `<p style="color:var(--color-red); text-align:center;">${err.message}</p>`; }
+        } catch (err) { 
+            showToast(err.message, 'erro');
+        }
     }
 
+    // ======== ADICIONAR USUÁRIO ========
     async function addUser() {
         const name = document.getElementById("name").value.trim();
         const email = document.getElementById("email").value.trim();
         const senha = document.getElementById("senha").value.trim();
         const role = document.getElementById("role").value;
-        const msg = document.getElementById("msg");
 
         if (!name || !email || !senha) {
-            msg.textContent = "⚠️ Preencha todos os campos.";
-            msg.style.color = "var(--color-amber)";
+            showToast("⚠️ Preencha todos os campos.", "erro");
             return;
         }
+
         try {
             const data = await api("/api/users", {
                 method: "POST",
                 body: JSON.stringify({ company_id: user.company_id, name, email, senha, role }),
             });
             if (!data.ok) throw new Error(data.error || "Erro ao adicionar.");
-            msg.style.color = "var(--color-green)";
-            msg.textContent = "Sucesso! ✅";
+            
+            showToast("Funcionário cadastrado! 🚀");
+            document.getElementById("name").value = "";
+            document.getElementById("email").value = "";
+            document.getElementById("senha").value = "";
             carregarUsuarios();
-        } catch (err) { msg.textContent = "❌ " + err.message; }
-    }
-
-    async function excluir(id) {
-        if (!confirm("Remover este funcionário?")) return;
-        try {
-            await api(`/api/users/${id}`, { method: "DELETE" });
-            carregarUsuarios();
-        } catch (err) { alert(err.message); }
-    }
-
-    function toggleMenu(event) {
-        if (event) event.stopPropagation();
-        document.getElementById("menuDropdown").classList.toggle("show");
-    }
-
-    function logout() {
-        localStorage.clear();
-        window.location.href = "login.html";
-    }
-
-    // Função para atualizar o Card
-    function renderizarCardPlano(userData) {
-        if (!userData.trial_expires_at) return;
-
-        const expiraEm = new Date(userData.trial_expires_at);
-        const hoje = new Date();
-        const diffTempo = expiraEm - hoje;
-        const diffDias = Math.ceil(diffTempo / (1000 * 60 * 60 * 24));
-        
-        const pNome = document.getElementById("plano-nome");
-        const pDias = document.getElementById("plano-dias");
-        const pCard = document.getElementById("plano-card");
-        const pEmoji = document.getElementById("plano-emoji");
-
-        if (userData.plano === 'vitalicio' || diffDias > 5000) {
-            pNome.textContent = "Plano Vitalício 👑";
-            pDias.textContent = "∞";
-            pCard.style.borderLeftColor = "#fcc419";
-            pEmoji.textContent = "👑";
-            return;
-        }
-
-        if (userData.plano === 'trial') {
-            pNome.textContent = "Período de Teste";
-            pCard.style.borderLeftColor = "var(--color-amber)";
-            pEmoji.textContent = "⏳";
-        } else {
-            pNome.textContent = "Plano Profissional";
-            pCard.style.borderLeftColor = "var(--color-green)";
-            pEmoji.textContent = "💎";
-            pDias.style.color = "var(--color-green)";
-        }
-
-        pDias.textContent = diffDias > 0 ? diffDias : 0;
-        
-        if (diffDias <= 3 && userData.plano !== 'vitalicio') {
-            pCard.style.borderLeftColor = "var(--color-red)";
-            pNome.style.color = "var(--color-red)";
-            if (diffDias <= 0) pNome.textContent = "Assinatura Expirada 🛑";
+        } catch (err) { 
+            showToast(err.message, "erro"); 
         }
     }
 
-    document.addEventListener("DOMContentLoaded", async () => {
+    // ======== MODAL DE EXCLUSÃO ========
+    window.prepararExclusao = (id) => {
+        idUsuarioParaExcluir = id;
+        document.getElementById('confirmModal').style.display = 'flex';
+    };
+
+    window.fecharConfirm = () => {
+        document.getElementById('confirmModal').style.display = 'none';
+        idUsuarioParaExcluir = null;
+    };
+
+    // ======== LOGOUT E MENU ========
+    window.logout = () => { localStorage.clear(); window.location.href = "login.html"; };
+    window.toggleMenu = (e) => { 
+        if (e) e.stopPropagation();
+        document.getElementById("menuDropdown").classList.toggle("show"); 
+    };
+
+    // Inicialização
+    document.addEventListener("DOMContentLoaded", () => {
         carregarUsuarios();
-
-        // BUSCA EM TEMPO REAL NO BANCO
-        try {
-            const res = await api(`/api/companies/${user.company_id}`); 
-            if (res.ok) {
-                const updatedUser = { ...user, ...res.company };
-                localStorage.setItem("user", JSON.stringify(updatedUser));
-                renderizarCardPlano(updatedUser);
-            } else {
-                renderizarCardPlano(user);
-            }
-        } catch (err) {
-            renderizarCardPlano(user);
-        }
-
-        if (user.role === "admin" || user.role === "master") {
-            const btn = document.getElementById("btn-assinatura");
-            if (btn) btn.style.display = "inline-block";
-        }
+        
+        // Configura o botão do Modal
+        document.getElementById('confirmBtn').onclick = async () => {
+            if (!idUsuarioParaExcluir) return;
+            try {
+                await api(`/api/users/${idUsuarioParaExcluir}`, { method: "DELETE" });
+                showToast("Removido com sucesso! 🗑️");
+                fecharConfirm();
+                carregarUsuarios();
+            } catch (err) { showToast(err.message, "erro"); }
+        };
     });
 
-    document.addEventListener("click", e => {
-        if (!e.target.closest(".menu-wrapper")) {
-            const dropdown = document.getElementById("menuDropdown");
-            if (dropdown) dropdown.classList.remove("show");
-        }
-    });
-
-    window.toggleMenu = toggleMenu;
+    // Expondo funções para o HTML
     window.addUser = addUser;
-    window.excluir = excluir;
-    window.logout = logout;
-  </script>
+</script>
 </head>
 
 <body>  
