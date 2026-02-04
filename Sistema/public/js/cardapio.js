@@ -20,7 +20,7 @@ function renderItems() {
   el.innerHTML = '';
 
   if (!menu.length) {
-    el.innerHTML = '<p style="text-align:center;margin-top:20px;">🍽️ Nenhum item disponível no cardápio.</p>';
+    el.innerHTML = '<p style="text-align:center;margin-top:20px;"> Nenhum item disponível no cardápio 🍽️</p>';
     return;
   }
 
@@ -40,7 +40,6 @@ function renderItems() {
       div.innerHTML = `
         <h4>${i.name}</h4>
         <div class="price">R$ ${Number(i.price).toFixed(2).replace(".", ",")}</div>
-        ${i.description ? `<p class="desc">${i.description}</p>` : ""}
       `;
       // Chama a função global ou local (depende de como está o escopo, mas aqui funciona)
       div.onclick = () => abrirModalProduto(i);
