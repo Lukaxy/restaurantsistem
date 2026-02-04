@@ -330,6 +330,38 @@ app.post("/api/webhook", async (req, res) => {
 });
 
 // =============================================================
+// 🆘 ROTA DE EMERGÊNCIA (Use para criar as tabelas na força)
+// =============================================================
+app.get("/api/setup-force", async (req, res) => {
+  try {
+    console.log("🛠️ Iniciando reparo forçado do banco...");
+
+    // 1. Cria as tabelas que faltam
+    await db.execute(`CREATE TABLE IF NOT EXISTS users (id INTEGER PRIMARY KEY AUTOINCREMENT, company_id INTEGER, name TEXT, email TEXT UNIQUE, senha_hash TEXT, role TEXT DEFAULT 'atendente', ativo INTEGER DEFAULT 1, created_at TEXT)`);
+    await db.execute(`CREATE TABLE IF NOT EXISTS orders (id INTEGER PRIMARY KEY AUTOINCREMENT, company_id INTEGER, items TEXT, total REAL, table_name TEXT, notes TEXT, status TEXT DEFAULT 'novo', created_at TEXT, status_updated_at TEXT, payment_method TEXT)`);
+    await db.execute(`CREATE TABLE IF NOT EXISTS products (id INTEGER PRIMARY KEY AUTOINCREMENT, company_id INTEGER, name TEXT, price REAL, category TEXT, description TEXT)`);
+    
+    // 2. Garante que o Master existe
+    const checkMaster = await db.execute({ sql: "SELECT * FROM users WHERE email = ?", args: ["admin@master.com"] });
+    
+    if (checkMaster.rows.length === 0) {
+      const hash = bcrypt.hashSync("123456", 10);
+      await db.execute({
+        sql: "INSERT INTO users (name, email, senha_hash, role, created_at) VALUES (?, ?, ?, 'master', ?)",
+        args: ["Admin Master", "admin@master.com", hash, new Date().toISOString()]
+      });
+      res.send("<h1>✅ SUCESSO!</h1><p>Tabelas Users, Orders e Products criadas.</p><p>Usuário Master restaurado.</p><a href='/login.html'>Ir para Login</a>");
+    } else {
+      res.send("<h1>✅ BANCO OK!</h1><p>As tabelas já existem e o Master também.</p><a href='/login.html'>Ir para Login</a>");
+    }
+
+  } catch (err) {
+    console.error(err);
+    res.send(`<h1>❌ ERRO:</h1><p>${err.message}</p>`);
+  }
+});
+
+// =============================================================
 // 🚀 SERVIDOR
 // =============================================================
 const publicPath = path.join(__dirname, "public");
