@@ -44,7 +44,7 @@
   <script type="module">
     import { api } from "./js/http.js";
 
-    // Reutilizando sua função Toast para manter o padrão
+    // --- FUNÇÕES DE INTERFACE (TOAST) ---
     function showToast(mensagem, tipo = 'sucesso') {
         let container = document.getElementById('toast-container');
         if (!container) {
@@ -69,21 +69,28 @@
         }, 3000);
     }
 
+    // Injeção de animações
+    const animStyle = document.createElement('style');
+    animStyle.innerHTML = `
+        @keyframes slideIn { from { transform: translateX(100%); opacity: 0; } to { transform: translateX(0); opacity: 1; } }
+        @keyframes fadeOut { from { opacity: 1; } to { opacity: 0; transform: translateY(-20px); } }
+    `;
+    document.head.appendChild(animStyle);
+
+    // --- LÓGICA DO SISTEMA ---
     const user = JSON.parse(localStorage.getItem("user") || "{}");
     let idUsuarioParaExcluir = null;
 
-    if (!user || user.role !== "admin") {
+    if (!user || !user.role || user.role !== "admin") {
         window.location.href = "login.html";
     }
 
-    // ======== LISTAR USUÁRIOS ========
     async function carregarUsuarios() {
         const list = document.getElementById("users-list");
         list.innerHTML = "<p style='text-align:center;'>Buscando equipe...</p>";
         try {
             const data = await api(`/api/users?company_id=${user.company_id}`);
-            if (!data.ok) throw new Error(data.error || "Erro ao carregar");
-            
+            if (!data.ok) throw new Error(data.error || "Erro ao carregar usuários");
             list.innerHTML = data.users.map(u => `
                 <div style="display: flex; justify-content: space-between; align-items: center; padding: 12px; border-bottom: 1px solid var(--border-color); gap: 10px;">
                     <div>
@@ -99,7 +106,6 @@
         }
     }
 
-    // ======== ADICIONAR USUÁRIO ========
     async function addUser() {
         const name = document.getElementById("name").value.trim();
         const email = document.getElementById("email").value.trim();
@@ -110,7 +116,6 @@
             showToast("⚠️ Preencha todos os campos.", "erro");
             return;
         }
-
         try {
             const data = await api("/api/users", {
                 method: "POST",
@@ -118,17 +123,17 @@
             });
             if (!data.ok) throw new Error(data.error || "Erro ao adicionar.");
             
-            showToast("Funcionário cadastrado! 🚀");
+            showToast("Sucesso! ✅");
             document.getElementById("name").value = "";
             document.getElementById("email").value = "";
             document.getElementById("senha").value = "";
             carregarUsuarios();
         } catch (err) { 
-            showToast(err.message, "erro"); 
+            showToast(err.message, "erro");
         }
     }
 
-    // ======== MODAL DE EXCLUSÃO ========
+    // Função de Exclusão com Modal
     window.prepararExclusao = (id) => {
         idUsuarioParaExcluir = id;
         document.getElementById('confirmModal').style.display = 'flex';
@@ -139,38 +144,73 @@
         idUsuarioParaExcluir = null;
     };
 
-    // ======== LOGOUT E MENU ========
-    window.logout = () => { localStorage.clear(); window.location.href = "login.html"; };
-    window.toggleMenu = (e) => { 
-        if (e) e.stopPropagation();
-        document.getElementById("menuDropdown").classList.toggle("show"); 
-    };
+    function renderizarCardPlano(userData) {
+        if (!userData.trial_expires_at) return;
 
-    // Inicialização
-    document.addEventListener("DOMContentLoaded", () => {
-        carregarUsuarios();
+        const expiraEm = new Date(userData.trial_expires_at);
+        const hoje = new Date();
+        const diffDias = Math.ceil((expiraEm - hoje) / (1000 * 60 * 60 * 24));
         
-        // Configura o botão do Modal
+        const pNome = document.getElementById("plano-nome");
+        const pDias = document.getElementById("plano-dias");
+        const pCard = document.getElementById("plano-card");
+        const pEmoji = document.getElementById("plano-emoji");
+
+        if (userData.plano === 'vitalicio' || diffDias > 5000) {
+            pNome.textContent = "Plano Vitalício 👑";
+            pDias.textContent = "∞";
+            pCard.style.borderLeftColor = "#fcc419";
+            pEmoji.textContent = "👑";
+            return;
+        }
+
+        pNome.textContent = userData.plano === 'trial' ? "Período de Teste" : "Plano Profissional";
+        pEmoji.textContent = userData.plano === 'trial' ? "⏳" : "💎";
+        pDias.textContent = diffDias > 0 ? diffDias : 0;
+        pCard.style.borderLeftColor = diffDias <= 3 ? "var(--color-red)" : (userData.plano === 'trial' ? "var(--color-amber)" : "var(--color-green)");
+    }
+
+    document.addEventListener("DOMContentLoaded", async () => {
+        carregarUsuarios();
+        renderizarCardPlano(user);
+
+        // Busca atualização do plano no servidor
+        try {
+            const res = await api(`/api/companies/${user.company_id}`); 
+            if (res.ok) {
+                const updatedUser = { ...user, ...res.company };
+                localStorage.setItem("user", JSON.stringify(updatedUser));
+                renderizarCardPlano(updatedUser);
+            }
+        } catch (err) { console.log("Erro ao atualizar card"); }
+
+        // Configura botão do Modal
         document.getElementById('confirmBtn').onclick = async () => {
             if (!idUsuarioParaExcluir) return;
             try {
                 await api(`/api/users/${idUsuarioParaExcluir}`, { method: "DELETE" });
-                showToast("Removido com sucesso! 🗑️");
+                showToast("Funcionário removido! 🗑️");
                 fecharConfirm();
                 carregarUsuarios();
             } catch (err) { showToast(err.message, "erro"); }
         };
+
+        if (user.role === "admin" || user.role === "master") {
+            const btn = document.getElementById("btn-assinatura");
+            if (btn) btn.style.display = "inline-block";
+        }
     });
 
-    // Expondo funções para o HTML
+    window.toggleMenu = () => document.getElementById("menuDropdown").classList.toggle("show");
+    window.logout = () => { localStorage.clear(); window.location.href = "login.html"; };
     window.addUser = addUser;
-</script>
+  </script>
 </head>
 
 <body>  
   <header class="main-header" style="display: flex; align-items: center; justify-content: space-between; padding: 10px 15px; background: #212529; min-height: 60px;">
     <div class="menu-wrapper" style="flex: 1; display: flex; justify-content: flex-start;">
-      <button class="menu-button" onclick="toggleMenu(event)">⋮</button>
+      <button class="menu-button" onclick="toggleMenu()">⋮</button>
       <div id="menuDropdown" class="menu-dropdown">
         <div onclick="window.location.href='index.html'">📙 Voltar ao Cardápio</div>
         <div onclick="window.location.href='meus-pedidos.html'">🧾 Meus pedidos</div>
@@ -182,12 +222,12 @@
       </div>
     </div>
 
-    <div class="header-title" style="flex: 1; text-align: center; font-weight: bold; font-size: 1.1rem; white-space: nowrap;">
+    <div class="header-title" style="flex: 1; text-align: center; font-weight: bold; font-size: 1.1rem;">
       Gestão da Empresa 🏢
     </div>
 
     <div class="header-actions" style="flex: 1; display: flex; justify-content: flex-end;">
-        <button id="btn-assinatura" class="btn" style="display: none; background: #845ef7; color: white; border: none; padding: 8px 12px; border-radius: 8px; font-weight: bold; cursor: pointer;" onclick="window.location.href='assinaturas.html'">
+        <button id="btn-assinatura" class="btn" style="display: none; background: #845ef7; color: white; border: none; padding: 8px 12px; border-radius: 8px; font-weight: bold;" onclick="window.location.href='assinaturas.html'">
           Assinatura 💎
         </button>
     </div>
@@ -210,7 +250,7 @@
       <h3 style="color: var(--color-blue); margin-bottom: 20px; text-align: center;">➕ Cadastrar Funcionário</h3>
       <div class="form-row" style="display: flex; flex-direction: column; gap: 10px;">
         <input id="name" placeholder="Nome Completo">
-        <select id="role" style="padding: 12px;">
+        <select id="role" style="padding: 12px; background: var(--bg-main); color: white; border: 1px solid var(--border-color); border-radius: 8px;">
             <option value="atendente">Atendente 🙋‍♂️</option>
             <option value="cozinha">Cozinha 👨‍🍳</option>
             <option value="admin">Admin 🔑</option>
@@ -219,7 +259,6 @@
         <input id="senha" placeholder="Senha" type="password">
       </div>
       <button class="btn success" onclick="addUser()" style="width: 100%; margin-top: 20px; padding: 15px;">Confirmar Cadastro</button>
-      <p id="msg" style="margin-top:10px; text-align: center; font-weight: bold;"></p>
     </div>
 
     <div class="box" style="margin-top: 25px;">
@@ -229,14 +268,14 @@
   </main>
 
   <div id="confirmModal" class="modal" style="display:none; position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.8); z-index:9999; justify-content:center; align-items:center;">
-    <div class="box" style="max-width: 400px; text-align: center; padding: 30px;">
-        <h3>Remover Funcionário? 👤</h3>
-        <p style="color: var(--text-secondary); margin: 15px 0;">O acesso deste usuário será revogado. Deseja continuar?</p>
-        <div style="display: flex; gap: 10px; margin-top: 20px;">
-            <button id="confirmBtn" class="btn success" style="flex:1; background: var(--color-red);">Remover</button>
-            <button onclick="fecharConfirm()" class="btn cancel" style="flex:1;">Cancelar</button>
-        </div>
-    </div>
-</div>
+      <div class="box" style="max-width: 400px; text-align: center; padding: 30px;">
+          <h3>Remover Funcionário? 👤</h3>
+          <p style="color: var(--text-secondary); margin: 15px 0;">O acesso deste usuário será revogado. Deseja continuar?</p>
+          <div style="display: flex; gap: 10px; margin-top: 20px;">
+              <button id="confirmBtn" class="btn success" style="flex:1; background: var(--color-red);">Remover</button>
+              <button onclick="fecharConfirm()" class="btn cancel" style="flex:1;">Cancelar</button>
+          </div>
+      </div>
+  </div>
 </body>
 </html>
