@@ -8,7 +8,6 @@
   <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;600;700&display=swap" rel="stylesheet">
 
   <style>
-    /* VARIÁVEIS DE COR (Mesmas do seu sistema) */
     :root {
       --bg-main: #0d0d0d;
       --bg-card: #1a1a1a;
@@ -34,340 +33,172 @@
       min-height: 100vh;
     }
 
-    /* HEADER */
-    header {
-      text-align: center;
-      padding: 60px 20px 40px;
-    }
+    header { text-align: center; padding: 60px 20px 40px; }
 
     h1 {
-      font-size: 2.5rem;
-      margin: 0 0 15px;
+      font-size: 2.5rem; margin: 0 0 15px;
       background: linear-gradient(90deg, #fff, var(--color-blue));
-      -webkit-background-clip: text;
-      -webkit-text-fill-color: transparent;
+      -webkit-background-clip: text; -webkit-text-fill-color: transparent;
     }
 
-    p.subtitle {
-      color: var(--text-secondary);
-      font-size: 1.1rem;
-      max-width: 600px;
-      margin: 0 auto;
-      line-height: 1.6;
-    }
-
-    /* GRID DE PLANOS */
     .plans-container {
-      display: flex;
-      flex-wrap: wrap;
-      justify-content: center;
-      gap: 30px;
-      padding: 20px;
-      max-width: 1200px;
-      width: 100%;
+      display: flex; flex-wrap: wrap; justify-content: center;
+      gap: 30px; padding: 20px; max-width: 1200px; width: 100%;
     }
 
     .plan-card {
-      background: var(--bg-card);
-      border: 1px solid var(--border-color);
-      border-radius: 16px;
-      padding: 40px 30px;
-      width: 320px;
-      text-align: center;
-      position: relative;
-      transition: all 0.3s ease;
-      display: flex;
-      flex-direction: column;
+      background: var(--bg-card); border: 1px solid var(--border-color);
+      border-radius: 16px; padding: 40px 30px; width: 320px;
+      text-align: center; position: relative; transition: all 0.3s ease;
+      display: flex; flex-direction: column;
     }
 
-    .plan-card:hover {
-      transform: translateY(-10px);
-      border-color: var(--color-blue);
-      box-shadow: 0 15px 30px rgba(0,0,0,0.4);
-    }
+    .plan-card:hover { transform: translateY(-10px); border-color: var(--color-blue); }
 
-    /* DESTAQUE (Card do Meio - Anual) */
-    .plan-card.popular {
-      border: 2px solid var(--color-blue);
-      box-shadow: 0 0 25px rgba(51, 154, 240, 0.15);
-      transform: scale(1.05); 
-      z-index: 2;
-    }
-    
-    .plan-card.popular:hover {
-      transform: scale(1.05) translateY(-10px);
-      box-shadow: 0 15px 40px rgba(51, 154, 240, 0.25);
-    }
+    .plan-card.popular { border: 2px solid var(--color-blue); transform: scale(1.05); z-index: 2; }
 
     .badge {
-      position: absolute;
-      top: -15px;
-      left: 50%;
-      transform: translateX(-50%);
-      background: var(--color-blue);
-      color: white;
-      padding: 8px 20px;
-      border-radius: 20px;
-      font-size: 0.85rem;
-      font-weight: 700;
-      letter-spacing: 1px;
-      text-transform: uppercase;
-      box-shadow: 0 4px 10px rgba(0,0,0,0.3);
+      position: absolute; top: -15px; left: 50%; transform: translateX(-50%);
+      background: var(--color-blue); color: white; padding: 8px 20px;
+      border-radius: 20px; font-size: 0.85rem; font-weight: 700; text-transform: uppercase;
     }
 
-    /* PREÇOS E TEXTOS */
-    .plan-name {
-      font-size: 1.4rem;
-      margin-bottom: 10px;
-      color: var(--text-primary);
-      text-transform: uppercase;
-      letter-spacing: 1px;
-    }
+    .price { font-size: 3rem; font-weight: 700; margin: 20px 0; color: white; }
+    .price small { font-size: 1rem; color: var(--text-secondary); font-weight: 400; }
 
-    .price {
-      font-size: 3rem;
-      font-weight: 700;
-      margin: 20px 0;
-      color: white;
-    }
-    
-    .price small {
-      font-size: 1rem;
-      color: var(--text-secondary);
-      font-weight: 400;
-    }
-
-    /* LISTA DE VANTAGENS */
-    ul.features {
-      list-style: none;
-      padding: 0;
-      margin: 0 0 30px;
-      flex-grow: 1; 
-      text-align: left;
-      border-top: 1px solid var(--border-color);
-      padding-top: 20px;
-    }
-
-    ul.features li {
-      margin-bottom: 15px;
-      color: #ccc;
-      display: flex;
-      align-items: center;
-      font-size: 0.95rem;
-    }
-
-    /* Checkmark Verde */
+    ul.features { list-style: none; padding: 20px 0 0; margin: 0 0 30px; flex-grow: 1; text-align: left; border-top: 1px solid var(--border-color); }
+    ul.features li { margin-bottom: 15px; color: #ccc; display: flex; align-items: center; font-size: 0.95rem; }
     ul.features li::before {
-      content: "✔";
-      display: inline-flex;
-      justify-content: center;
-      align-items: center;
-      min-width: 24px;
-      height: 24px;
-      background: rgba(81, 207, 102, 0.1);
-      color: var(--color-green);
-      border-radius: 50%;
-      margin-right: 12px;
-      font-size: 12px;
+      content: "✔"; display: inline-flex; justify-content: center; align-items: center;
+      min-width: 24px; height: 24px; background: rgba(81, 207, 102, 0.1);
+      color: var(--color-green); border-radius: 50%; margin-right: 12px; font-size: 12px;
     }
 
-    /* BOTÕES */
-    .btn-plan {
-      display: block;
-      width: 100%;
-      padding: 16px;
-      border-radius: 8px;
-      text-decoration: none;
-      font-weight: 600;
-      font-size: 1rem;
-      transition: 0.3s;
-      margin-top: auto;
-      cursor: pointer;
-    }
+    .btn-plan { display: block; width: 100%; padding: 16px; border-radius: 8px; font-weight: 600; cursor: pointer; transition: 0.3s; border: none; }
+    .btn-outline { border: 1px solid var(--border-color); color: white; background: transparent; }
+    .btn-primary { background: var(--color-blue); color: white; }
+    .btn-vip { background: linear-gradient(135deg, #6741d9, #e03131); color: white; }
 
-    /* Estilo Botão Básico */
-    .btn-outline {
-      border: 1px solid var(--border-color);
-      color: white;
-      background: transparent;
-    }
-    .btn-outline:hover {
-      border-color: white;
-      background: rgba(255,255,255,0.05);
-    }
+    /* BOX ESTILO SISTEMA */
+    .box { background: var(--bg-card); padding: 25px; border-radius: 16px; border: 1px solid var(--border-color); }
+    
+    input { background: #2b2b2b; border: 1px solid var(--border-color); color: white; padding: 12px; border-radius: 8px; outline: none; }
 
-    /* Estilo Botão Destaque */
-    .btn-primary {
-      background: var(--color-blue);
-      color: white;
-      border: none;
-      box-shadow: 0 4px 15px rgba(51, 154, 240, 0.3);
-    }
-    .btn-primary:hover {
-      background: #228be6;
-      box-shadow: 0 6px 20px rgba(51, 154, 240, 0.5);
-    }
-
-    /* Estilo Botão VIP */
-    .btn-vip {
-      background: linear-gradient(135deg, #6741d9, #e03131);
-      color: white;
-      border: none;
-      box-shadow: 0 4px 15px rgba(103, 65, 217, 0.3);
-    }
-    .btn-vip:hover {
-      opacity: 0.9;
-      transform: scale(1.02);
-    }
-
-    /* FOOTER */
-    .footer-link {
-      margin: 50px 0;
-      color: var(--text-secondary);
-      text-decoration: none;
-      font-size: 0.9rem;
-      border-bottom: 1px dashed var(--border-color);
-      padding-bottom: 2px;
-      transition: 0.3s;
-    }
-    .footer-link:hover { color: white; border-color: white; }
-
-    /* RESPONSIVO */
-    @media (max-width: 800px) {
-      .plans-container { flex-direction: column; align-items: center; }
-      .plan-card { width: 100%; max-width: 350px; }
-      .plan-card.popular { transform: none; margin: 10px 0; }
-      .plan-card.popular:hover { transform: translateY(-5px); }
-    }
+    @keyframes popIn { from { transform: scale(0.9); opacity: 0; } to { transform: scale(1); opacity: 1; } }
   </style>
 </head>
 <body>
 
   <header>
     <h1>Escolha seu Plano 🚀</h1>
-    <p class="subtitle">
-      Desbloqueie o uso ilimitado e leve seu restaurante para o próximo nível.
-      Sem fidelidade, cancele quando quiser.
-    </p>
+    <p style="color: var(--text-secondary);">Desbloqueie o uso ilimitado e leve seu restaurante para o próximo nível.</p>
   </header>
 
   <div class="plans-container">
-    
     <div class="plan-card">
       <h3 class="plan-name">Mensal</h3>
       <div class="price">R$ 74<small>,90</small> <small style="font-size: 0.4em">/mês</small></div>
-      
       <ul class="features">
         <li>Cardápio Digital Ilimitado</li>
         <li>Painel de Pedidos em Tempo Real</li>
         <li>Suporte via WhatsApp</li>
       </ul>
-
-      <button class="btn-plan btn-outline" onclick="gerarPagamento(30, 1.05, this)">
-    Assinar Mensal
-</button>
+      <button class="btn-plan btn-outline" onclick="abrirModalCPF(30, 74.90)">Assinar Mensal</button>
     </div>
 
     <div class="plan-card popular">
       <div class="badge">MAIS VENDIDO 🔥</div>
       <h3 class="plan-name">Anual</h3>
       <div class="price">R$ 800 <small style="font-size: 0.4em">/ano</small></div>
-      <p style="color: var(--color-green); font-size: 0.9rem; margin-top: -15px; font-weight: bold;">
-        Economize R$ 100,00 (1 mês OFF)
-      </p>
-      
       <ul class="features">
-        <li><strong>Todos os recursos do Mensal</strong></li>
-        <li>Prioridade no Suporte Técnico</li>
+        <li><strong>1 mês GRÁTIS (Economia R$ 100)</strong></li>
+        <li>Prioridade no Suporte</li>
         <li>Backup Diário dos Dados</li>
-        <li>Acesso a novidades Beta</li>
       </ul>
-
-      <button class="btn-plan btn-primary" onclick="gerarPagamento(365, 800.00, this)">
-    Quero Economizar
-</button>
+      <button class="btn-plan btn-primary" onclick="abrirModalCPF(365, 800.00)">Quero Economizar</button>
     </div>
 
-    <div class="plan-card" style="border-color: #4c4c4c;">
-      <h3 class="plan-name" style="background: linear-gradient(90deg, #b197fc, #ff8787); -webkit-background-clip: text; -webkit-text-fill-color: transparent;">Semestral</h3>
-      <div class="price">R$ 199<small>,90</small> <small style="font-size: 0.4em">3/meses</small></div>
-      
+    <div class="plan-card">
+      <h3 class="plan-name">Semestral</h3>
+      <div class="price">R$ 199<small>,90</small> <small style="font-size: 0.4em">/3 meses</small></div>
       <ul class="features">
-        <li>Pagamento de 3 em 3 meses</li>
-        <li>Acesso a novas atualizações</li>
         <li>Selo "Parceiro Digital"</li>
-        <li>Contato direto com o Desenvolvedor</li>
+        <li>Acesso a novidades Beta</li>
+        <li>Contato direto Desenvolvedor</li>
       </ul>
-
-      <button class="btn-plan btn-vip" onclick="gerarPagamento(180, 199.90, this)">
-    Comprar Acesso Semestral
-</button>
+      <button class="btn-plan btn-vip" onclick="abrirModalCPF(180, 199.90)">Comprar Semestral</button>
     </div>
-
   </div>
 
-  <a href="javascript:history.back()" class="footer-link">← Voltar para o Sistema</a>
+  <div id="cpfModal" style="display:none; position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.85); z-index:10000; justify-content:center; align-items:center; backdrop-filter:blur(5px);">
+      <div class="box" style="width: 340px; text-align: center; border: 1px solid var(--color-blue); animation: popIn 0.3s ease;">
+          <h3 style="margin-top:0; color: var(--color-blue);">Pagamento via PIX 💠</h3>
+          <p style="font-size: 0.85rem; color: var(--text-secondary); margin-bottom: 20px;">Digite seu CPF para gerar o QR Code:</p>
+          
+          <input type="text" id="inputCPF" placeholder="000.000.000-00" maxlength="14" style="width: 100%; margin-bottom: 20px; text-align: center; font-size: 1.3rem; font-weight: bold; letter-spacing: 1px;">
+          
+          <div style="display: flex; gap: 10px;">
+              <button id="btnConfirmarCPF" class="btn-plan btn-primary" style="flex:1; padding: 12px;">Gerar PIX</button>
+              <button onclick="fecharModalCPF()" class="btn-plan btn-outline" style="flex:1; padding: 12px;">Voltar</button>
+          </div>
+      </div>
+  </div>
 
-  <div id="modal-pix" class="modal" style="display:none; position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.8); z-index:2000; justify-content:center; align-items:center;">
-    <div class="box" style="max-width: 450px; text-align: center; padding: 30px; background:var(--bg-card); border-radius:16px;">
-        <h3 style="margin-bottom: 5px;">Finalizar Assinatura 🚀</h3>
-        <p style="font-size: 0.85rem; color: var(--text-secondary); margin-bottom: 20px;">Escaneie o QR Code abaixo no seu banco</p>
-
-        <div style="background: rgba(81, 207, 102, 0.1); padding: 15px; border-radius: 12px; margin-bottom: 20px;">
-            <small style="color: var(--text-secondary); text-transform: uppercase; font-size: 0.7rem;">Total a pagar</small>
-            <div id="pix-valor-display" style="font-size: 2.2rem; font-weight: bold; color: var(--color-blue);">R$ 0,00</div>
+  <div id="modal-pix" style="display:none; position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.9); z-index:11000; justify-content:center; align-items:center;">
+    <div class="box" style="max-width: 400px; text-align: center;">
+        <h3 style="margin-bottom: 5px;">QR Code Gerado! ✅</h3>
+        <div id="pix-valor-display" style="font-size: 2rem; font-weight: bold; color: var(--color-green); margin: 15px 0;">R$ 0,00</div>
+        <img id="qrcode-img" src="" style="width: 200px; background: white; padding: 10px; border-radius: 10px; margin: 0 auto 15px; display: block;">
+        <div style="margin-bottom: 15px;">
+            <small>Expira em:</small>
+            <div id="pix-timer" style="font-size: 1.1rem; color: var(--color-red); font-weight: bold;">10:00</div>
         </div>
-
-        <img id="qrcode-img" src="" style="width: 220px; background: white; padding: 10px; border-radius: 10px; margin: 0 auto 20px; display: block;">
-        
+        <button class="btn-plan btn-primary" onclick="copiarCodigoPix()" style="margin-bottom: 10px;">📋 Copiar Código PIX</button>
+        <button class="btn-plan btn-outline" onclick="fecharModalPix()">Fechar</button>
         <input type="text" id="pix-copia-cola" style="position: absolute; left: -9999px;">
-
-        <div style="margin-bottom: 20px;">
-            <p style="font-size: 0.8rem; margin-bottom: 5px;">Este QR Code expira em:</p>
-            <div id="pix-timer" style="font-size: 1.2rem; font-weight: bold; color: var(--color-red);">10:00</div>
-        </div>
-
-        <button class="btn-plan btn-primary" onclick="copiarCodigoPix()" style="width: 100%; margin-bottom: 10px;">📋 Copiar Código PIX</button>
-        <button class="btn-plan btn-outline" onclick="fecharModal()" style="width: 100%;">Voltar</button>
     </div>
-</div>
+  </div>
 
 <script type="module">
     import { api } from "./js/http.js";
 
     const user = JSON.parse(localStorage.getItem("user") || "{}");
-    if (!user || !user.company_id) window.location.href = "login.html";
-
-    let tempoRestante = 600;
+    let planoAtual = { dias: 0, valor: 0 };
     let cronometroInterval;
 
-    function iniciarCronometro() {
-        tempoRestante = 600;
-        clearInterval(cronometroInterval);
-        cronometroInterval = setInterval(() => {
-            const minutos = Math.floor(tempoRestante / 60);
-            const segundos = tempoRestante % 60;
-            document.getElementById("pix-timer").textContent = `${minutos}:${segundos < 10 ? '0' : ''}${segundos}`;
-            if (tempoRestante <= 0) {
-                clearInterval(cronometroInterval);
-                alert("O QR Code expirou.");
-                fecharModal();
-            }
-            tempoRestante--;
-        }, 1000);
-    }
+    // --- MÁSCARA DE CPF ---
+    const inputCPF = document.getElementById('inputCPF');
+    inputCPF.addEventListener('input', (e) => {
+        let v = e.target.value.replace(/\D/g, '');
+        if (v.length <= 11) {
+            v = v.replace(/(\d{3})(\d)/, '$1.$2');
+            v = v.replace(/(\d{3})(\d)/, '$1.$2');
+            v = v.replace(/(\d{3})(\d{1,2})$/, '$1-$2');
+        }
+        e.target.value = v;
+    });
 
-    async function gerarPagamento(dias, valor, btnElement) {
-        const docInput = prompt("Digite o CPF para o PIX (apenas números):");
-        if (!docInput || docInput.length < 11) {
-            alert("CPF inválido.");
+    window.abrirModalCPF = (dias, valor) => {
+        planoAtual = { dias, valor };
+        document.getElementById('cpfModal').style.display = 'flex';
+        inputCPF.focus();
+    };
+
+    window.fecharModalCPF = () => {
+        document.getElementById('cpfModal').style.display = 'none';
+    };
+
+    document.getElementById('btnConfirmarCPF').onclick = async () => {
+        const cpfRaw = inputCPF.value.replace(/\D/g, '');
+        if (cpfRaw.length !== 11) {
+            alert("CPF Inválido! Digite os 11 números.");
             return;
         }
+        fecharModalCPF();
+        gerarPagamentoReal(planoAtual.dias, planoAtual.valor, cpfRaw);
+    };
 
-        const textoOriginal = btnElement.innerText;
-        btnElement.innerText = "Processando...";
-        btnElement.disabled = true;
-
+    async function gerarPagamentoReal(dias, valor, cpf) {
         try {
             const data = await api("/api/pay/create", {
                 method: "POST",
@@ -377,52 +208,43 @@
                     name: user.name,
                     valor: valor,
                     dias: dias,
-                    docNumber: docInput
+                    docNumber: cpf
                 })
             });
 
-            if (!data.ok) throw new Error(data.error || "Erro ao gerar PIX");
+            if (!data.ok) throw new Error(data.error || "Erro na API");
 
-            // Preenche o modal com os dados da API
-            document.getElementById("pix-valor-display").textContent = `R$ ${valor.toFixed(2)}`;
+            document.getElementById("pix-valor-display").textContent = `R$ ${valor.toFixed(2).replace('.', ',')}`;
             document.getElementById("qrcode-img").src = `data:image/png;base64,${data.qr_code_base64}`;
             document.getElementById("pix-copia-cola").value = data.qr_code;
-            
             document.getElementById("modal-pix").style.display = "flex";
+            
             iniciarCronometro();
-
-        } catch (err) {
-            alert("Erro: " + err.message);
-        } finally {
-            btnElement.innerText = textoOriginal;
-            btnElement.disabled = false;
-        }
+        } catch (err) { alert(err.message); }
     }
 
-    window.copiarCodigoPix = function() {
-        const input = document.getElementById("pix-copia-cola");
-        input.select();
+    function iniciarCronometro() {
+        let tempo = 600;
+        clearInterval(cronometroInterval);
+        cronometroInterval = setInterval(() => {
+            const min = Math.floor(tempo / 60);
+            const sec = tempo % 60;
+            document.getElementById("pix-timer").textContent = `${min}:${sec < 10 ? '0' : ''}${sec}`;
+            if (tempo-- <= 0) { clearInterval(cronometroInterval); fecharModalPix(); }
+        }, 1000);
+    }
+
+    window.copiarCodigoPix = () => {
+        const copyText = document.getElementById("pix-copia-cola");
+        copyText.select();
         document.execCommand("copy");
         alert("Código PIX copiado! ✅");
     };
 
-    window.fecharModal = function() {
+    window.fecharModalPix = () => {
         document.getElementById("modal-pix").style.display = "none";
         clearInterval(cronometroInterval);
     };
-
-    window.gerarPagamento = gerarPagamento;
 </script>
-  <div id="cpfModal" style="display:none; position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.85); z-index:10000; justify-content:center; align-items:center; backdrop-filter:blur(5px);">
-    <div class="box" style="width: 320px; text-align: center; border: 1px solid var(--color-blue); animation: popIn 0.3s ease;">
-        <h3 style="margin-top:0;">Pagamento via PIX 💠</h3>
-        <p style="font-size: 0.85rem; color: var(--text-secondary);">Digite seu CPF para gerar o QR Code (apenas números):</p>
-        <input type="text" id="inputCPF" placeholder="000.000.000-00" maxlength="11" style="width: 100%; margin-bottom: 15px; text-align: center; font-size: 1.1rem; letter-spacing: 2px;">
-        <div style="display: flex; gap: 10px;">
-            <button id="btnGerarPix" class="btn success" style="flex:1;">Gerar PIX</button>
-            <button onclick="document.getElementById('cpfModal').style.display='none'" class="btn cancel" style="flex:1; background:#444;">Cancelar</button>
-        </div>
-    </div>
-</div>
 </body>
 </html>
