@@ -101,32 +101,44 @@ app.post("/api/admin-login", async (req, res) => {
 });
 
 // =============================================================
-// 🏢 CADASTRO (Resolve o Redirecionamento)
+// 🏢 CADASTRO (CORREÇÃO FINAL DE ID + DEBUG)
 // =============================================================
 app.post("/api/register-company", async (req, res) => {
   const { name, email, whatsapp, senha } = req.body; 
-  const hash = bcrypt.hashSync(String(senha), 10);
-  
-  const dataExpira = new Date();
-  dataExpira.setDate(dataExpira.getDate() + 5); // 5 dias grátis
-  const trial_at = dataExpira.toISOString();
-  const created_at = getHoraLocalISOString();
+  console.log(`📝 Tentativa de cadastro: ${email}`);
 
   try {
+    const hash = bcrypt.hashSync(String(senha), 10);
+    const dataExpira = new Date();
+    dataExpira.setDate(dataExpira.getDate() + 5); 
+    const trial_at = dataExpira.toISOString();
+    const created_at = getHoraLocalISOString();
+
+    // 1. Cria Empresa
     const resCompany = await db.execute({
         sql: `INSERT INTO companies (name, email_admin, whatsapp, senha_hash, trial_expires_at, created_at) VALUES (?,?,?,?,?,?)`,
         args: [name, email, whatsapp, hash, trial_at, created_at]
     });
     
-    // CRUCIAL: Converte BigInt para Number para o Frontend entender
-    const newId = Number(resCompany.lastInsertRowid);
+    // 2. RECUPERAÇÃO SEGURA DO ID (A CORREÇÃO ESTÁ AQUI)
+    // Converte BigInt para String e depois para Number para garantir compatibilidade
+    const rawId = resCompany.lastInsertRowid;
+    const newId = Number(String(rawId));
 
+    console.log(`✅ Empresa criada no banco. ID Gerado: ${newId}`);
+
+    if (!newId || isNaN(newId)) {
+        throw new Error("Erro Crítico: O banco criou a empresa mas não retornou um ID válido.");
+    }
+
+    // 3. Cria Usuário Admin vinculado à empresa
     await db.execute({
         sql: `INSERT INTO users (company_id, name, email, senha_hash, role, created_at) VALUES (?,?,?,?,'admin',?)`,
         args: [newId, "Administrador", email, hash, created_at]
     });
 
-    // Retorna o objeto USER completo para o localStorage
+    console.log(`✅ Usuário Admin criado para empresa ${newId}. Retornando sucesso.`);
+
     res.json({ 
         ok: true, 
         user: { 
@@ -137,14 +149,16 @@ app.post("/api/register-company", async (req, res) => {
             email: email
         } 
     });
+
   } catch (err) { 
-    console.error("Erro Cadastro:", err);
-    res.status(400).json({ ok: false, error: "E-mail já cadastrado." }); 
+    console.error("❌ ERRO NO CADASTRO:", err);
+    // Retorna a mensagem real do erro para você ver na tela
+    res.status(400).json({ ok: false, error: err.message || "Erro desconhecido ao cadastrar." }); 
   }
 });
 
 // =============================================================
-// 📝 PEDIDOS (Restaurado)
+// 📝 PEDIDOS
 // =============================================================
 app.post("/api/orders", async (req, res) => {
   const { company_id, items, total, table_name, notes } = req.body;
@@ -167,7 +181,7 @@ app.get("/api/orders", async (req, res) => {
       const result = await db.execute({ sql: sql + ` ORDER BY id DESC`, args });
       const rows = result.rows.map(row => ({
           ...row, 
-          items: JSON.parse(row.items || "[]") // Garante que items volte como Array
+          items: JSON.parse(row.items || "[]") 
       }));
       res.json({ ok: true, pedidos: rows });
   } catch (err) { res.status(500).json({ ok: false }); }
@@ -196,7 +210,7 @@ app.get("/api/orders/history", async (req, res) => {
 });
 
 // =============================================================
-// 📦 PRODUTOS (Restaurado)
+// 📦 PRODUTOS
 // =============================================================
 app.get("/api/products", async (req, res) => {
   try {
@@ -224,7 +238,7 @@ app.delete("/api/products/:id", async (req, res) => {
 });
 
 // =============================================================
-// 👥 USUÁRIOS (Restaurado)
+// 👥 USUÁRIOS
 // =============================================================
 app.get("/api/users", async (req, res) => {
     try {
@@ -255,7 +269,7 @@ app.delete("/api/users/:id", async (req, res) => {
 });
 
 // =============================================================
-// 💰 PAGAMENTOS & ADMINISTRAÇÃO (Restaurado)
+// 💰 PAGAMENTOS & ADMINISTRAÇÃO
 // =============================================================
 app.get("/api/empresas", async (req, res) => {
   try {
