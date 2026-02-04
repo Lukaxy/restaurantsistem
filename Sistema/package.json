@@ -14,4 +14,3 @@
     "jsonwebtoken": "^9.0.2",
     "@libsql/client": "^0.6.0",
   }
-}
