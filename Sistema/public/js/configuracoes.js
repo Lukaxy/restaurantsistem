@@ -1,15 +1,14 @@
+// ==================== UTILITÁRIOS: NOTIFICAÇÕES (TOAST) ====================
 function showToast(mensagem, tipo = 'sucesso') {
     let container = document.getElementById('toast-container');
     if (!container) {
         container = document.createElement('div');
         container.id = 'toast-container';
-        // Adicionando o estilo básico via JS para garantir que funcione
-        container.style.cssText = "position:fixed; top:20px; right:20px; z-index:9999;";
+        container.style.cssText = "position:fixed; top:20px; right:20px; z-index:10000;";
         document.body.appendChild(container);
     }
 
     const toast = document.createElement('div');
-    // Estilização baseada no seu sistema Dark
     toast.style.cssText = `
         background: #1a1a1a; 
         color: white; 
@@ -28,22 +27,22 @@ function showToast(mensagem, tipo = 'sucesso') {
     toast.innerHTML = `<span>${tipo === 'sucesso' ? '✅' : '❌'}</span> <span>${mensagem}</span>`;
     container.appendChild(toast);
 
-    // Remove automaticamente
     setTimeout(() => {
         toast.style.animation = "fadeOut 0.5s ease forwards";
         setTimeout(() => toast.remove(), 500);
     }, 3000);
 }
 
-// Estilos de animação injetados no head
 const style = document.createElement('style');
 style.innerHTML = `
     @keyframes slideIn { from { transform: translateX(100%); opacity: 0; } to { transform: translateX(0); opacity: 1; } }
     @keyframes fadeOut { from { opacity: 1; } to { opacity: 0; transform: translateY(-20px); } }
 `;
 document.head.appendChild(style);
+
 // ==================== VARIÁVEIS GLOBAIS ====================
 let user = null;
+let idParaExcluir = null; // Guarda o ID do produto que será excluído após confirmar no modal
 const list = document.getElementById('productList');
 
 // ==================== CARREGAR PRODUTOS ====================
@@ -62,7 +61,6 @@ async function carregarProdutos() {
             return;
         }
 
-        // Renderiza cada produto com o novo visual de lista
         list.innerHTML = produtos.map(p => `
             <div style="display: flex; justify-content: space-between; align-items: center; padding: 15px; border-bottom: 1px solid var(--border-color); gap: 10px;">
                 <div style="flex: 1;">
@@ -77,7 +75,7 @@ async function carregarProdutos() {
                     </div>
                     ${p.description ? `<div style="color: var(--text-secondary); font-size: 0.85rem; margin-top: 4px;">${p.description}</div>` : ''}
                 </div>
-                <button class="btn cancel" onclick="excluirProduto(${p.id})" style="padding: 8px 12px; font-size: 1rem;">
+                <button class="btn cancel" onclick="prepararExclusao(${p.id})" style="padding: 8px 12px; font-size: 1rem;">
                     🗑️
                 </button>
             </div>
@@ -85,7 +83,7 @@ async function carregarProdutos() {
 
     } catch (err) {
         console.error('Erro ao carregar produtos:', err);
-        if (list) list.innerHTML = `<p style="color:var(--color-red);">Erro ao conectar com o servidor.</p>`;
+        showToast('Erro ao conectar com o servidor.', 'erro');
     }
 }
 
@@ -97,7 +95,7 @@ window.addProduct = async function() {
     const description = document.getElementById('newDescription').value.trim();
 
     if (!name || isNaN(price)) {
-        alert('Por favor, preencha o nome e o preço corretamente.');
+        showToast('Preencha nome e preço corretamente.', 'erro');
         return;
     }
 
@@ -122,7 +120,6 @@ window.addProduct = async function() {
         const data = await res.json();
         if (!data.ok) throw new Error(data.error || 'Erro ao adicionar produto.');
 
-        // Limpa os campos
         document.getElementById('newName').value = '';
         document.getElementById('newPrice').value = '';
         document.getElementById('newCategory').value = '';
@@ -133,32 +130,49 @@ window.addProduct = async function() {
 
     } catch (err) {
         console.error(err);
-        alert('❌ Erro: ' + err.message);
+        showToast('Erro: ' + err.message, 'erro');
     } finally {
         btn.innerText = originalText;
         btn.disabled = false;
     }
 }
 
-// ==================== EXCLUIR PRODUTO ====================
-window.excluirProduto = async function(id) {
-    if (!confirm('Deseja realmente excluir este produto?')) return;
-
-    try {
-        const res = await fetch(`/api/products/${id}`, { method: 'DELETE' });
-        const data = await res.json();
-        
-        if (!data.ok) throw new Error(data.error || 'Erro ao excluir produto.');
-
-        await carregarProdutos();
-    } catch (err) {
-        alert('❌ Erro ao excluir: ' + err.message);
-    }
+// ==================== LOGICA DO MODAL DE EXCLUSÃO ====================
+window.prepararExclusao = function(id) {
+    idParaExcluir = id;
+    document.getElementById('confirmModal').style.display = 'flex';
 }
+
+window.fecharConfirm = function() {
+    document.getElementById('confirmModal').style.display = 'none';
+    idParaExcluir = null;
+}
+
+// Configura o clique no botão de "Sim" do seu Modal HTML
+document.addEventListener('DOMContentLoaded', () => {
+    const confirmBtn = document.getElementById('confirmBtn');
+    if (confirmBtn) {
+        confirmBtn.onclick = async () => {
+            if (!idParaExcluir) return;
+
+            try {
+                const res = await fetch(`/api/products/${idParaExcluir}`, { method: 'DELETE' });
+                const data = await res.json();
+                
+                if (!data.ok) throw new Error(data.error || 'Erro ao excluir produto.');
+
+                fecharConfirm();
+                await carregarProdutos();
+                showToast('Produto removido! 🗑️');
+            } catch (err) {
+                showToast('Erro ao excluir: ' + err.message, 'erro');
+            }
+        };
+    }
+});
 
 // ==================== INICIALIZAÇÃO ====================
 document.addEventListener('DOMContentLoaded', () => {
-    // Busca usuário e valida permissão
     try {
         const userData = localStorage.getItem("user");
         if (!userData) {
@@ -168,8 +182,8 @@ document.addEventListener('DOMContentLoaded', () => {
         user = JSON.parse(userData);
         
         if (user.role !== "admin") {
-            alert("Acesso restrito a administradores.");
-            window.location.replace("index.html");
+            showToast("Acesso restrito a administradores.", "erro");
+            setTimeout(() => window.location.replace("index.html"), 2000);
             return;
         }
     } catch (e) {
