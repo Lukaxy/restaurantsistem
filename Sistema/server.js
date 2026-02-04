@@ -4,7 +4,6 @@ const cors = require("cors");
 const path = require("path");
 const bcrypt = require("bcryptjs");
 const { MercadoPagoConfig, Payment } = require('mercadopago');
-// 1. Trocamos o driver do SQLite pelo do Turso
 const { createClient } = require("@libsql/client");
 
 // Configura o banco de dados imortal do Turso
