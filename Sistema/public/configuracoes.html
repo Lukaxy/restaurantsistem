@@ -64,13 +64,13 @@
   <div class="menu-wrapper">
     <button class="menu-button" onclick="toggleMenu()">⋮</button>
     <div id="menuDropdown" class="menu-dropdown">
-      <div onclick="window.location.href='index.html'">📙 Cardápio</div>
-      <div onclick="window.location.href='meus-pedidos.html'">🧾 Meus pedidos</div>
-      <div onclick="window.location.href='relatorio.html'">📈 Relatório</div>
-      <div onclick="window.location.href='cozinha.html'">👨‍🍳 Cozinha</div>
-      <div onclick="window.location.href='configuracoes.html'">⚙️ Configurações</div>
-      <div onclick="abrirPainelEmpresa()">🏢 Painel da Empresa</div>
-      <div onclick="logout()" style="color: var(--color-red);">🚪 Sair do Sistema</div>
+      <div onclick="window.location.href='index.html'">Cardápio 📙</div>
+      <div onclick="window.location.href='meus-pedidos.html'">Meus pedidos 🧾</div>
+      <div onclick="window.location.href='relatorio.html'">Relatório 📈</div>
+      <div onclick="window.location.href='cozinha.html'">Cozinha 👨‍🍳</div>
+      <div onclick="window.location.href='configuracoes.html'">Configurações ⚙️</div>
+      <div onclick="location.href='company-admin.html'">Painel da Empresa  🏢</div>
+      <div onclick="logout()" style="color: var(--color-red);">Sair do Sistema 🚪</div>
     </div>
   </div>
   <div class="header-title">Configurações do Cardápio ⚙️</div>
@@ -147,15 +147,6 @@
   // Interface
   function toggleMenu() {
     document.getElementById('menuDropdown').classList.toggle('show');
-  }
-
-  function abrirPainelEmpresa() {
-    const user = JSON.parse(localStorage.getItem('user') || '{}');
-    if (user.role === 'admin') {
-      window.location.href = 'company-admin.html';
-    } else {
-      showToast('Apenas administradores podem acessar!', 'erro');
-    }
   }
 
   // Fecha menu ao clicar fora
