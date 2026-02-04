@@ -28,7 +28,7 @@ function getHoraLocalISOString() {
   return new Date().toISOString(); 
 }
 
-// 2. Inicialização das Tabelas (Agora usando await/async)
+// 1. Inicialização das Tabelas
 async function initDb() {
   try {
     await db.execute(`CREATE TABLE IF NOT EXISTS companies (
@@ -96,14 +96,14 @@ async function initDb() {
 initDb();
 
 // =============================================================
-// 📡 LOGIN
+// 📡 LOGIN (CORRIGIDO)
 // =============================================================
 app.post("/api/login", async (req, res) => {
   const { email, senha } = req.body;
   try {
-    const sql = `SELECT u.*, c.trial_expires_at, c.plano FROM users u JOIN companies c ON u.company_id = c.id WHERE u.email = ?`;
+    const sql = `SELECT u.*, c.trial_expires_at, c.plano FROM users u LEFT JOIN companies c ON u.company_id = c.id WHERE u.email = ?`;
     const result = await db.execute({ sql, args: [email] });
-    const user = result.rows[0];
+    const user = result.rows[0]; // Pega a primeira linha
 
     if (!user) return res.status(404).json({ ok: false, error: "Usuário não encontrado." });
 
@@ -112,36 +112,47 @@ app.post("/api/login", async (req, res) => {
 
     if (user.plano === 'bloqueado') return res.status(403).json({ ok: false, error: "Sua conta está suspensa. ❌" });
 
-    const hoje = new Date();
-    const expira = new Date(user.trial_expires_at);
-    if (user.plano === 'trial' && hoje > expira) {
-      return res.status(403).json({ ok: false, error: "Teste expirado! 🛑" });
+    // Verificação de Teste Expirado (apenas para quem não é Master)
+    if (user.role !== 'master') {
+        const hoje = new Date();
+        const expira = new Date(user.trial_expires_at);
+        if (user.plano === 'trial' && hoje > expira) {
+          return res.status(403).json({ ok: false, error: "Teste expirado! 🛑" });
+        }
     }
 
     res.json({ ok: true, user });
   } catch (err) {
-    res.status(500).json({ ok: false, error: "Erro no login." });
+    console.error("Erro Login:", err);
+    res.status(500).json({ ok: false, error: "Erro no servidor." });
   }
 });
 
 // =============================================================
-// 📊 HISTÓRICO
+// 👑 ADMIN LOGIN (MASTER)
 // =============================================================
-app.get("/api/orders/history", async (req, res) => {
-  const { company_id } = req.query;
-  const sql = `SELECT * FROM orders WHERE company_id = ? AND status IN ('finalizado', 'pronto', 'entregue', 'pago', 'concluido', 'concluído') ORDER BY status_updated_at DESC`;
+app.post("/api/admin-login", async (req, res) => {
+  const { email, senha } = req.body;
   try {
-    const result = await db.execute({ sql, args: [company_id] });
-    const rows = result.rows.map(r => {
-      try { r.items = JSON.parse(r.items || "[]"); } catch(e) { r.items = []; }
-      return r;
+    const result = await db.execute({
+        sql: "SELECT * FROM users WHERE email = ? AND role = 'master'",
+        args: [email]
     });
-    res.json({ ok: true, pedidos: rows });
-  } catch (err) { res.status(500).json({ ok: false }); }
+    const user = result.rows[0];
+
+    if (!user) return res.status(404).json({ ok: false, error: "Admin não encontrado." });
+
+    const valid = await bcrypt.compare(senha, user.senha_hash);
+    if (!valid) return res.status(401).json({ ok: false, error: "Senha incorreta." });
+
+    res.json({ ok: true, user });
+  } catch (err) {
+    res.status(500).json({ ok: false, error: "Erro interno." });
+  }
 });
 
 // =============================================================
-// 👑 ADMIN MASTER & EMPRESAS
+// 🏢 CADASTRO (CORRIGIDO PARA LOGAR AUTOMÁTICO)
 // =============================================================
 app.post("/api/register-company", async (req, res) => {
   const { name, email, whatsapp, senha } = req.body; 
@@ -157,13 +168,45 @@ app.post("/api/register-company", async (req, res) => {
         args: [name, email, whatsapp, hash, trial_expires_at, created_at]
     });
     
+    // Pega o ID da empresa recém criada
     const companyId = Number(resCompany.lastInsertRowid);
+
     await db.execute({
         sql: `INSERT INTO users (company_id, name, email, senha_hash, role, created_at) VALUES (?,?,?,?,'admin',?)`,
         args: [companyId, "Administrador", email, hash, created_at]
     });
-    res.json({ ok: true, user: { id: companyId, company_id: companyId, role: 'admin' } });
-  } catch (err) { res.status(400).json({ ok: false, error: "E-mail cadastrado." }); }
+
+    // Retorna o objeto exatamente como o seu Front-end espera para logar
+    res.json({ 
+        ok: true, 
+        user: { 
+            id: companyId, 
+            company_id: companyId, 
+            role: 'admin', 
+            name: "Administrador",
+            email: email 
+        } 
+    });
+  } catch (err) { 
+    console.error(err);
+    res.status(400).json({ ok: false, error: "E-mail já cadastrado ou erro no banco." }); 
+  }
+});
+
+// =============================================================
+// 📊 HISTÓRICO & EMPRESAS
+// =============================================================
+app.get("/api/orders/history", async (req, res) => {
+  const { company_id } = req.query;
+  const sql = `SELECT * FROM orders WHERE company_id = ? AND status IN ('finalizado', 'pronto', 'entregue', 'pago', 'concluido', 'concluído') ORDER BY status_updated_at DESC`;
+  try {
+    const result = await db.execute({ sql, args: [company_id] });
+    const rows = result.rows.map(r => {
+      try { r.items = JSON.parse(r.items || "[]"); } catch(e) { r.items = []; }
+      return r;
+    });
+    res.json({ ok: true, pedidos: rows });
+  } catch (err) { res.status(500).json({ ok: false }); }
 });
 
 app.get("/api/empresas", async (req, res) => {
@@ -195,7 +238,7 @@ app.post("/api/empresas/:id/add-days", async (req, res) => {
 });
 
 // =============================================================
-// 📦 PRODUTOS
+// 📦 PRODUTOS & PEDIDOS
 // =============================================================
 app.get("/api/products", async (req, res) => {
   try {
@@ -222,9 +265,6 @@ app.delete("/api/products/:id", async (req, res) => {
     } catch (err) { res.status(500).json({ ok: false }); }
 });
 
-// =============================================================
-// 📝 PEDIDOS
-// =============================================================
 app.post("/api/orders", async (req, res) => {
   const { company_id, items, total, table_name, notes } = req.body;
   const agora = getHoraLocalISOString();
@@ -275,7 +315,7 @@ app.delete("/api/users/:id", async (req, res) => {
     const { id } = req.params;
     try {
         const check = await db.execute({ sql: "SELECT email FROM users WHERE id = ?", args: [id] });
-        if (check.rows[0]?.email === MASTER_EMAIL) return res.status(403).json({ ok: false });
+        if (check.rows[0]?.email === MASTER_EMAIL) return res.status(403).json({ ok: false, error: "Não pode deletar o Master!" });
 
         await db.execute({ sql: `DELETE FROM users WHERE id = ?`, args: [id] });
         res.json({ ok: true });
@@ -295,7 +335,31 @@ app.post("/api/users", async (req, res) => {
 });
 
 // =============================================================
-// 💰 MERCADO PAGO & WEBHOOK
+// 🏢 OUTRAS ROTAS
+// =============================================================
+app.post("/api/empresas/:id/plano", async (req, res) => {
+    try {
+        await db.execute({ sql: `UPDATE companies SET plano = ? WHERE id = ?`, args: [req.body.plano, req.params.id] });
+        res.json({ ok: true });
+    } catch (err) { res.status(500).json({ ok: false }); }
+});
+
+app.delete("/api/empresas/:id", async (req, res) => {
+    try {
+        await db.execute({ sql: `DELETE FROM companies WHERE id = ?`, args: [req.params.id] });
+        res.json({ ok: true });
+    } catch (err) { res.status(500).json({ ok: false }); }
+});
+
+app.get("/api/companies/:id", async (req, res) => {
+    try {
+        const result = await db.execute({ sql: `SELECT plano, trial_expires_at, name FROM companies WHERE id = ?`, args: [req.params.id] });
+        res.json({ ok: true, company: result.rows[0] });
+    } catch (err) { res.status(500).json({ ok: false }); }
+});
+
+// =============================================================
+// 💰 MERCADO PAGO & WEBHOOK (SEM ALTERAÇÃO NA LÓGICA)
 // =============================================================
 app.post("/api/pay/create", async (req, res) => {
     const { company_id, email, name, valor, dias, docNumber } = req.body;
@@ -328,6 +392,7 @@ app.post("/api/pay/create", async (req, res) => {
         const data = result.point_of_interaction.transaction_data;
         res.json({ ok: true, qr_code: data.qr_code, qr_code_base64: data.qr_code_base64, id: result.id });
     } catch (error) {
+        console.error(error);
         res.status(500).json({ ok: false, error: "Falha MP" });
     }
 });
@@ -363,15 +428,8 @@ app.post("/api/webhook", async (req, res) => {
 });
 
 // =============================================================
-// CONFIGURAÇÕES FINAIS
+// 🚀 INICIALIZAÇÃO
 // =============================================================
-app.get("/api/companies/:id", async (req, res) => {
-    try {
-        const result = await db.execute({ sql: `SELECT plano, trial_expires_at, name FROM companies WHERE id = ?`, args: [req.params.id] });
-        res.json({ ok: true, company: result.rows[0] });
-    } catch (err) { res.status(500).json({ ok: false }); }
-});
-
 const publicPath = path.join(__dirname, "public");
 app.use(express.static(publicPath));
 
