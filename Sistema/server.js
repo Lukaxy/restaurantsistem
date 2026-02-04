@@ -7,10 +7,11 @@ const { MercadoPagoConfig, Payment } = require('mercadopago');
 const { createClient } = require("@libsql/client");
 
 // =============================================================
-// 🔧 CONFIGURAÇÕES INICIAIS
+// 🔧 CONFIGURAÇÕES
 // =============================================================
 const db = createClient({
-  url: "https://restaurant-system-lukaxy.aws-us-east-1.turso.io",
+  // URL Fixa com HTTPS para evitar bloqueio do Render
+  url: "https://restaurant-system-lukaxy.aws-us-east-1.turso.io", 
   authToken: process.env.TURSO_TOKEN,
 });
 
@@ -26,37 +27,49 @@ const app = express();
 app.use(cors());
 app.use(bodyParser.json({ limit: "5mb" }));
 
-// Função auxiliar para data limpa no banco
 function getHoraLocalISOString() {
   return new Date().toISOString().replace('T', ' ').substring(0, 19); 
 }
 
 // =============================================================
-// 🗄️ INICIALIZAÇÃO DO BANCO (TURSO)
+// 🏗️ INICIALIZAÇÃO ROBUSTA DO BANCO
 // =============================================================
 async function initDb() {
+  console.log("🔄 Iniciando verificação do Banco de Dados...");
   try {
+    // 1. Criação das Tabelas (Sequencial)
     await db.execute(`CREATE TABLE IF NOT EXISTS companies (id INTEGER PRIMARY KEY AUTOINCREMENT, name TEXT, email_admin TEXT UNIQUE, whatsapp TEXT, senha_hash TEXT, plano TEXT DEFAULT 'trial', trial_expires_at TEXT, created_at TEXT)`);
     await db.execute(`CREATE TABLE IF NOT EXISTS users (id INTEGER PRIMARY KEY AUTOINCREMENT, company_id INTEGER, name TEXT, email TEXT UNIQUE, senha_hash TEXT, role TEXT DEFAULT 'atendente', ativo INTEGER DEFAULT 1, created_at TEXT)`);
     await db.execute(`CREATE TABLE IF NOT EXISTS orders (id INTEGER PRIMARY KEY AUTOINCREMENT, company_id INTEGER, items TEXT, total REAL, table_name TEXT, notes TEXT, status TEXT DEFAULT 'novo', created_at TEXT, status_updated_at TEXT, payment_method TEXT)`);
     await db.execute(`CREATE TABLE IF NOT EXISTS products (id INTEGER PRIMARY KEY AUTOINCREMENT, company_id INTEGER, name TEXT, price REAL, category TEXT, description TEXT)`);
+    
+    console.log("✅ Tabelas verificadas/criadas.");
 
-    // Verifica e cria o Master
+    // 2. Verificação/Criação do Master
     const checkMaster = await db.execute({ sql: "SELECT * FROM users WHERE email = ?", args: [MASTER_EMAIL] });
+    
     if (checkMaster.rows.length === 0) {
+      console.log("👤 Usuário Master não encontrado. Criando agora...");
+      const hash = bcrypt.hashSync(MASTER_SENHA, 10);
       await db.execute({
         sql: "INSERT INTO users (name, email, senha_hash, role, created_at) VALUES (?, ?, ?, 'master', ?)",
-        args: ["Admin Master", MASTER_EMAIL, bcrypt.hashSync(MASTER_SENHA, 10), getHoraLocalISOString()]
+        args: ["Admin Master", MASTER_EMAIL, hash, getHoraLocalISOString()]
       });
-      console.log("✅ Usuário Master criado/verificado.");
+      console.log("✅ Usuário Master criado com sucesso.");
+    } else {
+      console.log("✅ Usuário Master já existe.");
     }
-  } catch (err) { console.error("❌ Erro ao iniciar banco:", err); }
+
+  } catch (err) { 
+    console.error("❌ FALHA CRÍTICA NA INICIALIZAÇÃO DO BANCO:", err);
+    process.exit(1); // Mata o servidor se o banco falhar
+  }
 }
-initDb();
 
 // =============================================================
-// 📡 LOGIN BLINDADO (Resolve erro 500)
+// 📡 ROTAS DE AUTENTICAÇÃO
 // =============================================================
+
 app.post("/api/login", async (req, res) => {
   const { email, senha } = req.body;
   try {
@@ -68,13 +81,11 @@ app.post("/api/login", async (req, res) => {
     const user = result.rows[0]; 
     if (!user) return res.status(404).json({ ok: false, error: "Usuário não encontrado." });
 
-    // GARANTIA: Converte para String para o bcrypt não quebrar
     const valid = await bcrypt.compare(String(senha), String(user.senha_hash));
-    
     if (!valid) return res.status(401).json({ ok: false, error: "Senha incorreta." });
+    
     if (user.plano === 'bloqueado') return res.status(403).json({ ok: false, error: "Conta suspensa." });
 
-    // Verificação de validade do plano (exceto para Master e Admin)
     if (user.role !== 'master' && user.trial_expires_at) {
         if (new Date() > new Date(user.trial_expires_at)) {
              return res.status(403).json({ ok: false, error: "Seu plano expirou! Renove para continuar." });
@@ -93,19 +104,23 @@ app.post("/api/admin-login", async (req, res) => {
   try {
     const result = await db.execute({ sql: "SELECT * FROM users WHERE email = ? AND role = 'master'", args: [email] });
     const user = result.rows[0];
-    if (user && await bcrypt.compare(String(senha), String(user.senha_hash))) {
+    
+    if (!user) return res.status(401).json({ ok: false, error: "Master não encontrado." });
+
+    const valid = await bcrypt.compare(String(senha), String(user.senha_hash));
+    if (valid) {
         return res.json({ ok: true, user });
     }
-    res.status(401).json({ ok: false, error: "Acesso negado." });
-  } catch (err) { res.status(500).json({ ok: false }); }
+    res.status(401).json({ ok: false, error: "Senha incorreta." });
+  } catch (err) { 
+      console.error(err);
+      res.status(500).json({ ok: false, error: "Erro no servidor." }); 
+  }
 });
 
-// =============================================================
-// 🏢 CADASTRO (CORREÇÃO FINAL DE ID + DEBUG)
-// =============================================================
 app.post("/api/register-company", async (req, res) => {
   const { name, email, whatsapp, senha } = req.body; 
-  console.log(`📝 Tentativa de cadastro: ${email}`);
+  console.log(`📝 Cadastro solicitado: ${email}`);
 
   try {
     const hash = bcrypt.hashSync(String(senha), 10);
@@ -114,77 +129,119 @@ app.post("/api/register-company", async (req, res) => {
     const trial_at = dataExpira.toISOString();
     const created_at = getHoraLocalISOString();
 
-    // 1. Cria Empresa
     const resCompany = await db.execute({
         sql: `INSERT INTO companies (name, email_admin, whatsapp, senha_hash, trial_expires_at, created_at) VALUES (?,?,?,?,?,?)`,
         args: [name, email, whatsapp, hash, trial_at, created_at]
     });
     
-    // 2. RECUPERAÇÃO SEGURA DO ID (A CORREÇÃO ESTÁ AQUI)
-    // Converte BigInt para String e depois para Number para garantir compatibilidade
-    const rawId = resCompany.lastInsertRowid;
-    const newId = Number(String(rawId));
+    // Conversão Segura de ID
+    const newId = Number(String(resCompany.lastInsertRowid));
 
-    console.log(`✅ Empresa criada no banco. ID Gerado: ${newId}`);
+    if (!newId || isNaN(newId)) throw new Error("Falha ao gerar ID da empresa.");
 
-    if (!newId || isNaN(newId)) {
-        throw new Error("Erro Crítico: O banco criou a empresa mas não retornou um ID válido.");
-    }
-
-    // 3. Cria Usuário Admin vinculado à empresa
     await db.execute({
         sql: `INSERT INTO users (company_id, name, email, senha_hash, role, created_at) VALUES (?,?,?,?,'admin',?)`,
         args: [newId, "Administrador", email, hash, created_at]
     });
 
-    console.log(`✅ Usuário Admin criado para empresa ${newId}. Retornando sucesso.`);
-
     res.json({ 
         ok: true, 
-        user: { 
-            id: newId, 
-            company_id: newId, 
-            role: 'admin',
-            name: "Administrador",
-            email: email
-        } 
+        user: { id: newId, company_id: newId, role: 'admin', name: "Administrador", email: email } 
     });
-
   } catch (err) { 
-    console.error("❌ ERRO NO CADASTRO:", err);
-    // Retorna a mensagem real do erro para você ver na tela
-    res.status(400).json({ ok: false, error: err.message || "Erro desconhecido ao cadastrar." }); 
+    console.error("Erro Cadastro:", err);
+    res.status(400).json({ ok: false, error: err.message || "Erro ao cadastrar." }); 
   }
 });
 
 // =============================================================
-// 📝 PEDIDOS
+// 📝 PEDIDOS, PRODUTOS E PAGAMENTOS
 // =============================================================
-app.post("/api/orders", async (req, res) => {
-  const { company_id, items, total, table_name, notes } = req.body;
-  const agora = getHoraLocalISOString();
+
+// --- PRODUTOS ---
+app.get("/api/products", async (req, res) => {
+    try {
+        const result = await db.execute({ sql: `SELECT * FROM products WHERE company_id = ?`, args: [req.query.company_id] });
+        res.json(result.rows);
+    } catch (err) { res.status(500).json([]); }
+});
+
+app.post("/api/products", async (req, res) => {
+  const { company_id, name, price, category, description } = req.body;
   try {
       await db.execute({
-          sql: `INSERT INTO orders (company_id, items, total, table_name, notes, created_at, status_updated_at) VALUES (?,?,?,?,?,?,?)`,
-          args: [Number(company_id), JSON.stringify(items), total, table_name, notes, agora, agora]
+          sql: `INSERT INTO products (company_id, name, price, category, description) VALUES (?,?,?,?,?)`,
+          args: [Number(company_id), name, price, category, description]
       });
       res.json({ ok: true });
   } catch (err) { res.status(500).json({ ok: false }); }
 });
 
-app.get("/api/orders", async (req, res) => {
-  let sql = `SELECT * FROM orders WHERE company_id = ?`;
-  const args = [req.query.company_id];
-  if (req.query.status) { sql += ` AND status = ?`; args.push(req.query.status); }
-  
+app.delete("/api/products/:id", async (req, res) => {
+    try {
+        await db.execute({ sql: `DELETE FROM products WHERE id = ?`, args: [req.params.id] });
+        res.json({ ok: true });
+    } catch (err) { res.status(500).json({ ok: false }); }
+});
+
+// --- USUÁRIOS ---
+app.get("/api/users", async (req, res) => {
+    try {
+        const result = await db.execute({ sql: `SELECT id, name, email, role FROM users WHERE company_id = ?`, args: [req.query.company_id] });
+        res.json({ ok: true, users: result.rows });
+    } catch (err) { res.status(500).json({ ok: false }); }
+});
+
+app.post("/api/users", async (req, res) => {
+    const { name, email, senha, role, company_id } = req.body;
+    try {
+        await db.execute({
+            sql: `INSERT INTO users (name, email, senha_hash, role, company_id, created_at) VALUES (?, ?, ?, ?, ?, ?)`,
+            args: [name, email, bcrypt.hashSync(String(senha), 10), role, Number(company_id), getHoraLocalISOString()]
+        });
+        res.json({ ok: true });
+    } catch (err) { res.status(500).json({ ok: false }); }
+});
+
+app.delete("/api/users/:id", async (req, res) => {
+    try {
+        const check = await db.execute({ sql: "SELECT email FROM users WHERE id = ?", args: [req.params.id] });
+        if (check.rows[0]?.email === MASTER_EMAIL) return res.status(403).json({ ok: false, error: "Master imortal." });
+        await db.execute({ sql: `DELETE FROM users WHERE id = ?`, args: [req.params.id] });
+        res.json({ ok: true });
+    } catch (err) { res.status(500).json({ ok: false }); }
+});
+
+// --- ADMINISTRAÇÃO ---
+app.get("/api/empresas", async (req, res) => {
   try {
-      const result = await db.execute({ sql: sql + ` ORDER BY id DESC`, args });
-      const rows = result.rows.map(row => ({
-          ...row, 
-          items: JSON.parse(row.items || "[]") 
-      }));
-      res.json({ ok: true, pedidos: rows });
+      const result = await db.execute(`SELECT * FROM companies ORDER BY id DESC`);
+      res.json({ ok: true, empresas: result.rows });
   } catch (err) { res.status(500).json({ ok: false }); }
+});
+
+// --- PEDIDOS ---
+app.post("/api/orders", async (req, res) => {
+    const { company_id, items, total, table_name, notes } = req.body;
+    const agora = getHoraLocalISOString();
+    try {
+        await db.execute({
+            sql: `INSERT INTO orders (company_id, items, total, table_name, notes, created_at, status_updated_at) VALUES (?,?,?,?,?,?,?)`,
+            args: [Number(company_id), JSON.stringify(items), total, table_name, notes, agora, agora]
+        });
+        res.json({ ok: true });
+    } catch (err) { res.status(500).json({ ok: false }); }
+});
+  
+app.get("/api/orders", async (req, res) => {
+    let sql = `SELECT * FROM orders WHERE company_id = ?`;
+    const args = [req.query.company_id];
+    if (req.query.status) { sql += ` AND status = ?`; args.push(req.query.status); }
+    try {
+        const result = await db.execute({ sql: sql + ` ORDER BY id DESC`, args });
+        const rows = result.rows.map(row => ({ ...row, items: JSON.parse(row.items || "[]") }));
+        res.json({ ok: true, pedidos: rows });
+    } catch (err) { res.status(500).json({ ok: false }); }
 });
 
 app.post("/api/orders/:id/status", async (req, res) => {
@@ -209,75 +266,7 @@ app.get("/api/orders/history", async (req, res) => {
     } catch (err) { res.status(500).json({ ok: false }); }
 });
 
-// =============================================================
-// 📦 PRODUTOS
-// =============================================================
-app.get("/api/products", async (req, res) => {
-  try {
-      const result = await db.execute({ sql: `SELECT * FROM products WHERE company_id = ?`, args: [req.query.company_id] });
-      res.json(result.rows);
-  } catch (err) { res.status(500).json([]); }
-});
-
-app.post("/api/products", async (req, res) => {
-  const { company_id, name, price, category, description } = req.body;
-  try {
-      await db.execute({
-          sql: `INSERT INTO products (company_id, name, price, category, description) VALUES (?,?,?,?,?)`,
-          args: [Number(company_id), name, price, category, description]
-      });
-      res.json({ ok: true });
-  } catch (err) { res.status(500).json({ ok: false }); }
-});
-
-app.delete("/api/products/:id", async (req, res) => {
-    try {
-        await db.execute({ sql: `DELETE FROM products WHERE id = ?`, args: [req.params.id] });
-        res.json({ ok: true });
-    } catch (err) { res.status(500).json({ ok: false }); }
-});
-
-// =============================================================
-// 👥 USUÁRIOS
-// =============================================================
-app.get("/api/users", async (req, res) => {
-    try {
-        const result = await db.execute({ sql: `SELECT id, name, email, role FROM users WHERE company_id = ?`, args: [req.query.company_id] });
-        res.json({ ok: true, users: result.rows });
-    } catch (err) { res.status(500).json({ ok: false }); }
-});
-
-app.post("/api/users", async (req, res) => {
-    const { name, email, senha, role, company_id } = req.body;
-    try {
-        await db.execute({
-            sql: `INSERT INTO users (name, email, senha_hash, role, company_id, created_at) VALUES (?, ?, ?, ?, ?, ?)`,
-            args: [name, email, bcrypt.hashSync(String(senha), 10), role, Number(company_id), getHoraLocalISOString()]
-        });
-        res.json({ ok: true });
-    } catch (err) { res.status(500).json({ ok: false }); }
-});
-
-app.delete("/api/users/:id", async (req, res) => {
-    try {
-        const check = await db.execute({ sql: "SELECT email FROM users WHERE id = ?", args: [req.params.id] });
-        if (check.rows[0]?.email === MASTER_EMAIL) return res.status(403).json({ ok: false, error: "Master imortal." });
-        
-        await db.execute({ sql: `DELETE FROM users WHERE id = ?`, args: [req.params.id] });
-        res.json({ ok: true });
-    } catch (err) { res.status(500).json({ ok: false }); }
-});
-
-// =============================================================
-// 💰 PAGAMENTOS & ADMINISTRAÇÃO
-// =============================================================
-app.get("/api/empresas", async (req, res) => {
-  try {
-      const result = await db.execute(`SELECT * FROM companies ORDER BY id DESC`);
-      res.json({ ok: true, empresas: result.rows });
-  } catch (err) { res.status(500).json({ ok: false }); }
-});
-
+// --- PAGAMENTO PIX ---
 app.post("/api/pay/create", async (req, res) => {
     const { company_id, email, name, valor, dias, docNumber } = req.body;
     try {
@@ -308,7 +297,6 @@ app.post("/api/webhook", async (req, res) => {
             const p = await payment.get({ id: data.id });
             if (p.status === "approved") {
                 const { company_id, dias_adicionar } = p.metadata;
-                // Busca a data atual da empresa
                 const result = await db.execute({ sql: "SELECT trial_expires_at FROM companies WHERE id = ?", args: [company_id] });
                 const row = result.rows[0];
 
@@ -321,7 +309,6 @@ app.post("/api/webhook", async (req, res) => {
                         sql: "UPDATE companies SET trial_expires_at = ?, plano = 'basic' WHERE id = ?",
                         args: [novaData.toISOString(), company_id]
                     });
-                    console.log(`✅ Pagamento Aprovado: Empresa ${company_id} renovada.`);
                 }
             }
         } catch (error) { console.error("Erro Webhook:", error); }
@@ -330,42 +317,19 @@ app.post("/api/webhook", async (req, res) => {
 });
 
 // =============================================================
-// 🆘 ROTA DE EMERGÊNCIA (Use para criar as tabelas na força)
-// =============================================================
-app.get("/api/setup-force", async (req, res) => {
-  try {
-    console.log("🛠️ Iniciando reparo forçado do banco...");
-
-    // 1. Cria as tabelas que faltam
-    await db.execute(`CREATE TABLE IF NOT EXISTS users (id INTEGER PRIMARY KEY AUTOINCREMENT, company_id INTEGER, name TEXT, email TEXT UNIQUE, senha_hash TEXT, role TEXT DEFAULT 'atendente', ativo INTEGER DEFAULT 1, created_at TEXT)`);
-    await db.execute(`CREATE TABLE IF NOT EXISTS orders (id INTEGER PRIMARY KEY AUTOINCREMENT, company_id INTEGER, items TEXT, total REAL, table_name TEXT, notes TEXT, status TEXT DEFAULT 'novo', created_at TEXT, status_updated_at TEXT, payment_method TEXT)`);
-    await db.execute(`CREATE TABLE IF NOT EXISTS products (id INTEGER PRIMARY KEY AUTOINCREMENT, company_id INTEGER, name TEXT, price REAL, category TEXT, description TEXT)`);
-    
-    // 2. Garante que o Master existe
-    const checkMaster = await db.execute({ sql: "SELECT * FROM users WHERE email = ?", args: ["admin@master.com"] });
-    
-    if (checkMaster.rows.length === 0) {
-      const hash = bcrypt.hashSync("123456", 10);
-      await db.execute({
-        sql: "INSERT INTO users (name, email, senha_hash, role, created_at) VALUES (?, ?, ?, 'master', ?)",
-        args: ["Admin Master", "admin@master.com", hash, new Date().toISOString()]
-      });
-      res.send("<h1>✅ SUCESSO!</h1><p>Tabelas Users, Orders e Products criadas.</p><p>Usuário Master restaurado.</p><a href='/login.html'>Ir para Login</a>");
-    } else {
-      res.send("<h1>✅ BANCO OK!</h1><p>As tabelas já existem e o Master também.</p><a href='/login.html'>Ir para Login</a>");
-    }
-
-  } catch (err) {
-    console.error(err);
-    res.send(`<h1>❌ ERRO:</h1><p>${err.message}</p>`);
-  }
-});
-
-// =============================================================
-// 🚀 SERVIDOR
+// 🚀 INICIALIZAÇÃO CORRETA DO SERVIDOR
 // =============================================================
 const publicPath = path.join(__dirname, "public");
 app.use(express.static(publicPath));
 
 const PORT = process.env.PORT || 3000;
-app.listen(PORT, "0.0.0.0", () => console.log(`🚀 Sistema Blindado rodando na porta ${PORT}`));
+
+// SÓ LIGA O SERVIDOR DEPOIS QUE O BANCO ESTIVER PRONTO
+async function startServer() {
+    await initDb();
+    app.listen(PORT, "0.0.0.0", () => {
+        console.log(`🚀 Sistema rodando 100% pronto na porta ${PORT}`);
+    });
+}
+
+startServer();
