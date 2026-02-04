@@ -10,7 +10,7 @@ const { createClient } = require("@libsql/client");
 // 🔧 CONFIGURAÇÕES INICIAIS
 // =============================================================
 const db = createClient({
-  url: process.env.TURSO_URL,
+  url: "https://restaurant-system-lukaxy.aws-us-east-1.turso.io",
   authToken: process.env.TURSO_TOKEN,
 });
 
