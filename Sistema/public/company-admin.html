@@ -80,13 +80,16 @@
     // --- SEGURANÇA INICIAL ---
     const user = JSON.parse(localStorage.getItem("user") || "{}");
     
+    // Verifica acesso e bloqueia intrusos com Toast
     if (!user || !user.role || user.role !== "admin") {
         document.addEventListener("DOMContentLoaded", () => {
-            showToast("🚫 Acesso negado! Área restrita ao Chef.", "erro");
+            showToast("🚫 Acesso negado! Área restrita ao Chef. Voltando...", "erro");
             setTimeout(() => {
                 window.location.href = "index.html";
             }, 2500);
         });
+        // Interrompe o carregamento do restante do script para segurança
+        throw new Error("Acesso não autorizado.");
     }
 
     let idUsuarioParaExcluir = null;
@@ -182,6 +185,7 @@
 
     // --- INICIALIZAÇÃO ---
     document.addEventListener("DOMContentLoaded", async () => {
+        // Só executa o carregamento se for admin
         if (user.role === "admin") {
             carregarUsuarios();
             renderizarCardPlano(user);
@@ -206,7 +210,7 @@
             };
 
             const btn = document.getElementById("btn-assinatura");
-            if (btn && (user.role === "admin" || user.role === "master")) {
+            if (btn) {
                 btn.style.display = "inline-block";
             }
         }
