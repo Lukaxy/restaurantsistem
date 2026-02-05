@@ -1,0 +1,178 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Cardápio Digital</title>
+    <style>
+        /* ================== HERANÇA DO DNA DO SISTEMA ================== */
+        :root {
+            --bg-main: #1a1d21;
+            --bg-card: #2c3035;
+            --text-primary: #e9ecef;
+            --text-secondary: #adb5bd;
+            --color-blue: #339af0;
+            --color-green: #51cf66;
+            --border-color: #3a3f44;
+            --radius: 12px;
+            --shadow: 0 4px 15px rgba(0,0,0,0.3);
+        }
+
+        body {
+            font-family: 'Segoe UI', sans-serif;
+            background-color: var(--bg-main);
+            color: var(--text-primary);
+            margin: 0;
+            padding: 0;
+        }
+
+        /* HEADER ESTILO DIGITALMENU */
+        header {
+            background: #212529;
+            padding: 20px;
+            text-align: center;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.5);
+            position: sticky;
+            top: 0;
+            z-index: 100;
+        }
+
+        .restaurant-name {
+            font-size: 1.4rem;
+            font-weight: bold;
+            color: var(--color-blue);
+            margin: 0;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+
+        main {
+            max-width: 600px;
+            margin: 0 auto;
+            padding: 15px;
+        }
+
+        /* CATEGORIAS */
+        .category-title {
+            color: var(--color-amber, #fcc419);
+            font-size: 1.1rem;
+            margin: 20px 0 10px 5px;
+            border-left: 4px solid var(--color-blue);
+            padding-left: 10px;
+        }
+
+        /* CARTÃO DE PRODUTO (O CLONE DO ADMIN) */
+        .product-card {
+            background-color: var(--bg-card);
+            border-radius: var(--radius);
+            padding: 15px;
+            margin-bottom: 12px;
+            border: 1px solid var(--border-color);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            transition: transform 0.2s;
+        }
+
+        .product-info { flex: 1; }
+
+        .product-name {
+            font-size: 1.1rem;
+            font-weight: 600;
+            margin-bottom: 5px;
+            color: var(--text-primary);
+        }
+
+        .product-desc {
+            font-size: 0.9rem;
+            color: var(--text-secondary);
+            margin-bottom: 8px;
+            line-height: 1.4;
+        }
+
+        .product-price {
+            font-size: 1.1rem;
+            font-weight: bold;
+            color: var(--color-green);
+        }
+
+        /* LOADING E ERRO */
+        #loading { text-align: center; margin-top: 50px; color: var(--text-secondary); }
+    </style>
+</head>
+<body>
+
+    <header>
+        <div class="restaurant-name" id="rest-name">Carregando...</div>
+        <div style="font-size: 0.8rem; color: var(--text-secondary); margin-top: 5px;">Cardápio Digital</div>
+    </header>
+
+    <main id="menu-container">
+        <div id="loading">Buscando as melhores opções para você...</div>
+    </main>
+
+    <script>
+        // Pega o ID da empresa pela URL (ex: menu.html?id=1)
+        const urlParams = new URLSearchParams(window.location.search);
+        const companyId = urlParams.get('id');
+
+        async function loadMenu() {
+            if (!companyId) {
+                document.getElementById('menu-container').innerHTML = "Empresa não identificada.";
+                return;
+            }
+
+            try {
+                // Chamada para a rota pública que criamos no Passo 2
+                const response = await fetch(`/api/public/menu/${companyId}`);
+                const data = await response.json();
+
+                if (!data.menu || data.menu.length === 0) {
+                    document.getElementById('menu-container').innerHTML = "<p style='text-align:center'>O cardápio está sendo atualizado. Volte logo!</p>";
+                    document.getElementById('rest-name').innerText = data.restaurant || "DigitalMenu";
+                    return;
+                }
+
+                // Define o nome do restaurante no Header
+                document.getElementById('rest-name').innerText = data.restaurant;
+
+                const container = document.getElementById('menu-container');
+                container.innerHTML = ""; // Limpa o loading
+
+                // Agrupar por categoria
+                const categories = [...new Set(data.menu.map(p => p.category))];
+
+                categories.forEach(cat => {
+                    // Adiciona o título da categoria
+                    const catTitle = document.createElement('div');
+                    catTitle.className = 'category-title';
+                    catTitle.innerText = cat;
+                    container.appendChild(catTitle);
+
+                    // Filtra produtos dessa categoria
+                    const products = data.menu.filter(p => p.category === cat);
+                    
+                    products.forEach(p => {
+                        const card = document.createElement('div');
+                        card.className = 'product-card';
+                        card.innerHTML = `
+                            <div class="product-info">
+                                <div class="product-name">${p.name}</div>
+                                <div class="product-desc">${p.description || ''}</div>
+                                <div class="product-price">R$ ${p.price.toFixed(2).replace('.', ',')}</div>
+                            </div>
+                        `;
+                        container.appendChild(card);
+                    });
+                });
+
+            } catch (err) {
+                console.error(err);
+                document.getElementById('menu-container').innerHTML = "Erro ao carregar o cardápio.";
+            }
+        }
+
+        loadMenu();
+    </script>
+</body>
+</html>
