@@ -221,7 +221,7 @@ app.get("/api/empresas", async (req, res) => {
 // =============================================================
 // 🗑️ ROTA DE EXCLUIR EMPRESA 
 // =============================================================
-app.delete("/api/companies/:id", async (req, res) => {
+app.delete("/api/empresas/:id", async (req, res) => {
   const id = req.params.id;
   console.log(`🗑️ Solicitando exclusão da empresa ID: ${id}`);
   
