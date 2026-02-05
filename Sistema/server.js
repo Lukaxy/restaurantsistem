@@ -218,6 +218,30 @@ app.get("/api/empresas", async (req, res) => {
       res.json({ ok: true, empresas: result.rows });
   } catch (err) { res.status(500).json({ ok: false }); }
 });
+// =============================================================
+// 🗑️ ROTA DE EXCLUIR EMPRESA 
+// =============================================================
+app.delete("/api/companies/:id", async (req, res) => {
+  const id = req.params.id;
+  console.log(`🗑️ Solicitando exclusão da empresa ID: ${id}`);
+  
+  try {
+    // 1. Remove tudo que pertence à empresa (Cascata)
+    await db.execute({ sql: "DELETE FROM users WHERE company_id = ?", args: [id] });
+    await db.execute({ sql: "DELETE FROM products WHERE company_id = ?", args: [id] });
+    await db.execute({ sql: "DELETE FROM orders WHERE company_id = ?", args: [id] });
+
+    // 2. Remove a empresa
+    await db.execute({ sql: "DELETE FROM companies WHERE id = ?", args: [id] });
+
+    console.log(`✅ Empresa ${id} excluída com sucesso.`);
+    res.json({ ok: true });
+
+  } catch (err) {
+    console.error("❌ Erro ao excluir empresa:", err);
+    res.status(500).json({ ok: false, error: "Erro ao excluir dados vinculados." });
+  }
+});
 
 // --- PEDIDOS ---
 app.post("/api/orders", async (req, res) => {
