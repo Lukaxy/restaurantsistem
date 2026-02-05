@@ -42,10 +42,10 @@ document.head.appendChild(style);
 
 // ==================== VARIÁVEIS GLOBAIS ====================
 let user = null;
-let idParaExcluir = null; // Guarda o ID do produto que será excluído após confirmar no modal
+let idParaExcluir = null; 
 const list = document.getElementById('productList');
 
-// ==================== CARREGAR PRODUTOS ====================
+// ==================== CARREGAR PRODUTOS (COM TOGGLE) ====================
 async function carregarProdutos() {
     if (!user || !user.company_id) {
         if (list) list.innerHTML = '<p style="color:var(--color-red);">Erro: Empresa não identificada.</p>';
@@ -75,15 +75,46 @@ async function carregarProdutos() {
                     </div>
                     ${p.description ? `<div style="color: var(--text-secondary); font-size: 0.85rem; margin-top: 4px;">${p.description}</div>` : ''}
                 </div>
-                <button class="btn cancel" onclick="prepararExclusao(${p.id})" style="padding: 8px 12px; font-size: 1rem;">
-                    🗑️
-                </button>
+
+                <div style="display: flex; align-items: center; gap: 15px;">
+                    <div style="text-align: center;">
+                        <div style="font-size: 0.65rem; color: var(--text-secondary); margin-bottom: 4px;">No Menu</div>
+                        <label class="switch">
+                            <input type="checkbox" ${p.visible === 1 ? 'checked' : ''} onchange="alterarVisibilidade(${p.id}, this.checked)">
+                            <span class="slider"></span>
+                        </label>
+                    </div>
+
+                    <button class="btn cancel" onclick="prepararExclusao(${p.id})" style="padding: 8px 12px; font-size: 1rem; background: transparent;">
+                        🗑️
+                    </button>
+                </div>
             </div>
         `).join('');
 
     } catch (err) {
         console.error('Erro ao carregar produtos:', err);
         showToast('Erro ao conectar com o servidor.', 'erro');
+    }
+}
+
+// ==================== ALTERAR VISIBILIDADE (PASSO 4) ====================
+window.alterarVisibilidade = async function(id, checked) {
+    try {
+        const response = await fetch(`/api/products/${id}/visible`, {
+            method: 'PUT',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ visible: checked ? 1 : 0 })
+        });
+
+        if (response.ok) {
+            showToast(checked ? 'Visível no cardápio! 👁️' : 'Oculto do cardápio! 🙈');
+        } else {
+            throw new Error();
+        }
+    } catch (err) {
+        showToast('Erro ao atualizar visibilidade.', 'erro');
+        carregarProdutos(); // Recarrega para voltar o toggle ao estado real se falhar
     }
 }
 
@@ -148,19 +179,15 @@ window.fecharConfirm = function() {
     idParaExcluir = null;
 }
 
-// Configura o clique no botão de "Sim" do seu Modal HTML
 document.addEventListener('DOMContentLoaded', () => {
     const confirmBtn = document.getElementById('confirmBtn');
     if (confirmBtn) {
         confirmBtn.onclick = async () => {
             if (!idParaExcluir) return;
-
             try {
                 const res = await fetch(`/api/products/${idParaExcluir}`, { method: 'DELETE' });
                 const data = await res.json();
-                
                 if (!data.ok) throw new Error(data.error || 'Erro ao excluir produto.');
-
                 fecharConfirm();
                 await carregarProdutos();
                 showToast('Produto removido! 🗑️');
