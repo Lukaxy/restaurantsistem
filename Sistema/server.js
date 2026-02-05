@@ -184,6 +184,22 @@ app.delete("/api/products/:id", async (req, res) => {
     } catch (err) { res.status(500).json({ ok: false }); }
 });
 
+// ROTA PARA ATUALIZAR VISIBILIDADE DO PRODUTO (USADA PELO TOGGLE)
+app.put("/api/products/:id/visible", async (req, res) => {
+    const { id } = req.params;
+    const { visible } = req.body; // Recebe 1 ou 0
+    try {
+        await db.execute({
+            sql: "UPDATE products SET visible = ? WHERE id = ?",
+            args: [visible, id]
+        });
+        res.json({ ok: true });
+    } catch (err) {
+        console.error("Erro ao atualizar visibilidade:", err);
+        res.status(500).json({ ok: false, error: "Erro no banco de dados" });
+    }
+});
+
 // --- USUÁRIOS ---
 app.get("/api/users", async (req, res) => {
     try {
