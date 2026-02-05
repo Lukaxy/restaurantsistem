@@ -242,7 +242,60 @@ app.delete("/api/empresas/:id", async (req, res) => {
     res.status(500).json({ ok: false, error: "Erro ao excluir dados vinculados." });
   }
 });
+// =============================================================
+// 📅 ROTAS DE GERENCIAMENTO (Adicionar Dias e Mudar Plano)
+// =============================================================
 
+// 1. Adicionar Dias Manualmente
+app.post("/api/empresas/:id/add-days", async (req, res) => {
+  const { id } = req.params;
+  const { dias } = req.body;
+
+  try {
+    // Busca a data atual da empresa
+    const result = await db.execute({ sql: "SELECT trial_expires_at FROM companies WHERE id = ?", args: [id] });
+    const row = result.rows[0];
+
+    if (!row) return res.status(404).json({ ok: false, error: "Empresa não encontrada" });
+
+    // Calcula a nova data
+    const hoje = new Date();
+    // Se já venceu, começa de hoje. Se não, soma na data que já tem.
+    let dataBase = (new Date(row.trial_expires_at) > hoje) ? new Date(row.trial_expires_at) : hoje;
+    
+    dataBase.setDate(dataBase.getDate() + parseInt(dias));
+
+    // Atualiza no banco
+    await db.execute({
+        sql: "UPDATE companies SET trial_expires_at = ? WHERE id = ?",
+        args: [dataBase.toISOString(), id]
+    });
+
+    console.log(`✅ Adicionados ${dias} dias para a empresa ${id}`);
+    res.json({ ok: true });
+
+  } catch (err) {
+    console.error("Erro ao adicionar dias:", err);
+    res.status(500).json({ ok: false });
+  }
+});
+
+// 2. Alterar Plano Manualmente (Trial / Basic / Vitalicio)
+app.post("/api/empresas/:id/plano", async (req, res) => {
+  const { id } = req.params;
+  const { plano } = req.body; // 'trial', 'basic', 'vitalicio'
+
+  try {
+    await db.execute({
+        sql: "UPDATE companies SET plano = ? WHERE id = ?",
+        args: [plano, id]
+    });
+    console.log(`✅ Plano da empresa ${id} alterado para ${plano}`);
+    res.json({ ok: true });
+  } catch (err) {
+    res.status(500).json({ ok: false });
+  }
+});
 // --- PEDIDOS ---
 app.post("/api/orders", async (req, res) => {
     const { company_id, items, total, table_name, notes } = req.body;
