@@ -296,6 +296,27 @@ app.post("/api/empresas/:id/plano", async (req, res) => {
     res.status(500).json({ ok: false });
   }
 });
+// =============================================================
+// 🔎 ROTA DE BUSCAR DETALHES DA EMPRESA (Para o Painel Admin)
+// =============================================================
+app.get("/api/companies/:id", async (req, res) => {
+  try {
+      const result = await db.execute({ 
+          sql: "SELECT * FROM companies WHERE id = ?", 
+          args: [req.params.id] 
+      });
+      
+      const company = result.rows[0];
+      
+      if (company) {
+          res.json({ ok: true, company });
+      } else {
+          res.status(404).json({ ok: false, error: "Empresa não encontrada" });
+      }
+  } catch (err) { 
+      res.status(500).json({ ok: false, error: "Erro ao buscar empresa" }); 
+  }
+});
 // --- PEDIDOS ---
 app.post("/api/orders", async (req, res) => {
     const { company_id, items, total, table_name, notes } = req.body;
