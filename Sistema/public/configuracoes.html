@@ -7,15 +7,65 @@
   
   <link rel="stylesheet" href="css/style.css" />
 
+  <style>
+    /* CSS DO TOGGLE SWITCH (PASSO 4) */
+    .switch {
+      position: relative;
+      display: inline-block;
+      width: 40px;
+      height: 22px;
+    }
+    .switch input { opacity: 0; width: 0; height: 0; }
+    .slider {
+      position: absolute;
+      cursor: pointer;
+      top: 0; left: 0; right: 0; bottom: 0;
+      background-color: var(--bg-input);
+      transition: .4s;
+      border-radius: 34px;
+      border: 1px solid var(--border-color);
+    }
+    .slider:before {
+      position: absolute;
+      content: "";
+      height: 14px; width: 14px;
+      left: 4px; bottom: 3px;
+      background-color: white;
+      transition: .4s;
+      border-radius: 50%;
+    }
+    input:checked + .slider { background-color: var(--color-green); border-color: var(--color-green); }
+    input:checked + .slider:before { transform: translateX(18px); }
+
+    /* ESTILO DO QR CODE */
+    #qr-container {
+      text-align: center;
+      padding: 20px;
+      background: var(--bg-input);
+      border-radius: var(--radius);
+      margin-top: 15px;
+      border: 1px dashed var(--color-blue);
+    }
+    
+    .menu-dropdown {
+      display: none;
+      position: absolute;
+      background: #1a1d21;
+      border: 1px solid var(--border-color);
+      right: 30px;
+      top: 60px;
+      z-index: 100;
+    }
+    .menu-dropdown.show { display: block; }
+    .menu-dropdown div { padding: 10px 20px; cursor: pointer; border-bottom: 1px solid #333; }
+  </style>
+
   <script>
     // === SEGURANÇA COM TOAST PERSONALIZADO ===
     (function () {
       const user = JSON.parse(localStorage.getItem("user") || "null");
-      
       if (!user || user.role !== "admin") {
-        // Cria o visual do erro na hora
         document.addEventListener("DOMContentLoaded", () => {
-          // Injeta o CSS das animações se não existirem
           const style = document.createElement('style');
           style.innerHTML = `
             @keyframes slideIn { from { transform: translateX(100%); opacity: 0; } to { transform: translateX(0); opacity: 1; } }
@@ -23,7 +73,6 @@
           `;
           document.head.appendChild(style);
 
-          // Mostra o Toast de Barrado
           let container = document.getElementById('toast-container');
           if (!container) {
             container = document.createElement('div');
@@ -47,11 +96,7 @@
             </div>
           `;
           container.appendChild(toast);
-
-          // Expulsa o intruso após 2.5 segundos
-          setTimeout(() => {
-            window.location.replace("index.html");
-          }, 2500);
+          setTimeout(() => { window.location.replace("index.html"); }, 2500);
         });
       }
     })();
@@ -76,21 +121,21 @@
   <div class="header-title">Configurações do Cardápio ⚙️</div>
 </header>
 
-<style>   
-  .menu-dropdown {
-    display: none;
-    position: absolute;
-    background: #1a1d21;
-    border: 1px solid var(--border-color);
-    right: 30px;
-    top: 60px;
-    z-index: 100;
-  }
-  .menu-dropdown.show { display: block; }
-  .menu-dropdown div { padding: 10px 20px; cursor: pointer; border-bottom: 1px solid #333; }
-</style>
-
 <main>
+  <div class="box" style="margin-bottom: 25px; border-left: 4px solid var(--color-blue);">
+    <h3 style="color: var(--color-blue); margin-bottom: 10px;">🔗 Seu Cardápio Digital</h3>
+    <p style="font-size: 0.9rem; color: var(--text-secondary);">Divulgue este link ou imprima o QR Code para as mesas.</p>
+    
+    <div id="qr-container">
+       <div id="qrcode-display">
+         <p style="color: var(--text-secondary); font-size: 0.8rem;">Clique no botão para gerar</p>
+       </div>
+       <button onclick="gerarQRCode()" class="btn" style="margin-top: 10px; background: var(--bg-card); border: 1px solid var(--color-blue); font-size: 0.9rem;">
+         🖨️ Gerar QR Code para Impressão
+       </button>
+    </div>
+  </div>
+
   <div class="box">
     <h3 style="color: var(--color-amber); margin-bottom: 20px;">➕ Adicionar Novo Prato</h3>
 
@@ -115,10 +160,32 @@
   </div>
 </main>
 
+<script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
 <script src="js/auth.js"></script>
 <script src="js/configuracoes.js"></script>
 
 <script>
+  // === GERADOR DE QR CODE ===
+  function gerarQRCode() {
+    const user = JSON.parse(localStorage.getItem("user"));
+    const display = document.getElementById('qrcode-display');
+    display.innerHTML = ""; // Limpa
+    
+    // URL Final do seu cardápio público
+    const urlCardapio = `${window.location.origin}/menu.html?id=${user.company_id}`;
+    
+    new QRCode(display, {
+      text: urlCardapio,
+      width: 150,
+      height: 150,
+      colorDark : "#ffffff",
+      colorLight : "#2c3035",
+      correctLevel : QRCode.CorrectLevel.H
+    });
+
+    showToast("QR Code gerado com sucesso!");
+  }
+
   // === NOTIFICAÇÕES (TOAST) GLOBAIS ===
   function showToast(mensagem, tipo = 'sucesso') {
       let container = document.getElementById('toast-container');
@@ -144,12 +211,10 @@
       }, 3000);
   }
 
-  // Interface
   function toggleMenu() {
     document.getElementById('menuDropdown').classList.toggle('show');
   }
 
-  // Fecha menu ao clicar fora
   document.addEventListener('click', e => {
     if (!e.target.closest('.menu-wrapper')) {
       document.getElementById('menuDropdown').classList.remove('show');
