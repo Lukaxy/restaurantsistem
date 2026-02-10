@@ -84,6 +84,19 @@
       document.getElementById("menuDropdown").classList.remove("show");
     }
   });
+
+  document.addEventListener("DOMContentLoaded", () => {
+    const user = JSON.parse(localStorage.getItem("user"));
+    
+    if (user && user.planoExpirado) {
+        const modal = document.getElementById("modalExpirado");
+        if (modal) {
+            modal.style.display = "flex";
+            // Bloqueia o scroll da página atrás
+            document.body.style.overflow = "hidden"; 
+        }
+    }
+});
 </script>
 
 <style>
@@ -109,8 +122,24 @@
     <div class="success-circle">✓</div>
     <div class="success-text">Pedido Enviado! 🚀</div>
 </div>  
+
+  <div id="modalExpirado" style="display:none; position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.85); z-index:9999; backdrop-filter: blur(5px); align-items:center; justify-content:center;">
+    <div style="background:#2c3035; padding:40px; border-radius:15px; text-align:center; max-width:450px; border: 1px solid #339af0; box-shadow: 0 0 30px rgba(51, 154, 240, 0.3);">
+        <div style="font-size: 4rem; margin-bottom: 20px;">🚀</div>
+        <h2 style="color:#fff; margin-bottom:15px;">Seu teste de 5 dias chegou ao fim!</h2>
+        <p style="color:#adb5bd; line-height:1.6; margin-bottom:25px;">
+            O <strong>_menudigital</strong> quer continuar ajudando seu restaurante a crescer. Não deixe sua operação parar! 
+            Assine agora e garanta todos os pedidos em tempo real.
+        </p>
+        <button onclick="window.location.href='assinatura.html'" style="background:#51cf66; color:white; border:none; padding:15px 30px; border-radius:8px; font-weight:bold; cursor:pointer; width:100%; font-size:1.1rem; transition:0.3s;">
+            CONTINUAR USANDO (ASSINAR)
+        </button>
+        <p style="margin-top:15px;"><a href="login.html" style="color:#6c757d; font-size:0.9rem;">Sair da conta</a></p>
+    </div>
+</div>
 </body>
 </html>
+
 
 
 
