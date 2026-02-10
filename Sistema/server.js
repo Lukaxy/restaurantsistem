@@ -86,11 +86,15 @@ app.post("/api/login", async (req, res) => {
     
     if (user.plano === 'bloqueado') return res.status(403).json({ ok: false, error: "Conta suspensa." });
 
-    if (user.role !== 'master' && user.trial_expires_at) {
-        if (new Date() > new Date(user.trial_expires_at)) {
-             return res.status(403).json({ ok: false, error: "Seu plano expirou! Renove para continuar." });
-        }
-    }
+    // Dentro da rota app.post("/api/login")
+const expirou = user.role !== 'master' && 
+                user.trial_expires_at && 
+                (new Date() > new Date(user.trial_expires_at));
+
+res.json({ 
+    ok: true, 
+    user: { ...user, planoExpirado: expirou } // Enviamos essa flag nova
+});
 
     res.json({ ok: true, user });
   } catch (err) {
