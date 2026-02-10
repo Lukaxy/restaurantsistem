@@ -1,17 +1,14 @@
 // ======================== VARIÁVEIS GLOBAIS ========================
 let pedidos = [];
-const TEMPO_OCULTAR_PRONTO = 10 * 60 * 1000; // 10 minutos
 let user = null;
 
 // ======================== FUNÇÕES ========================
 
-// Renderiza os pedidos na tela (COM O NOVO VISUAL)
 function renderizarPedidos() {
   const lista = document.getElementById("orders");
   if (!lista) return;
 
   if (pedidos.length === 0) {
-    // Mensagem centralizada e bonita quando não há pedidos
     lista.innerHTML = `
         <div style="text-align:center; margin-top:50px; color: var(--text-secondary);">
             <div style="font-size: 4rem; margin-bottom: 20px;">👩‍🍳🍽️</div>
@@ -23,13 +20,11 @@ function renderizarPedidos() {
 
   lista.innerHTML = pedidos
     .map((p) => {
-      // Garante que items é um array
       const itensArray = Array.isArray(p.items) ? p.items : [];
       const horaFormatada = new Date(p.created_at).toLocaleTimeString("pt-BR", {hour: "2-digit", minute: "2-digit"});
 
       return `
       <div class="order ${p.status}" id="order-${p.id}">
-        
         <div class="order-header">
            <div class="order-title">🧾 Pedido #${p.id}</div>
            <div class="order-meta">
@@ -68,23 +63,24 @@ function renderizarPedidos() {
             </button>
           ` : ""}
         </div>
-
       </div>
     `;
     })
     .join("");
 }
 
-// Função global para atualizar status
 window.atualizarStatus = async function(id, status) {
   try {
-    // Feedback visual imediato no botão clicado
     const btn = event.target.closest('button');
     if(btn) {
         btn.innerHTML = "Processando...";
         btn.disabled = true;
-        // Opcional: diminuir a opacidade do cartão inteiro pra mostrar que está carregando
-        document.getElementById(`order-${id}`).style.opacity = "0.6";
+        document.getElementById(`order-${id}`).style.opacity = "0.5";
+        // Efeito de saída suave
+        if(status === 'pronto') {
+            document.getElementById(`order-${id}`).style.transform = "translateX(20px)";
+            document.getElementById(`order-${id}`).style.transition = "0.3s";
+        }
     }
 
     const res = await fetch(`/api/orders/${id}/status`, {
@@ -96,29 +92,14 @@ window.atualizarStatus = async function(id, status) {
     const data = await res.json();
     if (!data.ok) throw new Error(data.error || "Erro ao atualizar status.");
 
-    carregarPedidos();
+    // Recarrega a lista para remover o pedido que agora está "pronto"
+    await carregarPedidos();
   } catch (err) {
     alert("Erro: " + err.message);
     carregarPedidos();
   }
 }
 
-// Oculta pedidos prontos (visual)
-function removerPedidosAntigos() {
-  const agora = Date.now();
-  const novaLista = pedidos.filter((p) => {
-    if (p.status !== "pronto") return true;
-    if (!p._horaPronto) p._horaPronto = new Date(p.status_updated_at).getTime();
-    return agora - p._horaPronto < TEMPO_OCULTAR_PRONTO;
-  });
-  
-  if (novaLista.length !== pedidos.length) {
-     pedidos = novaLista;
-     renderizarPedidos();
-  }
-}
-
-// Carrega pedidos do backend
 async function carregarPedidos() {
   const lista = document.getElementById("orders");
   try {
@@ -129,7 +110,13 @@ async function carregarPedidos() {
     
     if (!data.ok) throw new Error(data.error || "Erro ao carregar pedidos.");
 
-    pedidos = data.pedidos.filter((p) => p.status !== "cancelado" && p.status !== "entregue");
+    // FILTRO ALTERADO: Agora remove 'cancelado', 'entregue' E 'pronto' da visão da cozinha
+    pedidos = data.pedidos.filter((p) => 
+        p.status !== "cancelado" && 
+        p.status !== "entregue" && 
+        p.status !== "pronto"
+    );
+    
     renderizarPedidos();
   } catch (err) {
     console.error("Erro ao carregar pedidos:", err);
@@ -151,6 +138,6 @@ document.addEventListener("DOMContentLoaded", () => {
   }
 
   carregarPedidos();
+  // Intervalo de 5 segundos para checar novos pedidos
   setInterval(carregarPedidos, 5000);
-  setInterval(removerPedidosAntigos, 60000);
 });
