@@ -86,20 +86,28 @@ app.post("/api/login", async (req, res) => {
     
     if (user.plano === 'bloqueado') return res.status(403).json({ ok: false, error: "Conta suspensa." });
 
-    // Dentro da rota app.post("/api/login")
-const expirou = user.role !== 'master' && 
-                user.trial_expires_at && 
-                (new Date() > new Date(user.trial_expires_at));
+    // --- LOGICA DE EXPIRAÇÃO CORRIGIDA ---
+    const expirou = user.role !== 'master' && 
+                    user.trial_expires_at && 
+                    (new Date() > new Date(user.trial_expires_at));
 
-res.json({ 
-    ok: true, 
-    user: { ...user, planoExpirado: expirou } // Enviamos essa flag nova
-});
+    // Se o plano expirou, enviamos a resposta e PARAMOS aqui com o 'return'
+    if (expirou) {
+        return res.json({ 
+            ok: true, 
+            user: { ...user, planoExpirado: true } 
+        });
+    }
 
-    res.json({ ok: true, user });
+    // Se NÃO expirou, ele pula o bloco acima e envia a resposta normal de login
+    res.json({ ok: true, user: { ...user, planoExpirado: false } });
+
   } catch (err) {
     console.error("Erro Login:", err);
-    res.status(500).json({ ok: false, error: "Erro interno no servidor." });
+    // Verificamos se já não enviamos resposta antes de dar erro 500
+    if (!res.headersSent) {
+        res.status(500).json({ ok: false, error: "Erro interno no servidor." });
+    }
   }
 });
 
