@@ -416,6 +416,7 @@ app.get("/api/orders/history", async (req, res) => {
 });
 
 // --- PAGAMENTO PIX ---
+// ROTA ATUALIZADA PARA ENVIAR ITENS E CATEGORIA (MELHORAR NOTA NO MERCADO PAGO)
 app.post("/api/pay/create", async (req, res) => {
     const { company_id, email, name, valor, dias, docNumber } = req.body;
     
@@ -424,22 +425,48 @@ app.post("/api/pay/create", async (req, res) => {
 
     try {
         const payment = new Payment(client);
+        
+        // Separa o primeiro e último nome para evitar rejeição
+        const nameParts = (name || "Cliente").split(" ");
+        const firstName = nameParts[0];
+        const lastName = nameParts.length > 1 ? nameParts[nameParts.length - 1] : "Empresa";
+
         const result = await payment.create({
             body: {
                 transaction_amount: Number(valor),
                 description: `Assinatura Sistema - ${dias} Dias`,
                 payment_method_id: 'pix',
-                notification_url: notificationUrl, // ⚡ A MÁGICA ESTÁ AQUI ⚡
+                notification_url: notificationUrl,
                 payer: {
                     email: email,
-                    first_name: (name || "Cliente").split(" ")[0],
-                    identification: { type: docNumber?.length > 11 ? 'CNPJ' : 'CPF', number: docNumber?.replace(/\D/g, '') || '00000000000' }
+                    first_name: firstName,
+                    last_name: lastName,
+                    identification: { 
+                        type: docNumber?.length > 11 ? 'CNPJ' : 'CPF', 
+                        number: docNumber?.replace(/\D/g, '') || '00000000000' 
+                    }
+                },
+                // ADICIONADO PARA MELHORAR A NOTA DA INTEGRAÇÃO
+                additional_info: {
+                    items: [
+                        {
+                            id: `plan-${dias}`,
+                            title: `Plano ${dias} Dias`,
+                            description: "Acesso ao sistema de cardápio digital",
+                            picture_url: "https://sistemadigitalmenu.com.br/assets/logo.png",
+                            category_id: "services", 
+                            quantity: 1,
+                            unit_price: Number(valor)
+                        }
+                    ]
                 },
                 metadata: { company_id: Number(company_id), dias_adicionar: Number(dias) }
             }
         });
+
         const data = result.point_of_interaction.transaction_data;
         res.json({ ok: true, qr_code: data.qr_code, qr_code_base64: data.qr_code_base64, id: result.id });
+    
     } catch (error) { 
         console.error("Erro Mercado Pago:", error);
         res.status(500).json({ ok: false, error: "Erro Mercado Pago" }); 
