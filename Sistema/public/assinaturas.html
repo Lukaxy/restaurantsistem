@@ -245,6 +245,65 @@
         document.getElementById("modal-pix").style.display = "none";
         clearInterval(cronometroInterval);
     };
+  let intervaloVerificacao = null;
+let dataExpiracaoAtual = null; // Vamos guardar a data atual para comparar
+
+// 1. Ao carregar a página, pegamos a data atual da empresa
+async function iniciarMonitoramento() {
+    const user = JSON.parse(localStorage.getItem("user"));
+    if (!user) return;
+
+    try {
+        const res = await fetch(`/api/companies/${user.company_id}/status`);
+        const data = await res.json();
+        if (data.ok) {
+            dataExpiracaoAtual = new Date(data.expires_at).getTime();
+            console.log("Data atual de expiração:", data.expires_at);
+        }
+    } catch (e) { console.error("Erro ao pegar data inicial", e); }
+}
+
+// 2. Função chamada quando o QR Code é gerado na tela
+function ativarVerificacaoPagamento() {
+    const user = JSON.parse(localStorage.getItem("user"));
+    if (!user || !user.company_id) return;
+    
+    // Evita criar múltiplos intervalos
+    if (intervaloVerificacao) clearInterval(intervaloVerificacao);
+
+    console.log("📡 Iniciando radar de pagamento...");
+
+    // Verifica a cada 3 segundos (3000ms)
+    intervaloVerificacao = setInterval(async () => {
+        try {
+            const res = await fetch(`/api/companies/${user.company_id}/status`);
+            const data = await res.json();
+
+            if (data.ok) {
+                const novaData = new Date(data.expires_at).getTime();
+
+                // SE A DATA NO BANCO FICOU MAIOR QUE A DATA ANTIGA = PAGOU!
+                if (novaData > dataExpiracaoAtual) {
+                    clearInterval(intervaloVerificacao); // Para de verificar
+                    mostrarSucesso();
+                }
+            }
+        } catch (err) {
+            console.error("Erro na verificação", err);
+        }
+    }, 3000);
+}
+
+function mostrarSucesso() {
+    // Esconde o QR Code e mostra o Modal de Sucesso
+    document.getElementById("modalSucesso").style.display = "flex";
+    
+    // Toca um som de caixa registradora (opcional, se quiser te mando o link)
+    // new Audio('ka-ching.mp3').play();
+}
+
+// Inicializa pegando a data atual
+document.addEventListener("DOMContentLoaded", iniciarMonitoramento);
 </script>
 
   <div id="modalSucesso" style="display:none; position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.9); z-index:10000; align-items:center; justify-content:center; flex-direction:column;">
