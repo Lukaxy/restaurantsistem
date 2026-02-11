@@ -5,6 +5,7 @@ const path = require("path");
 const bcrypt = require("bcryptjs");
 const { MercadoPagoConfig, Payment } = require('mercadopago');
 const { createClient } = require("@libsql/client/http");
+
 // =============================================================
 // 🔧 CONFIGURAÇÕES
 // =============================================================
@@ -41,7 +42,8 @@ async function initDb() {
     await db.execute(`CREATE TABLE IF NOT EXISTS users (id INTEGER PRIMARY KEY AUTOINCREMENT, company_id INTEGER, name TEXT, email TEXT UNIQUE, senha_hash TEXT, role TEXT DEFAULT 'atendente', ativo INTEGER DEFAULT 1, created_at TEXT)`);
     await db.execute(`CREATE TABLE IF NOT EXISTS orders (id INTEGER PRIMARY KEY AUTOINCREMENT, company_id INTEGER, items TEXT, total REAL, table_name TEXT, notes TEXT, status TEXT DEFAULT 'novo', created_at TEXT, status_updated_at TEXT, payment_method TEXT)`);
     await db.execute(`CREATE TABLE IF NOT EXISTS products (id INTEGER PRIMARY KEY AUTOINCREMENT, company_id INTEGER, name TEXT, price REAL, category TEXT, description TEXT)`);
-   // await db.execute(`ALTER TABLE products ADD COLUMN visible INTEGER DEFAULT 1`);
+    // Linha comentada para evitar erro de coluna duplicada
+    // await db.execute(`ALTER TABLE products ADD COLUMN visible INTEGER DEFAULT 1`);
     
     console.log("✅ Tabelas verificadas/criadas.");
 
@@ -416,6 +418,10 @@ app.get("/api/orders/history", async (req, res) => {
 // --- PAGAMENTO PIX ---
 app.post("/api/pay/create", async (req, res) => {
     const { company_id, email, name, valor, dias, docNumber } = req.body;
+    
+    // URL OBRIGATÓRIA PARA O MERCADO PAGO AVISAR O SEU SISTEMA
+    const notificationUrl = "https://sistemadigitalmenu.com.br/api/webhook";
+
     try {
         const payment = new Payment(client);
         const result = await payment.create({
@@ -423,6 +429,7 @@ app.post("/api/pay/create", async (req, res) => {
                 transaction_amount: Number(valor),
                 description: `Assinatura Sistema - ${dias} Dias`,
                 payment_method_id: 'pix',
+                notification_url: notificationUrl, // ⚡ A MÁGICA ESTÁ AQUI ⚡
                 payer: {
                     email: email,
                     first_name: (name || "Cliente").split(" ")[0],
@@ -433,7 +440,10 @@ app.post("/api/pay/create", async (req, res) => {
         });
         const data = result.point_of_interaction.transaction_data;
         res.json({ ok: true, qr_code: data.qr_code, qr_code_base64: data.qr_code_base64, id: result.id });
-    } catch (error) { res.status(500).json({ ok: false, error: "Erro Mercado Pago" }); }
+    } catch (error) { 
+        console.error("Erro Mercado Pago:", error);
+        res.status(500).json({ ok: false, error: "Erro Mercado Pago" }); 
+    }
 });
 
 app.post("/api/webhook", async (req, res) => {
