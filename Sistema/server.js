@@ -20,8 +20,8 @@ const client = new MercadoPagoConfig({
     options: { timeout: 5000 } 
 });
 
-const MASTER_EMAIL = "admin@master.com";
-const MASTER_SENHA = "123456";
+const MASTER_EMAIL = "lucasferreira123459966@gmail.com";
+const MASTER_SENHA = "Lu@14032004";
 
 const app = express();
 app.use(cors());
