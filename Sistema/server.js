@@ -415,54 +415,59 @@ app.get("/api/orders/history", async (req, res) => {
     } catch (err) { res.status(500).json({ ok: false }); }
 });
 
-// --- PAGAMENTO PIX ---
-// ROTA ATUALIZADA PARA ENVIAR ITENS E CATEGORIA (MELHORAR NOTA NO MERCADO PAGO)
+// --- PAGAMENTO PIX (COM DEVICE ID) ---
 app.post("/api/pay/create", async (req, res) => {
-    const { company_id, email, name, valor, dias, docNumber } = req.body;
+    // Agora recebemos também o 'deviceId' do Front-end
+    const { company_id, email, name, valor, dias, docNumber, deviceId } = req.body;
     
-    // URL OBRIGATÓRIA PARA O MERCADO PAGO AVISAR O SEU SISTEMA
     const notificationUrl = "https://sistemadigitalmenu.com.br/api/webhook";
 
     try {
         const payment = new Payment(client);
         
-        // Separa o primeiro e último nome para evitar rejeição
         const nameParts = (name || "Cliente").split(" ");
         const firstName = nameParts[0];
         const lastName = nameParts.length > 1 ? nameParts[nameParts.length - 1] : "Empresa";
 
-        const result = await payment.create({
-            body: {
-                transaction_amount: Number(valor),
-                description: `Assinatura Sistema - ${dias} Dias`,
-                payment_method_id: 'pix',
-                notification_url: notificationUrl,
-                payer: {
-                    email: email,
-                    first_name: firstName,
-                    last_name: lastName,
-                    identification: { 
-                        type: docNumber?.length > 11 ? 'CNPJ' : 'CPF', 
-                        number: docNumber?.replace(/\D/g, '') || '00000000000' 
+        // Criação do objeto de pagamento
+        const bodyPayment = {
+            transaction_amount: Number(valor),
+            description: `Assinatura Sistema - ${dias} Dias`,
+            payment_method_id: 'pix',
+            notification_url: notificationUrl,
+            payer: {
+                email: email,
+                first_name: firstName,
+                last_name: lastName,
+                identification: { 
+                    type: docNumber?.length > 11 ? 'CNPJ' : 'CPF', 
+                    number: docNumber?.replace(/\D/g, '') || '00000000000' 
+                }
+            },
+            additional_info: {
+                items: [
+                    {
+                        id: `plan-${dias}`,
+                        title: `Plano ${dias} Dias`,
+                        description: "Acesso ao sistema de cardápio digital",
+                        picture_url: "https://sistemadigitalmenu.com.br/assets/logo.png",
+                        category_id: "services", 
+                        quantity: 1,
+                        unit_price: Number(valor)
                     }
-                },
-                // ADICIONADO PARA MELHORAR A NOTA DA INTEGRAÇÃO
-                additional_info: {
-                    items: [
-                        {
-                            id: `plan-${dias}`,
-                            title: `Plano ${dias} Dias`,
-                            description: "Acesso ao sistema de cardápio digital",
-                            picture_url: "https://sistemadigitalmenu.com.br/assets/logo.png",
-                            category_id: "services", 
-                            quantity: 1,
-                            unit_price: Number(valor)
-                        }
-                    ]
-                },
-                metadata: { company_id: Number(company_id), dias_adicionar: Number(dias) }
-            }
-        });
+                ],
+                // Envia o IP do cliente se possível (ajuda na pontuação)
+                ip_address: req.headers['x-forwarded-for'] || req.socket.remoteAddress
+            },
+            metadata: { company_id: Number(company_id), dias_adicionar: Number(dias) }
+        };
+
+        // SE TIVER O DEVICE ID, ADICIONA NO METADATA (Ou onde a API V2 aceitar melhor, geralmente metadata segura bem)
+        if (deviceId) {
+            bodyPayment.metadata.device_id = deviceId;
+        }
+
+        const result = await payment.create({ body: bodyPayment });
 
         const data = result.point_of_interaction.transaction_data;
         res.json({ ok: true, qr_code: data.qr_code, qr_code_base64: data.qr_code_base64, id: result.id });
