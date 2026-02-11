@@ -3,9 +3,11 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Upgrade de Plano - _menudigital 🚀</title>
+  <title>Upgrade de Plano - Digital Menu 🚀</title>
   
   <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;600;700&display=swap" rel="stylesheet">
+  
+  <script src="https://sdk.mercadopago.com/js/v2"></script>
 
   <style>
     :root {
@@ -180,28 +182,43 @@
 <script type="module">
     import { api } from "./js/http.js";
 
+    // =======================================================
+    // ⚠️ ATENÇÃO: COLE SUA PUBLIC KEY AQUI DENTRO DAS ASPAS
+    // =======================================================
+    const MP_PUBLIC_KEY = 'APP_USR-be07e32a-3887-4859-b2ff-1c2341c0b589'; 
+    // =======================================================
+
     const user = JSON.parse(localStorage.getItem("user") || "{}");
     let planoAtual = { dias: 0, valor: 0 };
     let intervaloVerificacao = null;
-    let dataExpiracaoAtual = 0; // Guardamos a data atual em timestamp
+    let dataExpiracaoAtual = 0; 
+    let deviceId = null;
 
-    // 1. INICIALIZAÇÃO: Pega a data de expiração atual para comparar depois
+    // --- INICIALIZA MERCADO PAGO E GERA DEVICE ID ---
+    try {
+        if (MP_PUBLIC_KEY === 'COLE_SUA_PUBLIC_KEY_AQUI') {
+             console.warn("⚠️ AVISO: Você ainda não configurou a Public Key no arquivo assinatura.html");
+        }
+        const mp = new MercadoPago(MP_PUBLIC_KEY);
+        deviceId = mp.getDeviceId();
+        console.log("Device ID gerado com sucesso:", deviceId);
+    } catch (e) {
+        console.warn("Erro ao iniciar Mercado Pago (Verifique se colou a Public Key).", e);
+    }
+
+    // 1. INICIALIZAÇÃO: Pega a data de expiração atual
     async function iniciarMonitoramento() {
         if (!user || !user.company_id) return;
         try {
             const res = await fetch(`/api/companies/${user.company_id}/status`);
             const data = await res.json();
             if (data.ok) {
-                // Se não tiver data (null), assume 0
                 dataExpiracaoAtual = data.expires_at ? new Date(data.expires_at).getTime() : 0;
-                console.log("Data Base Expiração:", dataExpiracaoAtual);
             }
         } catch (e) { console.error("Erro ao pegar data inicial", e); }
     }
 
-    // Chama assim que a página carrega
     iniciarMonitoramento();
-
 
     // --- FUNÇÕES DE MÁSCARA E MODAL CPF ---
     const inputCPF = document.getElementById('inputCPF');
@@ -215,7 +232,6 @@
         e.target.value = v;
     });
 
-    // Anexando ao window para o HTML poder chamar
     window.abrirModalCPF = (dias, valor) => {
         planoAtual = { dias, valor };
         document.getElementById('cpfModal').style.display = 'flex';
@@ -240,7 +256,6 @@
     // --- LÓGICA DE PAGAMENTO E MONITORAMENTO ---
     async function gerarPagamentoReal(dias, valor, cpf) {
         try {
-            // Feedback visual
             document.body.style.cursor = "wait";
 
             const data = await api("/api/pay/create", {
@@ -251,7 +266,8 @@
                     name: user.name,
                     valor: valor,
                     dias: dias,
-                    docNumber: cpf
+                    docNumber: cpf,
+                    deviceId: deviceId // ENVIANDO O DEVICE ID PARA O SERVIDOR
                 })
             });
 
@@ -259,13 +275,11 @@
 
             if (!data.ok) throw new Error(data.error || "Erro na API");
 
-            // Preenche o Modal PIX
             document.getElementById("pix-valor-display").textContent = `R$ ${valor.toFixed(2).replace('.', ',')}`;
             document.getElementById("qrcode-img").src = `data:image/png;base64,${data.qr_code_base64}`;
             document.getElementById("pix-copia-cola").value = data.qr_code;
             document.getElementById("modal-pix").style.display = "flex";
             
-            // INICIA O RADAR PARA DETECTAR O PAGAMENTO
             ativarRadarPagamento();
 
         } catch (err) { 
@@ -277,16 +291,12 @@
     function ativarRadarPagamento() {
         if (!user || !user.company_id) return;
         
-        // Limpa se já existir
         if (intervaloVerificacao) clearInterval(intervaloVerificacao);
 
         const statusLabel = document.getElementById("pix-status");
         statusLabel.innerText = "⏳ Aguardando confirmação do banco...";
         statusLabel.style.color = "var(--color-blue)";
 
-        console.log("📡 Radar ligado...");
-
-        // Verifica a cada 3 segundos
         intervaloVerificacao = setInterval(async () => {
             try {
                 const res = await fetch(`/api/companies/${user.company_id}/status`);
@@ -295,7 +305,6 @@
                 if (data.ok) {
                     const novaData = data.expires_at ? new Date(data.expires_at).getTime() : 0;
                     
-                    // SE A DATA MUDOU (FICOU MAIOR), SIGNIFICA QUE O WEBHOOK PROCESSOU!
                     if (novaData > dataExpiracaoAtual) {
                         clearInterval(intervaloVerificacao);
                         mostrarSucesso();
@@ -306,7 +315,6 @@
     }
 
     function mostrarSucesso() {
-        // Fecha o PIX e abre o Sucesso
         document.getElementById("modal-pix").style.display = "none";
         document.getElementById("modalSucesso").style.display = "flex";
     }
