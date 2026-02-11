@@ -1,0 +1,188 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Tutorial - _menudigital 📖</title>
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;600;700&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --bg-main: #0d0d0d;
+            --bg-card: #1a1a1a;
+            --color-blue: #339af0;
+            --color-green: #51cf66;
+            --text-primary: #ffffff;
+            --text-secondary: #adb5bd;
+            --border-color: #2c2f33;
+        }
+
+        * { box-sizing: border-box; }
+
+        body {
+            font-family: 'Poppins', sans-serif;
+            background: var(--bg-main);
+            color: var(--text-primary);
+            margin: 0; padding: 20px;
+            display: flex; flex-direction: column; align-items: center;
+            min-height: 100vh;
+        }
+
+        .container { max-width: 700px; width: 100%; margin-top: 40px; }
+
+        header { text-align: center; margin-bottom: 50px; }
+        h1 { 
+            font-size: 2.2rem; 
+            margin-bottom: 10px;
+            background: linear-gradient(90deg, #fff, var(--color-blue)); 
+            -webkit-background-clip: text; 
+            -webkit-text-fill-color: transparent; 
+        }
+        header p { color: var(--text-secondary); }
+
+        /* ESTILO DOS TÓPICOS (ACORDEÃO) */
+        .tutorial-item {
+            background: var(--bg-card);
+            border: 1px solid var(--border-color);
+            border-radius: 12px;
+            margin-bottom: 15px;
+            overflow: hidden;
+            transition: 0.3s;
+        }
+
+        .tutorial-item:hover {
+            border-color: var(--color-blue);
+        }
+
+        .tutorial-header {
+            padding: 20px;
+            cursor: pointer;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            user-select: none;
+            font-weight: 600;
+        }
+
+        .tutorial-header::after {
+            content: '▼';
+            font-size: 0.8rem;
+            color: var(--color-blue);
+            transition: 0.3s;
+        }
+
+        .tutorial-item.active .tutorial-header::after {
+            transform: rotate(180deg);
+        }
+
+        .tutorial-content {
+            max-height: 0;
+            overflow: hidden;
+            transition: max-height 0.3s ease-out, padding 0.3s ease;
+            background: #212529;
+            color: var(--text-secondary);
+            font-size: 0.95rem;
+            line-height: 1.6;
+        }
+
+        .tutorial-item.active .tutorial-content {
+            max-height: 500px; /* Tamanho máximo do conteúdo aberto */
+            padding: 20px;
+            border-top: 1px solid var(--border-color);
+        }
+
+        .tip {
+            margin-top: 15px;
+            padding: 12px;
+            background: rgba(51, 154, 240, 0.1);
+            border-left: 4px solid var(--color-blue);
+            border-radius: 4px;
+            color: #fff;
+            font-size: 0.85rem;
+        }
+
+        .btn-back {
+            margin-top: 30px;
+            display: inline-block;
+            color: var(--text-secondary);
+            text-decoration: none;
+            font-size: 0.9rem;
+            transition: 0.3s;
+        }
+        .btn-back:hover { color: var(--color-blue); }
+
+        strong { color: var(--color-blue); }
+    </style>
+</head>
+<body>
+
+    <div class="container">
+        <header>
+            <h1>Central de Ajuda 💡</h1>
+            <p>Clique nos tópicos abaixo para tirar suas dúvidas.</p>
+        </header>
+
+        <div class="tutorial-item">
+            <div class="tutorial-header">🍎 Como cadastrar meus produtos?</div>
+            <div class="tutorial-content">
+                Para cadastrar, acesse a aba <strong>Produtos</strong> no menu lateral. Clique em "Novo Produto", preencha o nome, preço e categoria. 
+                <div class="tip">🎯 <strong>Dica:</strong> Use descrições curtas e chamativas. Em vez de "X-Burguer", use "Saboroso blend bovino com queijo derretido".</div>
+            </div>
+        </div>
+
+        <div class="tutorial-item">
+            <div class="tutorial-header">🖼️ Como ocultar um item que acabou?</div>
+            <div class="tutorial-content">
+                Acabou o estoque? Não precisa apagar o produto! Na lista de produtos, basta clicar no <strong>ícone do olho</strong>. 
+                Se o olho estiver com um traço, o produto sumirá do cardápio dos clientes na hora, mas continuará salvo para você ativar depois.
+            </div>
+        </div>
+
+        <div class="tutorial-item">
+            <div class="tutorial-header">📱 Como os clientes acessam o cardápio?</div>
+            <div class="tutorial-content">
+                No seu painel, você verá o link único do seu restaurante. Você deve gerar um <strong>QR Code</strong> desse link, imprimir e colocar nas mesas.
+                O cliente só precisa apontar a câmera do celular, escolher os pratos e enviar o pedido.
+            </div>
+        </div>
+
+        <div class="tutorial-item">
+            <div class="tutorial-header">🍳 Como gerenciar os pedidos na cozinha?</div>
+            <div class="tutorial-content">
+                Fique de olho na aba <strong>Pedidos</strong>. Assim que um cliente pede, ele aparece lá com o número da mesa. 
+                Quando a comida estiver pronta, clique em <strong>✅ Concluir</strong>. Isso mantém sua tela limpa e sua equipe organizada!
+            </div>
+        </div>
+
+        <div class="tutorial-item">
+            <div class="tutorial-header">💳 Como renovar minha assinatura?</div>
+            <div class="tutorial-content">
+                O _menudigital funciona por créditos de dias. Vá em <strong>Assinatura</strong>, escolha o plano (30 dias, por exemplo) e gere o PIX. 
+                Assim que você pagar, o sistema identifica em segundos e libera seu acesso automaticamente. 
+                <div class="tip">🚀 <strong>Mágica:</strong> Você não precisa enviar comprovante, o robô faz tudo sozinho!</div>
+            </div>
+        </div>
+
+        <div style="text-align: center;">
+            <a href="index.html" class="btn-back">← Voltar para o Painel</a>
+        </div>
+    </div>
+
+    <script>
+        // Lógica para abrir e fechar os tópicos
+        document.querySelectorAll('.tutorial-header').forEach(header => {
+            header.addEventListener('click', () => {
+                const item = header.parentElement;
+                
+                // Fecha outros que estiverem abertos (opcional)
+                document.querySelectorAll('.tutorial-item').forEach(otherItem => {
+                    if (otherItem !== item) otherItem.classList.remove('active');
+                });
+
+                // Abre ou fecha o atual
+                item.classList.toggle('active');
+            });
+        });
+    </script>
+
+</body>
+</html>
