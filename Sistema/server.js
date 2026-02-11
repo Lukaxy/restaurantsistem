@@ -463,6 +463,26 @@ app.post("/api/webhook", async (req, res) => {
     res.sendStatus(200);
 });
 
+// ROTA LEVE PARA O FRONTEND VERIFICAR SE O PAGAMENTO CAIU
+app.get("/api/companies/:id/status", async (req, res) => {
+    try {
+        const result = await db.execute({ 
+            sql: "SELECT trial_expires_at, plano FROM companies WHERE id = ?", 
+            args: [req.params.id] 
+        });
+        
+        const company = result.rows[0];
+        if (company) {
+            // Retorna a data de expiração para comparação
+            res.json({ ok: true, expires_at: company.trial_expires_at, plano: company.plano });
+        } else {
+            res.status(404).json({ ok: false });
+        }
+    } catch (err) {
+        res.status(500).json({ ok: false });
+    }
+});
+
 // =============================================================
 // 🚀 INICIALIZAÇÃO CORRETA DO SERVIDOR
 // =============================================================
