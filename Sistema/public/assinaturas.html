@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Upgrade de Plano - Digital Menu 🚀</title>
+  <title>Upgrade de Plano - _menudigital 🚀</title>
   
   <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;600;700&display=swap" rel="stylesheet">
 
@@ -147,15 +147,33 @@
   <div id="modal-pix" style="display:none; position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.9); z-index:11000; justify-content:center; align-items:center;">
     <div class="box" style="max-width: 400px; text-align: center;">
         <h3 style="margin-bottom: 5px;">QR Code Gerado! ✅</h3>
+        <p style="color: var(--text-secondary); font-size: 0.9rem;">Abra o app do seu banco e pague via PIX.</p>
+        
         <div id="pix-valor-display" style="font-size: 2rem; font-weight: bold; color: var(--color-green); margin: 15px 0;">R$ 0,00</div>
+        
         <img id="qrcode-img" src="" style="width: 200px; background: white; padding: 10px; border-radius: 10px; margin: 0 auto 15px; display: block;">
+        
         <div style="margin-bottom: 15px;">
-            <small>Expira em:</small>
-            <div id="pix-timer" style="font-size: 1.1rem; color: var(--color-red); font-weight: bold;">10:00</div>
+            <small>Aguardando pagamento...</small>
+            <div id="pix-status" style="font-size: 0.9rem; color: var(--color-blue); margin-top:5px;">🕒 Verificando status...</div>
         </div>
+        
         <button class="btn-plan btn-primary" onclick="copiarCodigoPix()" style="margin-bottom: 10px;">📋 Copiar Código PIX</button>
         <button class="btn-plan btn-outline" onclick="fecharModalPix()">Fechar</button>
         <input type="text" id="pix-copia-cola" style="position: absolute; left: -9999px;">
+    </div>
+  </div>
+
+  <div id="modalSucesso" style="display:none; position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.95); z-index:12000; align-items:center; justify-content:center; flex-direction:column;">
+    <div style="background:#1a1d21; padding:40px; border-radius:20px; text-align:center; border: 2px solid #51cf66; box-shadow: 0 0 50px rgba(81, 207, 102, 0.4); animation: popIn 0.5s ease;">
+        <div style="font-size: 5rem; margin-bottom: 20px;">🎉</div>
+        <h2 style="color:#fff; margin-bottom:10px;">Pagamento Confirmado!</h2>
+        <p style="color:#adb5bd; font-size:1.2rem;">Seu plano foi ativado com sucesso.</p>
+        <p style="color:#51cf66; font-weight:bold; margin-top:10px;">Obrigado por confiar no _menudigital!</p>
+        
+        <button onclick="window.location.href='index.html'" style="margin-top:30px; background:#51cf66; color:#fff; border:none; padding:15px 40px; font-size:1.2rem; border-radius:8px; cursor:pointer; font-weight:bold; transition: 0.3s;">
+            ACESSAR O SISTEMA 🚀
+        </button>
     </div>
   </div>
 
@@ -164,9 +182,28 @@
 
     const user = JSON.parse(localStorage.getItem("user") || "{}");
     let planoAtual = { dias: 0, valor: 0 };
-    let cronometroInterval;
+    let intervaloVerificacao = null;
+    let dataExpiracaoAtual = 0; // Guardamos a data atual em timestamp
 
-    // --- MÁSCARA DE CPF ---
+    // 1. INICIALIZAÇÃO: Pega a data de expiração atual para comparar depois
+    async function iniciarMonitoramento() {
+        if (!user || !user.company_id) return;
+        try {
+            const res = await fetch(`/api/companies/${user.company_id}/status`);
+            const data = await res.json();
+            if (data.ok) {
+                // Se não tiver data (null), assume 0
+                dataExpiracaoAtual = data.expires_at ? new Date(data.expires_at).getTime() : 0;
+                console.log("Data Base Expiração:", dataExpiracaoAtual);
+            }
+        } catch (e) { console.error("Erro ao pegar data inicial", e); }
+    }
+
+    // Chama assim que a página carrega
+    iniciarMonitoramento();
+
+
+    // --- FUNÇÕES DE MÁSCARA E MODAL CPF ---
     const inputCPF = document.getElementById('inputCPF');
     inputCPF.addEventListener('input', (e) => {
         let v = e.target.value.replace(/\D/g, '');
@@ -178,9 +215,11 @@
         e.target.value = v;
     });
 
+    // Anexando ao window para o HTML poder chamar
     window.abrirModalCPF = (dias, valor) => {
         planoAtual = { dias, valor };
         document.getElementById('cpfModal').style.display = 'flex';
+        inputCPF.value = "";
         inputCPF.focus();
     };
 
@@ -198,8 +237,12 @@
         gerarPagamentoReal(planoAtual.dias, planoAtual.valor, cpfRaw);
     };
 
+    // --- LÓGICA DE PAGAMENTO E MONITORAMENTO ---
     async function gerarPagamentoReal(dias, valor, cpf) {
         try {
+            // Feedback visual
+            document.body.style.cursor = "wait";
+
             const data = await api("/api/pay/create", {
                 method: "POST",
                 body: JSON.stringify({
@@ -212,26 +255,60 @@
                 })
             });
 
+            document.body.style.cursor = "default";
+
             if (!data.ok) throw new Error(data.error || "Erro na API");
 
+            // Preenche o Modal PIX
             document.getElementById("pix-valor-display").textContent = `R$ ${valor.toFixed(2).replace('.', ',')}`;
             document.getElementById("qrcode-img").src = `data:image/png;base64,${data.qr_code_base64}`;
             document.getElementById("pix-copia-cola").value = data.qr_code;
             document.getElementById("modal-pix").style.display = "flex";
             
-            iniciarCronometro();
-        } catch (err) { alert(err.message); }
+            // INICIA O RADAR PARA DETECTAR O PAGAMENTO
+            ativarRadarPagamento();
+
+        } catch (err) { 
+            alert(err.message); 
+            document.body.style.cursor = "default";
+        }
     }
 
-    function iniciarCronometro() {
-        let tempo = 600;
-        clearInterval(cronometroInterval);
-        cronometroInterval = setInterval(() => {
-            const min = Math.floor(tempo / 60);
-            const sec = tempo % 60;
-            document.getElementById("pix-timer").textContent = `${min}:${sec < 10 ? '0' : ''}${sec}`;
-            if (tempo-- <= 0) { clearInterval(cronometroInterval); fecharModalPix(); }
-        }, 1000);
+    function ativarRadarPagamento() {
+        if (!user || !user.company_id) return;
+        
+        // Limpa se já existir
+        if (intervaloVerificacao) clearInterval(intervaloVerificacao);
+
+        const statusLabel = document.getElementById("pix-status");
+        statusLabel.innerText = "⏳ Aguardando confirmação do banco...";
+        statusLabel.style.color = "var(--color-blue)";
+
+        console.log("📡 Radar ligado...");
+
+        // Verifica a cada 3 segundos
+        intervaloVerificacao = setInterval(async () => {
+            try {
+                const res = await fetch(`/api/companies/${user.company_id}/status`);
+                const data = await res.json();
+
+                if (data.ok) {
+                    const novaData = data.expires_at ? new Date(data.expires_at).getTime() : 0;
+                    
+                    // SE A DATA MUDOU (FICOU MAIOR), SIGNIFICA QUE O WEBHOOK PROCESSOU!
+                    if (novaData > dataExpiracaoAtual) {
+                        clearInterval(intervaloVerificacao);
+                        mostrarSucesso();
+                    }
+                }
+            } catch (err) { console.error("Erro no radar", err); }
+        }, 3000);
+    }
+
+    function mostrarSucesso() {
+        // Fecha o PIX e abre o Sucesso
+        document.getElementById("modal-pix").style.display = "none";
+        document.getElementById("modalSucesso").style.display = "flex";
     }
 
     window.copiarCodigoPix = () => {
@@ -243,80 +320,9 @@
 
     window.fecharModalPix = () => {
         document.getElementById("modal-pix").style.display = "none";
-        clearInterval(cronometroInterval);
+        if (intervaloVerificacao) clearInterval(intervaloVerificacao);
     };
-  let intervaloVerificacao = null;
-let dataExpiracaoAtual = null; // Vamos guardar a data atual para comparar
 
-// 1. Ao carregar a página, pegamos a data atual da empresa
-async function iniciarMonitoramento() {
-    const user = JSON.parse(localStorage.getItem("user"));
-    if (!user) return;
-
-    try {
-        const res = await fetch(`/api/companies/${user.company_id}/status`);
-        const data = await res.json();
-        if (data.ok) {
-            dataExpiracaoAtual = new Date(data.expires_at).getTime();
-            console.log("Data atual de expiração:", data.expires_at);
-        }
-    } catch (e) { console.error("Erro ao pegar data inicial", e); }
-}
-
-// 2. Função chamada quando o QR Code é gerado na tela
-function ativarVerificacaoPagamento() {
-    const user = JSON.parse(localStorage.getItem("user"));
-    if (!user || !user.company_id) return;
-    
-    // Evita criar múltiplos intervalos
-    if (intervaloVerificacao) clearInterval(intervaloVerificacao);
-
-    console.log("📡 Iniciando radar de pagamento...");
-
-    // Verifica a cada 3 segundos (3000ms)
-    intervaloVerificacao = setInterval(async () => {
-        try {
-            const res = await fetch(`/api/companies/${user.company_id}/status`);
-            const data = await res.json();
-
-            if (data.ok) {
-                const novaData = new Date(data.expires_at).getTime();
-
-                // SE A DATA NO BANCO FICOU MAIOR QUE A DATA ANTIGA = PAGOU!
-                if (novaData > dataExpiracaoAtual) {
-                    clearInterval(intervaloVerificacao); // Para de verificar
-                    mostrarSucesso();
-                }
-            }
-        } catch (err) {
-            console.error("Erro na verificação", err);
-        }
-    }, 3000);
-}
-
-function mostrarSucesso() {
-    // Esconde o QR Code e mostra o Modal de Sucesso
-    document.getElementById("modalSucesso").style.display = "flex";
-    
-    // Toca um som de caixa registradora (opcional, se quiser te mando o link)
-    // new Audio('ka-ching.mp3').play();
-}
-
-// Inicializa pegando a data atual
-document.addEventListener("DOMContentLoaded", iniciarMonitoramento);
 </script>
-
-  <div id="modalSucesso" style="display:none; position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.9); z-index:10000; align-items:center; justify-content:center; flex-direction:column;">
-    <div style="background:#1a1d21; padding:40px; border-radius:20px; text-align:center; border: 2px solid #51cf66; box-shadow: 0 0 50px rgba(81, 207, 102, 0.4);">
-        <div style="font-size: 5rem; margin-bottom: 20px;">🎉</div>
-        <h2 style="color:#fff; margin-bottom:10px;">Pagamento Confirmado!</h2>
-        <p style="color:#adb5bd; font-size:1.2rem;">Seu plano foi ativado com sucesso.</p>
-        <p style="color:#51cf66; font-weight:bold; margin-top:10px;">Obrigado por confiar no Digital Menu!</p>
-        
-        <button onclick="window.location.href='index.html'" style="margin-top:30px; background:#51cf66; color:#fff; border:none; padding:15px 40px; font-size:1.2rem; border-radius:8px; cursor:pointer; font-weight:bold;">
-            ACESSAR O SISTEMA 🚀
-        </button>
-    </div>
-</div>
 </body>
 </html>
