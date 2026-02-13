@@ -205,6 +205,9 @@ document.addEventListener('DOMContentLoaded', async () => {
       if (e.target.id === 'productModal') fecharModalProduto();
   });
 
+  document.getElementById('fecharModalProduto')?.addEventListener('click', () => {
+    fecharModalProduto();
+});
   // ==================== ENVIAR PEDIDO COM ANIMAÇÃO ====================
   const btnSend = document.getElementById('sendOrder');
   if (btnSend) {
