@@ -26,7 +26,7 @@
             padding: 0;
         }
 
-        /* HEADER ESTILO DIGITALMENU - ATUALIZADO */
+        /* HEADER ESTILO DIGITALMENU */
         header {
             background: #212529;
             padding: 15px 20px;
@@ -39,9 +39,9 @@
         /* Container Flex para alinhar Logo + Texto */
         .header-content {
             display: flex;
-            align-items: center; /* Centraliza verticalmente */
-            justify-content: center; /* Centraliza o bloco todo na tela */
-            gap: 15px; /* Espaço entre a logo e o texto */
+            align-items: center; 
+            justify-content: center; 
+            gap: 15px; 
             max-width: 600px;
             margin: 0 auto;
         }
@@ -50,14 +50,15 @@
         .header-logo {
             width: 60px;
             height: 60px;
-            border-radius: 50%; /* Deixa redonda */
-            object-fit: cover; /* Garante que a imagem não estique */
+            border-radius: 50%; 
+            object-fit: cover; 
             border: 2px solid var(--border-color);
             display: none; /* Oculta por padrão até carregar */
+            background-color: #fff; /* Fundo branco caso a logo seja transparente */
         }
 
         .header-info {
-            text-align: left; /* Alinha o texto à esquerda (perto da logo) */
+            text-align: left; 
         }
 
         .restaurant-name {
@@ -169,21 +170,24 @@
                     return;
                 }
 
-                // ============ ATUALIZA O CABEÇALHO ============
-                // Nome do Restaurante
+                // ============ 1. ATUALIZA NOME ============
                 document.getElementById('rest-name').innerText = data.restaurant;
 
-                // Lógica da Logo: Verifica se a API mandou o campo 'logo' (URL da imagem)
+                // ============ 2. ATUALIZA LOGO (AUTOMÁTICO) ============
                 const logoImg = document.getElementById('rest-logo');
                 
-                // IMPORTANTE: Seu backend precisa retornar algo como "logo": "url_da_imagem.png"
-                if (data.logo && data.logo !== "") {
-                    logoImg.src = data.logo;
-                    logoImg.style.display = 'block'; // Mostra a imagem
-                } else {
-                    logoImg.style.display = 'none'; // Esconde se não tiver logo
-                }
-                // ==============================================
+                // Monta o caminho: pasta "img" + nome padrão + ID da empresa
+                // O "?v=..." serve para atualizar a imagem caso o dono troque a foto
+                const logoPath = `img/logo-companyid-${companyId}.png?v=${Date.now()}`;
+
+                logoImg.src = logoPath;
+                logoImg.style.display = 'block'; // Mostra a imagem
+
+                // SE A IMAGEM NÃO EXISTIR (Erro 404), ESCONDE A BOLINHA
+                logoImg.onerror = function() {
+                    this.style.display = 'none';
+                };
+                // =======================================================
 
                 const container = document.getElementById('menu-container');
                 container.innerHTML = ""; // Limpa o loading
