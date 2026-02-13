@@ -26,15 +26,38 @@
             padding: 0;
         }
 
-        /* HEADER ESTILO DIGITALMENU */
+        /* HEADER ESTILO DIGITALMENU - ATUALIZADO */
         header {
             background: #212529;
-            padding: 20px;
-            text-align: center;
+            padding: 15px 20px;
             box-shadow: 0 2px 10px rgba(0,0,0,0.5);
             position: sticky;
             top: 0;
             z-index: 100;
+        }
+
+        /* Container Flex para alinhar Logo + Texto */
+        .header-content {
+            display: flex;
+            align-items: center; /* Centraliza verticalmente */
+            justify-content: center; /* Centraliza o bloco todo na tela */
+            gap: 15px; /* Espaço entre a logo e o texto */
+            max-width: 600px;
+            margin: 0 auto;
+        }
+
+        /* Estilo da Imagem da Logo */
+        .header-logo {
+            width: 60px;
+            height: 60px;
+            border-radius: 50%; /* Deixa redonda */
+            object-fit: cover; /* Garante que a imagem não estique */
+            border: 2px solid var(--border-color);
+            display: none; /* Oculta por padrão até carregar */
+        }
+
+        .header-info {
+            text-align: left; /* Alinha o texto à esquerda (perto da logo) */
         }
 
         .restaurant-name {
@@ -44,6 +67,13 @@
             margin: 0;
             text-transform: uppercase;
             letter-spacing: 1px;
+            line-height: 1.2;
+        }
+
+        .restaurant-slogan {
+            font-size: 0.85rem; 
+            color: var(--text-secondary); 
+            margin-top: 4px;
         }
 
         main {
@@ -61,7 +91,7 @@
             padding-left: 10px;
         }
 
-        /* CARTÃO DE PRODUTO (O CLONE DO ADMIN) */
+        /* CARTÃO DE PRODUTO */
         .product-card {
             background-color: var(--bg-card);
             border-radius: var(--radius);
@@ -103,8 +133,14 @@
 <body>
 
     <header>
-        <div class="restaurant-name" id="rest-name">Carregando...</div>
-        <div style="font-size: 0.8rem; color: var(--text-secondary); margin-top: 5px;">Cardápio Digital</div>
+        <div class="header-content">
+            <img id="rest-logo" class="header-logo" alt="Logo Restaurante">
+            
+            <div class="header-info">
+                <div class="restaurant-name" id="rest-name">Carregando...</div>
+                <div class="restaurant-slogan">Cardápio Digital</div>
+            </div>
+        </div>
     </header>
 
     <main id="menu-container">
@@ -123,18 +159,31 @@
             }
 
             try {
-                // Chamada para a rota pública que criamos no Passo 2
+                // Chamada para a rota pública
                 const response = await fetch(`/api/public/menu/${companyId}`);
                 const data = await response.json();
 
                 if (!data.menu || data.menu.length === 0) {
-                    document.getElementById('menu-container').innerHTML = "<p style='text-align:center'>O cardápio está sendo atualizado. Volte logo!</p>";
+                    document.getElementById('menu-container').innerHTML = "<p style='text-align:center; color: #adb5bd;'>O cardápio está sendo atualizado. Volte logo!</p>";
                     document.getElementById('rest-name').innerText = data.restaurant || "DigitalMenu";
                     return;
                 }
 
-                // Define o nome do restaurante no Header
+                // ============ ATUALIZA O CABEÇALHO ============
+                // Nome do Restaurante
                 document.getElementById('rest-name').innerText = data.restaurant;
+
+                // Lógica da Logo: Verifica se a API mandou o campo 'logo' (URL da imagem)
+                const logoImg = document.getElementById('rest-logo');
+                
+                // IMPORTANTE: Seu backend precisa retornar algo como "logo": "url_da_imagem.png"
+                if (data.logo && data.logo !== "") {
+                    logoImg.src = data.logo;
+                    logoImg.style.display = 'block'; // Mostra a imagem
+                } else {
+                    logoImg.style.display = 'none'; // Esconde se não tiver logo
+                }
+                // ==============================================
 
                 const container = document.getElementById('menu-container');
                 container.innerHTML = ""; // Limpa o loading
@@ -143,13 +192,11 @@
                 const categories = [...new Set(data.menu.map(p => p.category))];
 
                 categories.forEach(cat => {
-                    // Adiciona o título da categoria
                     const catTitle = document.createElement('div');
                     catTitle.className = 'category-title';
                     catTitle.innerText = cat;
                     container.appendChild(catTitle);
 
-                    // Filtra produtos dessa categoria
                     const products = data.menu.filter(p => p.category === cat);
                     
                     products.forEach(p => {
@@ -168,7 +215,7 @@
 
             } catch (err) {
                 console.error(err);
-                document.getElementById('menu-container').innerHTML = "Erro ao carregar o cardápio.";
+                document.getElementById('menu-container').innerHTML = "<p style='text-align:center'>Erro ao carregar o cardápio.</p>";
             }
         }
 
