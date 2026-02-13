@@ -34,6 +34,11 @@
   </div>
   <div class="header-title">Cardápio 🍽️</div>
 </header>
+  
+ <div class="search-container">
+    <input type="text" id="inputPesquisa" placeholder="Pesquise aqui!">
+    <span class="search-icon">🔍</span>
+</div>
 
 <main>
   <div id="categories" class="categories">Carregando cardápio...</div>
@@ -98,6 +103,30 @@
         }
     }
 });
+
+document.getElementById('inputPesquisa').addEventListener('input', function(e) {
+    const termo = e.target.value.toLowerCase().trim();
+    const categorias = document.querySelectorAll('.category-section'); // Ajuste para a classe que engloba a categoria e os produtos
+
+    categorias.forEach(secao => {
+        let temProdutoVisivel = false;
+        const produtos = secao.querySelectorAll('.product-card'); // Ajuste para a classe do seu card de produto
+
+        produtos.forEach(card => {
+            const nome = card.querySelector('h3').innerText.toLowerCase();
+            
+            if (nome.includes(termo)) {
+                card.style.display = 'block';
+                temProdutoVisivel = true;
+            } else {
+                card.style.display = 'none';
+            }
+        });
+
+        // Esconde o título da categoria se não houver produtos visíveis nela
+        secao.style.display = temProdutoVisivel ? 'block' : 'none';
+    });
+});  
 </script>
 
 <style>
@@ -117,6 +146,40 @@
     }
     .menu-dropdown.show { display: block; }
     .menu-dropdown div { padding: 10px 20px; cursor: pointer; border-bottom: 1px solid #333; }  
+
+  .search-container {
+    padding: 15px;
+    position: sticky;
+    top: 0;
+    background: var(--bg-main); /* Usa a cor de fundo que você já definiu */
+    z-index: 100;
+}
+
+#inputPesquisa {
+    width: 100%;
+    padding: 12px 40px 12px 15px;
+    border-radius: 25px;
+    border: 1px solid #2c2f33;
+    background: #1a1a1a;
+    color: white;
+    font-size: 1rem;
+    outline: none;
+    transition: 0.3s;
+}
+
+#inputPesquisa:focus {
+    border-color: #51cf66; /* Verde que você usa no botão de comanda */
+    box-shadow: 0 0 8px rgba(81, 207, 102, 0.2);
+}
+
+.search-icon {
+    position: absolute;
+    right: 30px;
+    top: 50%;
+    transform: translateY(-50%);
+    pointer-events: none;
+    opacity: 0.6;
+}
 </style>
 
 <div id="order-success-overlay">
@@ -140,6 +203,7 @@
 </div>
 </body>
 </html>
+
 
 
 
