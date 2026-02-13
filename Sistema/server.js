@@ -1,16 +1,56 @@
 const express = require("express");
 const bodyParser = require("body-parser");
 const cors = require("cors");
-const path = require("path");
+const path = require("path"); // Mantido apenas uma vez
 const bcrypt = require("bcryptjs");
 const { MercadoPagoConfig, Payment } = require('mercadopago');
 const { createClient } = require("@libsql/client/http");
+const multer = require('multer');
+const fs = require('fs');
 
 // =============================================================
-// 🔧 CONFIGURAÇÕES
+// 🔧 CONFIGURAÇÕES INICIAIS
+// =============================================================
+const app = express();
+app.use(cors());
+app.use(bodyParser.json({ limit: "5mb" }));
+
+// 1. DEFINIR PASTA PÚBLICA E CRIAR PASTA DE IMAGENS (ESSENCIAL PRO RENDER)
+const publicPath = path.join(__dirname, "public");
+const uploadDir = path.join(publicPath, "img");
+
+// Garante que a pasta 'public/img' existe antes de qualquer coisa
+if (!fs.existsSync(uploadDir)){
+    console.log("📁 Criando diretório de imagens...");
+    fs.mkdirSync(uploadDir, { recursive: true });
+}
+
+// Libera o acesso aos arquivos estáticos (HTML, CSS, IMAGENS)
+app.use(express.static(publicPath));
+
+// =============================================================
+// 📸 CONFIGURAÇÃO DE UPLOAD (MULTER) - NOVO!
+// =============================================================
+const storage = multer.diskStorage({
+    destination: function (req, file, cb) {
+        cb(null, uploadDir); // Salva dentro de public/img criado acima
+    },
+    filename: function (req, file, cb) {
+        // Pega o ID da empresa vindo do corpo da requisição
+        const idEmpresa = req.body.companyId;
+        
+        // Força o nome: logo-companyid-{ID}.png
+        // Isso permite que o front-end "adivinhe" a imagem sem consultar o banco
+        cb(null, `logo-companyid-${idEmpresa}.png`);
+    }
+});
+
+const upload = multer({ storage: storage });
+
+// =============================================================
+// 🔧 BANCO DE DADOS E PAGAMENTOS
 // =============================================================
 const db = createClient({
-  // URL Fixa com HTTPS para evitar bloqueio do Render
   url: "https://restaurant-system-lukaxy.aws-us-east-1.turso.io", 
   authToken: process.env.TURSO_TOKEN,
 });
@@ -23,10 +63,6 @@ const client = new MercadoPagoConfig({
 const MASTER_EMAIL = "lucasferreira123459966@gmail.com";
 const MASTER_SENHA = "Lu@14032004";
 
-const app = express();
-app.use(cors());
-app.use(bodyParser.json({ limit: "5mb" }));
-
 function getHoraLocalISOString() {
   return new Date().toISOString().replace('T', ' ').substring(0, 19); 
 }
@@ -37,34 +73,34 @@ function getHoraLocalISOString() {
 async function initDb() {
   console.log("🔄 Iniciando verificação do Banco de Dados...");
   try {
-    // 1. Criação das Tabelas (Sequencial)
+    // 1. Criação das Tabelas
     await db.execute(`CREATE TABLE IF NOT EXISTS companies (id INTEGER PRIMARY KEY AUTOINCREMENT, name TEXT, email_admin TEXT UNIQUE, whatsapp TEXT, senha_hash TEXT, plano TEXT DEFAULT 'trial', trial_expires_at TEXT, created_at TEXT)`);
     await db.execute(`CREATE TABLE IF NOT EXISTS users (id INTEGER PRIMARY KEY AUTOINCREMENT, company_id INTEGER, name TEXT, email TEXT UNIQUE, senha_hash TEXT, role TEXT DEFAULT 'atendente', ativo INTEGER DEFAULT 1, created_at TEXT)`);
     await db.execute(`CREATE TABLE IF NOT EXISTS orders (id INTEGER PRIMARY KEY AUTOINCREMENT, company_id INTEGER, items TEXT, total REAL, table_name TEXT, notes TEXT, status TEXT DEFAULT 'novo', created_at TEXT, status_updated_at TEXT, payment_method TEXT)`);
     await db.execute(`CREATE TABLE IF NOT EXISTS products (id INTEGER PRIMARY KEY AUTOINCREMENT, company_id INTEGER, name TEXT, price REAL, category TEXT, description TEXT)`);
-    // Linha comentada para evitar erro de coluna duplicada
-    // await db.execute(`ALTER TABLE products ADD COLUMN visible INTEGER DEFAULT 1`);
     
-    console.log("✅ Tabelas verificadas/criadas.");
+    // Tenta adicionar a coluna visible se não existir (ignora erro se já existir)
+    try {
+        await db.execute(`ALTER TABLE products ADD COLUMN visible INTEGER DEFAULT 1`);
+    } catch (e) { /* Coluna já existe, segue o jogo */ }
+    
+    console.log("✅ Tabelas verificadas.");
 
     // 2. Verificação/Criação do Master
     const checkMaster = await db.execute({ sql: "SELECT * FROM users WHERE email = ?", args: [MASTER_EMAIL] });
     
     if (checkMaster.rows.length === 0) {
-      console.log("👤 Usuário Master não encontrado. Criando agora...");
+      console.log("👤 Criando Usuário Master...");
       const hash = bcrypt.hashSync(MASTER_SENHA, 10);
       await db.execute({
         sql: "INSERT INTO users (name, email, senha_hash, role, created_at) VALUES (?, ?, ?, 'master', ?)",
         args: ["Admin Master", MASTER_EMAIL, hash, getHoraLocalISOString()]
       });
-      console.log("✅ Usuário Master criado com sucesso.");
-    } else {
-      console.log("✅ Usuário Master já existe.");
     }
 
   } catch (err) { 
-    console.error("❌ FALHA CRÍTICA NA INICIALIZAÇÃO DO BANCO:", err);
-    process.exit(1); // Mata o servidor se o banco falhar
+    console.error("❌ FALHA CRÍTICA NO BANCO:", err);
+    process.exit(1);
   }
 }
 
@@ -88,28 +124,19 @@ app.post("/api/login", async (req, res) => {
     
     if (user.plano === 'bloqueado') return res.status(403).json({ ok: false, error: "Conta suspensa." });
 
-    // --- LOGICA DE EXPIRAÇÃO CORRIGIDA ---
     const expirou = user.role !== 'master' && 
                     user.trial_expires_at && 
                     (new Date() > new Date(user.trial_expires_at));
 
-    // Se o plano expirou, enviamos a resposta e PARAMOS aqui com o 'return'
     if (expirou) {
-        return res.json({ 
-            ok: true, 
-            user: { ...user, planoExpirado: true } 
-        });
+        return res.json({ ok: true, user: { ...user, planoExpirado: true } });
     }
 
-    // Se NÃO expirou, ele pula o bloco acima e envia a resposta normal de login
     res.json({ ok: true, user: { ...user, planoExpirado: false } });
 
   } catch (err) {
     console.error("Erro Login:", err);
-    // Verificamos se já não enviamos resposta antes de dar erro 500
-    if (!res.headersSent) {
-        res.status(500).json({ ok: false, error: "Erro interno no servidor." });
-    }
+    if (!res.headersSent) res.status(500).json({ ok: false, error: "Erro interno." });
   }
 });
 
@@ -122,20 +149,14 @@ app.post("/api/admin-login", async (req, res) => {
     if (!user) return res.status(401).json({ ok: false, error: "Master não encontrado." });
 
     const valid = await bcrypt.compare(String(senha), String(user.senha_hash));
-    if (valid) {
-        return res.json({ ok: true, user });
-    }
+    if (valid) return res.json({ ok: true, user });
+    
     res.status(401).json({ ok: false, error: "Senha incorreta." });
-  } catch (err) { 
-      console.error(err);
-      res.status(500).json({ ok: false, error: "Erro no servidor." }); 
-  }
+  } catch (err) { res.status(500).json({ ok: false }); }
 });
 
 app.post("/api/register-company", async (req, res) => {
   const { name, email, whatsapp, senha } = req.body; 
-  console.log(`📝 Cadastro solicitado: ${email}`);
-
   try {
     const hash = bcrypt.hashSync(String(senha), 10);
     const dataExpira = new Date();
@@ -148,31 +169,42 @@ app.post("/api/register-company", async (req, res) => {
         args: [name, email, whatsapp, hash, trial_at, created_at]
     });
     
-    // Conversão Segura de ID
     const newId = Number(String(resCompany.lastInsertRowid));
-
-    if (!newId || isNaN(newId)) throw new Error("Falha ao gerar ID da empresa.");
+    if (!newId || isNaN(newId)) throw new Error("Falha ao gerar ID.");
 
     await db.execute({
         sql: `INSERT INTO users (company_id, name, email, senha_hash, role, created_at) VALUES (?,?,?,?,'admin',?)`,
         args: [newId, "Administrador", email, hash, created_at]
     });
 
-    res.json({ 
-        ok: true, 
-        user: { id: newId, company_id: newId, role: 'admin', name: "Administrador", email: email } 
-    });
-  } catch (err) { 
-    console.error("Erro Cadastro:", err);
-    res.status(400).json({ ok: false, error: err.message || "Erro ao cadastrar." }); 
-  }
+    res.json({ ok: true, user: { id: newId, company_id: newId, role: 'admin', name: "Administrador", email: email } });
+  } catch (err) { res.status(400).json({ ok: false, error: err.message }); }
 });
 
 // =============================================================
-// 📝 PEDIDOS, PRODUTOS E PAGAMENTOS
+// 📤 ROTA DE UPLOAD DE LOGO (NOVA!)
+// =============================================================
+app.post("/api/upload-logo", upload.single('logo'), (req, res) => {
+    try {
+        if (!req.file) {
+            return res.status(400).json({ error: "Nenhuma imagem enviada." });
+        }
+        
+        console.log(`✅ Logo atualizada para empresa ${req.body.companyId}`);
+        // Redireciona de volta para a tela de configurações com sucesso
+        res.redirect('/configuracoes.html?msg=logo_ok');
+        
+    } catch (error) {
+        console.error(error);
+        res.status(500).send("Erro ao fazer upload da imagem.");
+    }
+});
+
+
+// =============================================================
+// 📝 PEDIDOS E PRODUTOS
 // =============================================================
 
-// --- PRODUTOS ---
 app.get("/api/products", async (req, res) => {
     try {
         const result = await db.execute({ sql: `SELECT * FROM products WHERE company_id = ?`, args: [req.query.company_id] });
@@ -198,20 +230,16 @@ app.delete("/api/products/:id", async (req, res) => {
     } catch (err) { res.status(500).json({ ok: false }); }
 });
 
-// ROTA PARA ATUALIZAR VISIBILIDADE DO PRODUTO (USADA PELO TOGGLE)
 app.put("/api/products/:id/visible", async (req, res) => {
     const { id } = req.params;
-    const { visible } = req.body; // Recebe 1 ou 0
+    const { visible } = req.body;
     try {
         await db.execute({
             sql: "UPDATE products SET visible = ? WHERE id = ?",
             args: [visible, id]
         });
         res.json({ ok: true });
-    } catch (err) {
-        console.error("Erro ao atualizar visibilidade:", err);
-        res.status(500).json({ ok: false, error: "Erro no banco de dados" });
-    }
+    } catch (err) { res.status(500).json({ ok: false }); }
 });
 
 // --- USUÁRIOS ---
@@ -249,85 +277,46 @@ app.get("/api/empresas", async (req, res) => {
       res.json({ ok: true, empresas: result.rows });
   } catch (err) { res.status(500).json({ ok: false }); }
 });
-// =============================================================
-// 🗑️ ROTA DE EXCLUIR EMPRESA 
-// =============================================================
+
 app.delete("/api/empresas/:id", async (req, res) => {
   const id = req.params.id;
-  console.log(`🗑️ Solicitando exclusão da empresa ID: ${id}`);
-  
   try {
-    // 1. Remove tudo que pertence à empresa (Cascata)
     await db.execute({ sql: "DELETE FROM users WHERE company_id = ?", args: [id] });
     await db.execute({ sql: "DELETE FROM products WHERE company_id = ?", args: [id] });
     await db.execute({ sql: "DELETE FROM orders WHERE company_id = ?", args: [id] });
-
-    // 2. Remove a empresa
     await db.execute({ sql: "DELETE FROM companies WHERE id = ?", args: [id] });
-
-    console.log(`✅ Empresa ${id} excluída com sucesso.`);
     res.json({ ok: true });
-
-  } catch (err) {
-    console.error("❌ Erro ao excluir empresa:", err);
-    res.status(500).json({ ok: false, error: "Erro ao excluir dados vinculados." });
-  }
+  } catch (err) { res.status(500).json({ ok: false }); }
 });
-// =============================================================
-// 📅 ROTAS DE GERENCIAMENTO (Adicionar Dias e Mudar Plano)
-// =============================================================
 
-// 1. Adicionar Dias Manualmente
+// --- ADICIONAR DIAS / PLANOS ---
 app.post("/api/empresas/:id/add-days", async (req, res) => {
   const { id } = req.params;
   const { dias } = req.body;
-
   try {
-    // Busca a data atual da empresa
     const result = await db.execute({ sql: "SELECT trial_expires_at FROM companies WHERE id = ?", args: [id] });
     const row = result.rows[0];
+    if (!row) return res.status(404).json({ ok: false });
 
-    if (!row) return res.status(404).json({ ok: false, error: "Empresa não encontrada" });
-
-    // Calcula a nova data
     const hoje = new Date();
-    // Se já venceu, começa de hoje. Se não, soma na data que já tem.
     let dataBase = (new Date(row.trial_expires_at) > hoje) ? new Date(row.trial_expires_at) : hoje;
-    
     dataBase.setDate(dataBase.getDate() + parseInt(dias));
 
-    // Atualiza no banco
-    await db.execute({
-        sql: "UPDATE companies SET trial_expires_at = ? WHERE id = ?",
-        args: [dataBase.toISOString(), id]
-    });
-
-    console.log(`✅ Adicionados ${dias} dias para a empresa ${id}`);
+    await db.execute({ sql: "UPDATE companies SET trial_expires_at = ? WHERE id = ?", args: [dataBase.toISOString(), id] });
     res.json({ ok: true });
-
-  } catch (err) {
-    console.error("Erro ao adicionar dias:", err);
-    res.status(500).json({ ok: false });
-  }
+  } catch (err) { res.status(500).json({ ok: false }); }
 });
 
-// 2. Alterar Plano Manualmente (Trial / Basic / Vitalicio)
 app.post("/api/empresas/:id/plano", async (req, res) => {
   const { id } = req.params;
-  const { plano } = req.body; // 'trial', 'basic', 'vitalicio'
-
+  const { plano } = req.body; 
   try {
-    await db.execute({
-        sql: "UPDATE companies SET plano = ? WHERE id = ?",
-        args: [plano, id]
-    });
-    console.log(`✅ Plano da empresa ${id} alterado para ${plano}`);
+    await db.execute({ sql: "UPDATE companies SET plano = ? WHERE id = ?", args: [plano, id] });
     res.json({ ok: true });
-  } catch (err) {
-    res.status(500).json({ ok: false });
-  }
+  } catch (err) { res.status(500).json({ ok: false }); }
 });
-// Rota buscar produtos para o menu do cliente//
+
+// --- MENU PÚBLICO (MODIFICADO PARA RETORNAR A LOGO PADRONIZADA NO JSON SE QUISER, MAS O HTML JA SE VIRA) ---
 app.get("/api/public/menu/:company_id", async (req, res) => {
     try {
         const company = await db.execute({ 
@@ -340,35 +329,23 @@ app.get("/api/public/menu/:company_id", async (req, res) => {
             args: [req.params.company_id] 
         });
 
+        // O front-end vai montar o link da imagem sozinho, não precisamos mandar URL aqui
         res.json({ 
             restaurant: company.rows[0]?.name, 
             menu: products.rows 
         });
-    } catch (err) {
-        res.status(500).json({ error: "Erro ao carregar cardápio" });
-    }
+    } catch (err) { res.status(500).json({ error: "Erro ao carregar cardápio" }); }
 });
-// =============================================================
-// 🔎 ROTA DE BUSCAR DETALHES DA EMPRESA (Para o Painel Admin)
-// =============================================================
+
 app.get("/api/companies/:id", async (req, res) => {
   try {
-      const result = await db.execute({ 
-          sql: "SELECT * FROM companies WHERE id = ?", 
-          args: [req.params.id] 
-      });
-      
+      const result = await db.execute({ sql: "SELECT * FROM companies WHERE id = ?", args: [req.params.id] });
       const company = result.rows[0];
-      
-      if (company) {
-          res.json({ ok: true, company });
-      } else {
-          res.status(404).json({ ok: false, error: "Empresa não encontrada" });
-      }
-  } catch (err) { 
-      res.status(500).json({ ok: false, error: "Erro ao buscar empresa" }); 
-  }
+      if (company) res.json({ ok: true, company });
+      else res.status(404).json({ ok: false });
+  } catch (err) { res.status(500).json({ ok: false }); }
 });
+
 // --- PEDIDOS ---
 app.post("/api/orders", async (req, res) => {
     const { company_id, items, total, table_name, notes } = req.body;
@@ -415,21 +392,14 @@ app.get("/api/orders/history", async (req, res) => {
     } catch (err) { res.status(500).json({ ok: false }); }
 });
 
-// --- PAGAMENTO PIX (COM DEVICE ID) ---
+// --- PIX / WEBHOOK ---
 app.post("/api/pay/create", async (req, res) => {
-    // Agora recebemos também o 'deviceId' do Front-end
     const { company_id, email, name, valor, dias, docNumber, deviceId } = req.body;
-    
     const notificationUrl = "https://sistemadigitalmenu.com.br/api/webhook";
 
     try {
         const payment = new Payment(client);
-        
         const nameParts = (name || "Cliente").split(" ");
-        const firstName = nameParts[0];
-        const lastName = nameParts.length > 1 ? nameParts[nameParts.length - 1] : "Empresa";
-
-        // Criação do objeto de pagamento
         const bodyPayment = {
             transaction_amount: Number(valor),
             description: `Assinatura Sistema - ${dias} Dias`,
@@ -437,45 +407,24 @@ app.post("/api/pay/create", async (req, res) => {
             notification_url: notificationUrl,
             payer: {
                 email: email,
-                first_name: firstName,
-                last_name: lastName,
+                first_name: nameParts[0],
+                last_name: nameParts.length > 1 ? nameParts[nameParts.length - 1] : "Empresa",
                 identification: { 
                     type: docNumber?.length > 11 ? 'CNPJ' : 'CPF', 
                     number: docNumber?.replace(/\D/g, '') || '00000000000' 
                 }
             },
             additional_info: {
-                items: [
-                    {
-                        id: `plan-${dias}`,
-                        title: `Plano ${dias} Dias`,
-                        description: "Acesso ao sistema de cardápio digital",
-                        picture_url: "https://sistemadigitalmenu.com.br/assets/logo.png",
-                        category_id: "services", 
-                        quantity: 1,
-                        unit_price: Number(valor)
-                    }
-                ],
-                // Envia o IP do cliente se possível (ajuda na pontuação)
                 ip_address: req.headers['x-forwarded-for'] || req.socket.remoteAddress
             },
             metadata: { company_id: Number(company_id), dias_adicionar: Number(dias) }
         };
-
-        // SE TIVER O DEVICE ID, ADICIONA NO METADATA (Ou onde a API V2 aceitar melhor, geralmente metadata segura bem)
-        if (deviceId) {
-            bodyPayment.metadata.device_id = deviceId;
-        }
+        if (deviceId) bodyPayment.metadata.device_id = deviceId;
 
         const result = await payment.create({ body: bodyPayment });
-
         const data = result.point_of_interaction.transaction_data;
         res.json({ ok: true, qr_code: data.qr_code, qr_code_base64: data.qr_code_base64, id: result.id });
-    
-    } catch (error) { 
-        console.error("Erro Mercado Pago:", error);
-        res.status(500).json({ ok: false, error: "Erro Mercado Pago" }); 
-    }
+    } catch (error) { res.status(500).json({ ok: false, error: "Erro Mercado Pago" }); }
 });
 
 app.post("/api/webhook", async (req, res) => {
@@ -488,12 +437,10 @@ app.post("/api/webhook", async (req, res) => {
                 const { company_id, dias_adicionar } = p.metadata;
                 const result = await db.execute({ sql: "SELECT trial_expires_at FROM companies WHERE id = ?", args: [company_id] });
                 const row = result.rows[0];
-
                 if (row) {
                     const hoje = new Date();
                     let novaData = (new Date(row.trial_expires_at) > hoje) ? new Date(row.trial_expires_at) : hoje;
                     novaData.setDate(novaData.getDate() + parseInt(dias_adicionar));
-                    
                     await db.execute({
                         sql: "UPDATE companies SET trial_expires_at = ?, plano = 'basic' WHERE id = ?",
                         args: [novaData.toISOString(), company_id]
@@ -505,39 +452,27 @@ app.post("/api/webhook", async (req, res) => {
     res.sendStatus(200);
 });
 
-// ROTA LEVE PARA O FRONTEND VERIFICAR SE O PAGAMENTO CAIU
 app.get("/api/companies/:id/status", async (req, res) => {
     try {
         const result = await db.execute({ 
             sql: "SELECT trial_expires_at, plano FROM companies WHERE id = ?", 
             args: [req.params.id] 
         });
-        
         const company = result.rows[0];
-        if (company) {
-            // Retorna a data de expiração para comparação
-            res.json({ ok: true, expires_at: company.trial_expires_at, plano: company.plano });
-        } else {
-            res.status(404).json({ ok: false });
-        }
-    } catch (err) {
-        res.status(500).json({ ok: false });
-    }
+        if (company) res.json({ ok: true, expires_at: company.trial_expires_at, plano: company.plano });
+        else res.status(404).json({ ok: false });
+    } catch (err) { res.status(500).json({ ok: false }); }
 });
 
 // =============================================================
-// 🚀 INICIALIZAÇÃO CORRETA DO SERVIDOR
+// 🚀 INICIALIZAÇÃO
 // =============================================================
-const publicPath = path.join(__dirname, "public");
-app.use(express.static(publicPath));
-
 const PORT = process.env.PORT || 3000;
 
-// SÓ LIGA O SERVIDOR DEPOIS QUE O BANCO ESTIVER PRONTO
 async function startServer() {
     await initDb();
     app.listen(PORT, "0.0.0.0", () => {
-        console.log(`🚀 Sistema rodando 100% pronto na porta ${PORT}`);
+        console.log(`🚀 Sistema rodando na porta ${PORT}`);
     });
 }
 
