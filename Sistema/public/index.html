@@ -106,14 +106,20 @@
 
 document.getElementById('inputPesquisa').addEventListener('input', function(e) {
     const termo = e.target.value.toLowerCase().trim();
-    const categorias = document.querySelectorAll('.category-section'); // Ajuste para a classe que engloba a categoria e os produtos
+    // No seu js/cardapio.js, a classe principal é 'category-block'
+    const categorias = document.querySelectorAll('.category-block'); 
 
     categorias.forEach(secao => {
         let temProdutoVisivel = false;
-        const produtos = secao.querySelectorAll('.product-card'); // Ajuste para a classe do seu card de produto
+        // No seu js/cardapio.js, os pratos são criados com a classe 'card'
+        const produtos = secao.querySelectorAll('.card'); 
 
         produtos.forEach(card => {
-            const nome = card.querySelector('h3').innerText.toLowerCase();
+            // O nome do produto está dentro de um <h4> conforme seu cardapio.js
+            const h4 = card.querySelector('h4');
+            if (!h4) return;
+            
+            const nome = h4.innerText.toLowerCase();
             
             if (nome.includes(termo)) {
                 card.style.display = 'block';
@@ -123,10 +129,10 @@ document.getElementById('inputPesquisa').addEventListener('input', function(e) {
             }
         });
 
-        // Esconde o título da categoria se não houver produtos visíveis nela
+        // Esconde o título da categoria inteira se não houver resultados nela
         secao.style.display = temProdutoVisivel ? 'block' : 'none';
     });
-});  
+});
 </script>
 
 <style>
@@ -203,6 +209,7 @@ document.getElementById('inputPesquisa').addEventListener('input', function(e) {
 </div>
 </body>
 </html>
+
 
 
 
