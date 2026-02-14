@@ -383,13 +383,14 @@ app.post("/api/orders", async (req, res) => {
     const agora = getHoraLocalISOString();
     try {
         await db.execute({
-            sql: `INSERT INTO orders (company_id, items, total, table_name, notes, created_at, status_updated_at) VALUES (?,?,?,?,?,?,?)`,
+            // INSERE JÁ COM OS STATUS INDEPENDENTES COMO 'NOVO'
+            sql: `INSERT INTO orders (company_id, items, total, table_name, notes, created_at, status_updated_at, status_cozinha, status_bar) VALUES (?,?,?,?,?,?,?, 'novo', 'novo')`,
             args: [Number(company_id), JSON.stringify(items), total, table_name, notes, agora, agora]
         });
         res.json({ ok: true });
-    } catch (err) { res.status(500).json({ ok: false }); }
+    } catch (err) { console.error(err); res.status(500).json({ ok: false }); }
 });
-  
+
 app.get("/api/orders", async (req, res) => {
     let sql = `SELECT * FROM orders WHERE company_id = ?`;
     const args = [req.query.company_id];
