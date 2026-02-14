@@ -57,19 +57,14 @@
   </div>
 </main>
 
-<script>
-// ============================================================
-// LÓGICA DA COZINHA (SOMENTE NOVO E PREPARANDO)
-// ============================================================
+  <script>
 const ordersDiv = document.getElementById("orders");
 const user = JSON.parse(localStorage.getItem("user"));
 
-// Inicia o loop de atualização (5 segundos)
 setInterval(loadOrders, 5000);
-loadOrders(); // Chama a primeira vez imediatamente
+loadOrders();
 
 async function loadOrders() {
-    // Segurança: se não tiver usuário logado, não faz nada
     if (!user || !user.company_id) return;
 
     try {
@@ -78,33 +73,32 @@ async function loadOrders() {
         
         if (!data.ok) return;
 
-        // --- FILTRO PRINCIPAL ---
-        // Só mostra na tela se o status for 'novo' ou 'preparando'.
-        // Pedidos com status 'pronto', 'entregue', 'finalizado' ou 'cancelado' NÃO aparecem.
-        const activeOrders = data.pedidos.filter(p => 
-            p.status === 'novo' || p.status === 'preparando'
-        );
+        // FILTRO DA COZINHA: 
+        // 1. Olha a coluna 'status_cozinha'
+        // 2. Se for pedido antigo (sem coluna), assume 'novo'
+        const activeOrders = data.pedidos.filter(p => {
+            const statusK = p.status_cozinha || 'novo'; 
+            return statusK === 'novo' || statusK === 'preparando';
+        });
 
         if(activeOrders.length === 0) {
-            ordersDiv.innerHTML = '<p style="text-align:center; margin-top: 50px; color: #adb5bd;">Tudo limpo! Sem pedidos pendentes.</p>';
+            ordersDiv.innerHTML = '<p style="text-align:center; margin-top: 50px; color: #adb5bd;">Cozinha livre!</p>';
             return;
         }
 
-        ordersDiv.innerHTML = ""; // Limpa a tela antes de desenhar
+        ordersDiv.innerHTML = "";
 
         activeOrders.forEach(order => {
-            // --- FILTRO DE ITEM (COZINHA) ---
-            // Mostra itens que NÃO são do bar.
+            // Filtra itens que NÃO são Bar
             const itemsToShow = order.items.filter(item => item.destination !== 'bar');
-
-            // Se o pedido só tem bebida, não mostra o card na cozinha
             if (itemsToShow.length === 0) return; 
+
+            // Status Específico da Cozinha
+            const currentStatus = order.status_cozinha || 'novo';
 
             const card = document.createElement("div");
             card.className = "order-card";
-            
-            // Cor da borda: Laranja (Novo) ou Verde (Preparando)
-            const statusColor = order.status === 'novo' ? '#e8590c' : '#51cf66';
+            const statusColor = currentStatus === 'novo' ? '#e8590c' : '#51cf66';
             card.style.borderLeft = `5px solid ${statusColor}`;
 
             let itemsHtml = itemsToShow.map(item => `
@@ -114,62 +108,46 @@ async function loadOrders() {
                 </div>
             `).join("");
 
-            // Definição do Botão
             let btnHtml = "";
-            if (order.status === 'novo') {
-                btnHtml = `<button class="btn-action btn-accept" onclick="updateStatus(${order.id}, 'preparando')">🔥 Aceitar e Preparar</button>`;
-            } else if (order.status === 'preparando') {
-                // Ao clicar aqui, muda status para 'pronto' e o pedido SOME da tela no próximo loadOrders()
-                btnHtml = `<button class="btn-action btn-ready" onclick="updateStatus(${order.id}, 'pronto')">✅ Pronto (Liberar)</button>`;
+            if (currentStatus === 'novo' || !currentStatus) {
+                // Manda atualizar SÓ a cozinha
+                btnHtml = `<button class="btn-action btn-accept" onclick="updateSector(${order.id}, 'cozinha', 'preparando')">🔥 Aceitar</button>`;
+            } else if (currentStatus === 'preparando') {
+                btnHtml = `<button class="btn-action btn-ready" onclick="updateSector(${order.id}, 'cozinha', 'pronto')">✅ Pronto</button>`;
             }
 
             card.innerHTML = `
                 <div class="order-header">
-                    <span style="font-size:1.1rem;">${order.table_name || 'Balcão'}</span>
+                    <span>${order.table_name || 'Balcão'}</span>
                     <span>#${order.id}</span>
                 </div>
                 <div style="margin-bottom:10px; font-size:0.8rem; color:#888;">⏰ ${new Date(order.created_at).toLocaleTimeString().substring(0,5)}</div>
                 ${itemsHtml}
-                ${order.notes ? `<div style="background:#333; padding:5px; margin-top:5px; border-radius:4px; color:#fcc419;">📝 Nota Geral: ${order.notes}</div>` : ''}
+                ${order.notes ? `<div style="background:#333; padding:5px; margin-top:5px; border-radius:4px; color:#fcc419;">📝 ${order.notes}</div>` : ''}
                 ${btnHtml}
             `;
-            
             ordersDiv.appendChild(card);
         });
 
-    } catch (err) {
-        console.error("Erro de conexão:", err);
-    }
+    } catch (err) { console.error(err); }
 }
 
-async function updateStatus(id, status) {
-    if(!confirm("Confirmar mudança de status?")) return;
-    
+async function updateSector(id, sector, status) {
+    if(!confirm("Mudar status?")) return;
     try {
-        await fetch(`/api/orders/${id}/status`, {
+        // CHAMA A NOVA ROTA ESPECÍFICA DE SETOR
+        await fetch(`/api/orders/${id}/status-sector`, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ status })
+            body: JSON.stringify({ sector, status })
         });
-        
-        // Recarrega a lista imediatamente para o usuário ver o efeito (o pedido sumir)
-        loadOrders(); 
-    } catch (e) { 
-        alert("Erro ao atualizar status. Verifique sua conexão."); 
-    }
+        loadOrders();
+    } catch (e) { alert("Erro ao atualizar."); }
 }
 
-// Menu Toggle
-function toggleMenu() {
-    const menu = document.getElementById("menuDropdown");
-    if(menu) menu.classList.toggle("show");
-}
-document.addEventListener("click", e => {
-    const menu = document.getElementById("menuDropdown");
-    if (menu && !e.target.closest(".menu-wrapper")) {
-        menu.classList.remove("show");
-    }
-});
+function toggleMenu() { document.getElementById("menuDropdown").classList.toggle("show"); }
+document.addEventListener("click", e => { if (!e.target.closest(".menu-wrapper")) document.getElementById("menuDropdown").classList.remove("show"); });
 </script>
+
 </body>
 </html>
