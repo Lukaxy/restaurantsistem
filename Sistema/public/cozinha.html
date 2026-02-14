@@ -58,75 +58,79 @@
 </main>
 
 <script>
-// === LÓGICA INTERNA DA COZINHA (FILTRO APLICADO) ===
-const user = JSON.parse(localStorage.getItem("user"));
+// ============================================================
+// LÓGICA DA COZINHA (SOMENTE NOVO E PREPARANDO)
+// ============================================================
 const ordersDiv = document.getElementById("orders");
+const user = JSON.parse(localStorage.getItem("user"));
+
+// Inicia o loop de atualização (5 segundos)
+setInterval(loadOrders, 5000);
+loadOrders(); // Chama a primeira vez imediatamente
 
 async function loadOrders() {
+    // Segurança: se não tiver usuário logado, não faz nada
+    if (!user || !user.company_id) return;
+
     try {
-        // Busca todos os pedidos
         const res = await fetch(`/api/orders?company_id=${user.company_id}`);
         const data = await res.json();
         
         if (!data.ok) return;
 
-        // Filtra pedidos que não estão finalizados
+        // --- FILTRO PRINCIPAL ---
+        // Só mostra na tela se o status for 'novo' ou 'preparando'.
+        // Pedidos com status 'pronto', 'entregue', 'finalizado' ou 'cancelado' NÃO aparecem.
         const activeOrders = data.pedidos.filter(p => 
-            p.status !== 'finalizado' && 
-            p.status !== 'entregue' && 
-            p.status !== 'cancelado'
+            p.status === 'novo' || p.status === 'preparando'
         );
 
         if(activeOrders.length === 0) {
-            ordersDiv.innerHTML = '<p style="text-align:center; margin-top: 20px; color: #adb5bd;">Sem pedidos pendentes.</p>';
+            ordersDiv.innerHTML = '<p style="text-align:center; margin-top: 50px; color: #adb5bd;">Tudo limpo! Sem pedidos pendentes.</p>';
             return;
         }
 
-        ordersDiv.innerHTML = ""; // Limpa a tela
+        ordersDiv.innerHTML = ""; // Limpa a tela antes de desenhar
 
         activeOrders.forEach(order => {
-            // ============================================================
-            // 🛑 O FILTRO MÁGICO ACONTECE AQUI
-            // Mostra itens que são 'cozinha' OU que não tem destino definido
-            // ============================================================
+            // --- FILTRO DE ITEM (COZINHA) ---
+            // Mostra itens que NÃO são do bar.
             const itemsToShow = order.items.filter(item => item.destination !== 'bar');
 
-            // Se depois de filtrar não sobrou nada (ex: era só cerveja), não mostra o card
+            // Se o pedido só tem bebida, não mostra o card na cozinha
             if (itemsToShow.length === 0) return; 
 
-            // Cria o Card do Pedido
             const card = document.createElement("div");
             card.className = "order-card";
             
-            // Define cor da borda baseada no status
+            // Cor da borda: Laranja (Novo) ou Verde (Preparando)
             const statusColor = order.status === 'novo' ? '#e8590c' : '#51cf66';
             card.style.borderLeft = `5px solid ${statusColor}`;
 
             let itemsHtml = itemsToShow.map(item => `
                 <div class="order-item">
-                    1x ${item.name}
+                    <span style="font-weight:bold;">1x</span> ${item.name}
                     ${item.notes ? `<div class="order-obs">⚠️ ${item.notes}</div>` : ''}
                 </div>
             `).join("");
 
-            // Botão muda dependendo do status
+            // Definição do Botão
             let btnHtml = "";
             if (order.status === 'novo') {
-                btnHtml = `<button class="btn-action btn-accept" onclick="updateStatus(${order.id}, 'preparando')">🔥 Aceitar Pedido</button>`;
+                btnHtml = `<button class="btn-action btn-accept" onclick="updateStatus(${order.id}, 'preparando')">🔥 Aceitar e Preparar</button>`;
             } else if (order.status === 'preparando') {
-                btnHtml = `<button class="btn-action btn-ready" onclick="updateStatus(${order.id}, 'pronto')">✅ Pronto / Entregar</button>`;
-            } else {
-                btnHtml = `<button class="btn-action" style="background:#444;">Aguardando Entrega</button>`;
+                // Ao clicar aqui, muda status para 'pronto' e o pedido SOME da tela no próximo loadOrders()
+                btnHtml = `<button class="btn-action btn-ready" onclick="updateStatus(${order.id}, 'pronto')">✅ Pronto (Liberar)</button>`;
             }
 
             card.innerHTML = `
                 <div class="order-header">
-                    <span>${order.table_name || 'Balcão'}</span>
+                    <span style="font-size:1.1rem;">${order.table_name || 'Balcão'}</span>
                     <span>#${order.id}</span>
                 </div>
-                <div style="margin-bottom:10px; font-size:0.9rem; color:#888;">${new Date(order.created_at).toLocaleTimeString().substring(0,5)}</div>
+                <div style="margin-bottom:10px; font-size:0.8rem; color:#888;">⏰ ${new Date(order.created_at).toLocaleTimeString().substring(0,5)}</div>
                 ${itemsHtml}
-                ${order.notes ? `<div style="background:#333; padding:5px; margin-top:5px; border-radius:4px; color:#fcc419;">📝 Nota: ${order.notes}</div>` : ''}
+                ${order.notes ? `<div style="background:#333; padding:5px; margin-top:5px; border-radius:4px; color:#fcc419;">📝 Nota Geral: ${order.notes}</div>` : ''}
                 ${btnHtml}
             `;
             
@@ -134,35 +138,38 @@ async function loadOrders() {
         });
 
     } catch (err) {
-        console.error("Erro ao carregar pedidos", err);
+        console.error("Erro de conexão:", err);
     }
 }
 
 async function updateStatus(id, status) {
-    if(!confirm(`Mudar status para ${status.toUpperCase()}?`)) return;
+    if(!confirm("Confirmar mudança de status?")) return;
     
-    await fetch(`/api/orders/${id}/status`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ status })
-    });
-    loadOrders(); // Recarrega a tela
+    try {
+        await fetch(`/api/orders/${id}/status`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ status })
+        });
+        
+        // Recarrega a lista imediatamente para o usuário ver o efeito (o pedido sumir)
+        loadOrders(); 
+    } catch (e) { 
+        alert("Erro ao atualizar status. Verifique sua conexão."); 
+    }
 }
-
-// Atualiza a cada 5 segundos
-setInterval(loadOrders, 5000);
-loadOrders();
 
 // Menu Toggle
 function toggleMenu() {
-  document.getElementById("menuDropdown").classList.toggle("show");
+    const menu = document.getElementById("menuDropdown");
+    if(menu) menu.classList.toggle("show");
 }
 document.addEventListener("click", e => {
-  if (!e.target.closest(".menu-wrapper")) {
-    document.getElementById("menuDropdown").classList.remove("show");
-  }
+    const menu = document.getElementById("menuDropdown");
+    if (menu && !e.target.closest(".menu-wrapper")) {
+        menu.classList.remove("show");
+    }
 });
 </script>
-
 </body>
 </html>
