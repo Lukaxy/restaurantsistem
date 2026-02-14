@@ -1,51 +1,47 @@
 // ==================== UTILITÁRIOS: NOTIFICAÇÕES (TOAST) ====================
-function showToast(mensagem, tipo = 'sucesso') {
-    let container = document.getElementById('toast-container');
-    if (!container) {
-        container = document.createElement('div');
-        container.id = 'toast-container';
-        container.style.cssText = "position:fixed; top:20px; right:20px; z-index:10000;";
-        document.body.appendChild(container);
+// Verifica se a função já existe no HTML para não duplicar, se não, cria.
+if (typeof window.showToast !== 'function') {
+    window.showToast = function(mensagem, tipo = 'sucesso') {
+        let container = document.getElementById('toast-container');
+        if (!container) {
+            container = document.createElement('div');
+            container.id = 'toast-container';
+            container.style.cssText = "position:fixed; top:20px; right:20px; z-index:10000;";
+            document.body.appendChild(container);
+        }
+
+        const toast = document.createElement('div');
+        toast.style.cssText = `
+            background: #1a1a1a; 
+            color: white; 
+            padding: 15px 25px; 
+            border-radius: 10px; 
+            border-left: 4px solid ${tipo === 'sucesso' ? '#51cf66' : '#ff6b6b'};
+            box-shadow: 0 10px 30px rgba(0,0,0,0.5);
+            margin-bottom: 10px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            font-family: 'Poppins', sans-serif;
+            animation: slideIn 0.5s ease forwards;
+        `;
+
+        toast.innerHTML = `<span>${tipo === 'sucesso' ? '✅' : '❌'}</span> <span>${mensagem}</span>`;
+        container.appendChild(toast);
+
+        setTimeout(() => {
+            toast.style.animation = "fadeOut 0.5s ease forwards";
+            setTimeout(() => toast.remove(), 500);
+        }, 3000);
     }
-
-    const toast = document.createElement('div');
-    toast.style.cssText = `
-        background: #1a1a1a; 
-        color: white; 
-        padding: 15px 25px; 
-        border-radius: 10px; 
-        border-left: 4px solid ${tipo === 'sucesso' ? '#51cf66' : '#ff6b6b'};
-        box-shadow: 0 10px 30px rgba(0,0,0,0.5);
-        margin-bottom: 10px;
-        display: flex;
-        align-items: center;
-        gap: 10px;
-        font-family: 'Poppins', sans-serif;
-        animation: slideIn 0.5s ease forwards;
-    `;
-
-    toast.innerHTML = `<span>${tipo === 'sucesso' ? '✅' : '❌'}</span> <span>${mensagem}</span>`;
-    container.appendChild(toast);
-
-    setTimeout(() => {
-        toast.style.animation = "fadeOut 0.5s ease forwards";
-        setTimeout(() => toast.remove(), 500);
-    }, 3000);
 }
-
-const style = document.createElement('style');
-style.innerHTML = `
-    @keyframes slideIn { from { transform: translateX(100%); opacity: 0; } to { transform: translateX(0); opacity: 1; } }
-    @keyframes fadeOut { from { opacity: 1; } to { opacity: 0; transform: translateY(-20px); } }
-`;
-document.head.appendChild(style);
 
 // ==================== VARIÁVEIS GLOBAIS ====================
 let user = null;
 let idParaExcluir = null; 
 const list = document.getElementById('productList');
 
-// ==================== CARREGAR PRODUTOS (COM TOGGLE) ====================
+// ==================== CARREGAR PRODUTOS ====================
 async function carregarProdutos() {
     if (!user || !user.company_id) {
         if (list) list.innerHTML = '<p style="color:var(--color-red);">Erro: Empresa não identificada.</p>';
@@ -57,40 +53,53 @@ async function carregarProdutos() {
         const produtos = await res.json();
 
         if (!Array.isArray(produtos) || produtos.length === 0) {
-            list.innerHTML = '<p style="color:var(--text-secondary); text-align:center;">Nenhum produto cadastrado.</p>';
+            if (list) list.innerHTML = '<p style="color:var(--text-secondary); text-align:center;">Nenhum produto cadastrado.</p>';
             return;
         }
 
-        list.innerHTML = produtos.map(p => `
-            <div style="display: flex; justify-content: space-between; align-items: center; padding: 15px; border-bottom: 1px solid var(--border-color); gap: 10px;">
-                <div style="flex: 1;">
-                    <div style="display: flex; align-items: center; gap: 8px; flex-wrap: wrap;">
-                        <strong style="color: var(--text-primary); font-size: 1.1rem;">${p.name}</strong>
-                        <span style="background: var(--bg-main); color: var(--color-amber); padding: 2px 8px; border-radius: 4px; font-size: 0.75rem; font-weight: bold;">
-                            ${p.category || 'Geral'}
-                        </span>
-                    </div>
-                    <div style="color: var(--color-green); font-weight: bold; margin-top: 4px;">
-                        R$ ${Number(p.price).toFixed(2).replace('.', ',')}
-                    </div>
-                    ${p.description ? `<div style="color: var(--text-secondary); font-size: 0.85rem; margin-top: 4px;">${p.description}</div>` : ''}
-                </div>
+        if (list) {
+            list.innerHTML = produtos.map(p => {
+                // Define a etiqueta (Cozinha ou Bar)
+                // Se não tiver destino definido, assume Cozinha
+                let badge = '';
+                if (p.destination === 'bar') {
+                    badge = '<span style="background: #d63384; color: white; padding: 2px 6px; border-radius: 4px; font-size: 0.7rem; margin-left: 5px;">🍸 BAR</span>';
+                } else {
+                    badge = '<span style="background: #e8590c; color: white; padding: 2px 6px; border-radius: 4px; font-size: 0.7rem; margin-left: 5px;">🍳 COZINHA</span>';
+                }
 
-                <div style="display: flex; align-items: center; gap: 15px;">
-                    <div style="text-align: center;">
-                        <div style="font-size: 0.65rem; color: var(--text-secondary); margin-bottom: 4px;">No Menu</div>
-                        <label class="switch">
-                            <input type="checkbox" ${p.visible === 1 ? 'checked' : ''} onchange="alterarVisibilidade(${p.id}, this.checked)">
-                            <span class="slider"></span>
-                        </label>
+                return `
+                <div style="display: flex; justify-content: space-between; align-items: center; padding: 15px; border-bottom: 1px solid var(--border-color); gap: 10px; opacity: ${p.visible === 0 ? '0.5' : '1'};">
+                    <div style="flex: 1;">
+                        <div style="display: flex; align-items: center; gap: 8px; flex-wrap: wrap;">
+                            <strong style="color: var(--text-primary); font-size: 1.1rem;">${p.name}</strong>
+                            ${badge}
+                            <span style="background: var(--bg-main); color: var(--color-amber); padding: 2px 8px; border-radius: 4px; font-size: 0.75rem; font-weight: bold;">
+                                ${p.category || 'Geral'}
+                            </span>
+                        </div>
+                        <div style="color: var(--color-green); font-weight: bold; margin-top: 4px;">
+                            R$ ${Number(p.price).toFixed(2).replace('.', ',')}
+                        </div>
+                        ${p.description ? `<div style="color: var(--text-secondary); font-size: 0.85rem; margin-top: 4px;">${p.description}</div>` : ''}
                     </div>
 
-                    <button class="btn cancel" onclick="prepararExclusao(${p.id})" style="padding: 8px 12px; font-size: 1rem; background: transparent;">
-                        🗑️
-                    </button>
+                    <div style="display: flex; align-items: center; gap: 15px;">
+                        <div style="text-align: center;">
+                            <div style="font-size: 0.65rem; color: var(--text-secondary); margin-bottom: 4px;">Visível</div>
+                            <label class="switch">
+                                <input type="checkbox" ${p.visible !== 0 ? 'checked' : ''} onchange="alterarVisibilidade(${p.id}, this.checked)">
+                                <span class="slider"></span>
+                            </label>
+                        </div>
+
+                        <button class="btn cancel" onclick="prepararExclusao(${p.id})" style="padding: 8px 12px; font-size: 1rem; background: transparent; cursor: pointer;">
+                            🗑️
+                        </button>
+                    </div>
                 </div>
-            </div>
-        `).join('');
+            `}).join('');
+        }
 
     } catch (err) {
         console.error('Erro ao carregar produtos:', err);
@@ -98,7 +107,7 @@ async function carregarProdutos() {
     }
 }
 
-// ==================== ALTERAR VISIBILIDADE (PASSO 4) ====================
+// ==================== ALTERAR VISIBILIDADE ====================
 window.alterarVisibilidade = async function(id, checked) {
     try {
         const response = await fetch(`/api/products/${id}/visible`, {
@@ -109,112 +118,102 @@ window.alterarVisibilidade = async function(id, checked) {
 
         if (response.ok) {
             showToast(checked ? 'Visível no cardápio! 👁️' : 'Oculto do cardápio! 🙈');
+            // Opcional: recarregar a lista para aplicar a opacidade
+            carregarProdutos();
         } else {
             throw new Error();
         }
     } catch (err) {
         showToast('Erro ao atualizar visibilidade.', 'erro');
-        carregarProdutos(); // Recarrega para voltar o toggle ao estado real se falhar
+        carregarProdutos(); 
     }
 }
 
-// ==================== ADICIONAR PRODUTO ====================
+// ==================== ADICIONAR PRODUTO (CORRIGIDO) ====================
 window.addProduct = async function() {
-    // 1. PEGA OS VALORES DOS CAMPOS (INCLUINDO O NOVO 'DESTINO')
+    // 1. PEGA OS VALORES
     const name = document.getElementById('newName').value.trim();
     const price = parseFloat(document.getElementById('newPrice').value.trim());
     const category = document.getElementById('newCategory').value.trim();
     const description = document.getElementById('newDescription').value.trim();
     
-    // Tenta pegar o destino. Se o elemento não existir no HTML, define padrão 'cozinha' para não dar erro
+    // Tenta pegar o destino (Bar ou Cozinha)
     const destInput = document.getElementById('newDestination');
     const destination = destInput ? destInput.value : 'cozinha';
 
-    // 2. VALIDAÇÃO BÁSICA
+    // 2. VALIDAÇÃO
     if (!name || isNaN(price)) {
         showToast('Preencha nome e preço corretamente.', 'erro');
         return;
     }
 
-    // 3. EFEITO VISUAL NO BOTÃO
-    const btn = event.target; // Pega o botão que foi clicado
-    const originalText = btn.innerText;
-    btn.innerText = "Salvando...";
-    btn.disabled = true;
+    // 3. BLOQUEIA BOTÃO
+    const btn = event.target || document.querySelector('button[onclick="addProduct()"]');
+    const originalText = btn ? btn.innerText : "Salvar";
+    if(btn) {
+        btn.innerText = "Salvando...";
+        btn.disabled = true;
+    }
 
     try {
-        // 4. ENVIA PARA O SERVIDOR
+        // 4. ENVIA
         const res = await fetch('/api/products', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({
-                company_id: user.company_id, // Certifique-se que 'user' está definido globalmente
+                company_id: user.company_id,
                 name,
                 price,
                 category,
                 description,
-                destination // <--- AQUI ESTÁ A NOVIDADE
+                destination // Envia o destino
             })
         });
+
+        const data = await res.json();
 
         if (res.ok) {
             showToast("Produto salvo com sucesso!");
             
-            // 5. LIMPA OS CAMPOS PARA O PRÓXIMO CADASTRO
+            // 5. LIMPA CAMPOS
             document.getElementById('newName').value = "";
             document.getElementById('newPrice').value = "";
             document.getElementById('newCategory').value = "";
             document.getElementById('newDescription').value = "";
-            if(destInput) destInput.value = "cozinha"; // Reseta o select
+            if(destInput) destInput.value = "cozinha";
 
-            // Atualiza a lista na tela (assumindo que você tem essa função)
-            if (typeof loadProducts === 'function') {
-                loadProducts();
-            }
+            // 6. ATUALIZA A LISTA
+            carregarProdutos();
         } else {
-            showToast("Erro ao salvar produto.", "erro");
+            showToast("Erro ao salvar: " + (data.error || "Desconhecido"), "erro");
         }
 
     } catch (err) {
         console.error(err);
         showToast("Erro de conexão.", "erro");
     } finally {
-        // Restaura o botão
-        btn.innerText = originalText;
-        btn.disabled = false;
+        // 7. LIBERA BOTÃO
+        if(btn) {
+            btn.innerText = originalText;
+            btn.disabled = false;
+        }
     }
 };
-        const data = await res.json();
-        if (!data.ok) throw new Error(data.error || 'Erro ao adicionar produto.');
 
-        document.getElementById('newName').value = '';
-        document.getElementById('newPrice').value = '';
-        document.getElementById('newCategory').value = '';
-        document.getElementById('newDescription').value = '';
-
-        await carregarProdutos();
-        showToast('Produto cadastrado com sucesso! 🚀');
-
-    } catch (err) {
-        console.error(err);
-        showToast('Erro: ' + err.message, 'erro');
-    } finally {
-        btn.innerText = originalText;
-        btn.disabled = false;
-    }
-}
-
-// ==================== LOGICA DO MODAL DE EXCLUSÃO ====================
+// ==================== MODAL DE EXCLUSÃO ====================
 window.prepararExclusao = function(id) {
     idParaExcluir = id;
-    document.getElementById('confirmModal').style.display = 'flex';
+    const modal = document.getElementById('confirmModal');
+    if(modal) modal.style.display = 'flex';
 }
 
 window.fecharConfirm = function() {
-    document.getElementById('confirmModal').style.display = 'none';
+    const modal = document.getElementById('confirmModal');
+    if(modal) modal.style.display = 'none';
     idParaExcluir = null;
 }
 
+// Configura o botão de confirmar exclusão ao carregar
 document.addEventListener('DOMContentLoaded', () => {
     const confirmBtn = document.getElementById('confirmBtn');
     if (confirmBtn) {
@@ -223,7 +222,9 @@ document.addEventListener('DOMContentLoaded', () => {
             try {
                 const res = await fetch(`/api/products/${idParaExcluir}`, { method: 'DELETE' });
                 const data = await res.json();
-                if (!data.ok) throw new Error(data.error || 'Erro ao excluir produto.');
+                
+                if (!data.ok) throw new Error(data.error || 'Erro ao excluir.');
+                
                 fecharConfirm();
                 await carregarProdutos();
                 showToast('Produto removido! 🗑️');
@@ -234,14 +235,19 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 });
 
-// ==================== INICIALIZAÇÃO ====================
+// ==================== INICIALIZAÇÃO GERAL ====================
 document.addEventListener('DOMContentLoaded', () => {
     try {
         const userData = localStorage.getItem("user");
         if (!userData) {
-            window.location.replace("login.html");
+            // Se não estiver logado na página de config, manda pro login
+            // (A menos que seja a primeira renderização)
+            if(!window.location.href.includes('login.html')) {
+                window.location.replace("index.html");
+            }
             return;
         }
+        
         user = JSON.parse(userData);
         
         if (user.role !== "admin") {
@@ -249,10 +255,11 @@ document.addEventListener('DOMContentLoaded', () => {
             setTimeout(() => window.location.replace("index.html"), 2000);
             return;
         }
-    } catch (e) {
-        window.location.replace("index.html");
-        return;
-    }
 
-    carregarProdutos();
+        // Se passou em tudo, carrega a lista
+        carregarProdutos();
+
+    } catch (e) {
+        console.error(e);
+    }
 });
