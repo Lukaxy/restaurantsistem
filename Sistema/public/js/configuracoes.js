@@ -120,34 +120,70 @@ window.alterarVisibilidade = async function(id, checked) {
 
 // ==================== ADICIONAR PRODUTO ====================
 window.addProduct = async function() {
+    // 1. PEGA OS VALORES DOS CAMPOS (INCLUINDO O NOVO 'DESTINO')
     const name = document.getElementById('newName').value.trim();
     const price = parseFloat(document.getElementById('newPrice').value.trim());
     const category = document.getElementById('newCategory').value.trim();
     const description = document.getElementById('newDescription').value.trim();
+    
+    // Tenta pegar o destino. Se o elemento não existir no HTML, define padrão 'cozinha' para não dar erro
+    const destInput = document.getElementById('newDestination');
+    const destination = destInput ? destInput.value : 'cozinha';
 
+    // 2. VALIDAÇÃO BÁSICA
     if (!name || isNaN(price)) {
         showToast('Preencha nome e preço corretamente.', 'erro');
         return;
     }
 
-    const btn = event.target;
+    // 3. EFEITO VISUAL NO BOTÃO
+    const btn = event.target; // Pega o botão que foi clicado
     const originalText = btn.innerText;
     btn.innerText = "Salvando...";
     btn.disabled = true;
 
     try {
+        // 4. ENVIA PARA O SERVIDOR
         const res = await fetch('/api/products', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({
-                company_id: user.company_id,
+                company_id: user.company_id, // Certifique-se que 'user' está definido globalmente
                 name,
                 price,
                 category,
-                description
+                description,
+                destination // <--- AQUI ESTÁ A NOVIDADE
             })
         });
 
+        if (res.ok) {
+            showToast("Produto salvo com sucesso!");
+            
+            // 5. LIMPA OS CAMPOS PARA O PRÓXIMO CADASTRO
+            document.getElementById('newName').value = "";
+            document.getElementById('newPrice').value = "";
+            document.getElementById('newCategory').value = "";
+            document.getElementById('newDescription').value = "";
+            if(destInput) destInput.value = "cozinha"; // Reseta o select
+
+            // Atualiza a lista na tela (assumindo que você tem essa função)
+            if (typeof loadProducts === 'function') {
+                loadProducts();
+            }
+        } else {
+            showToast("Erro ao salvar produto.", "erro");
+        }
+
+    } catch (err) {
+        console.error(err);
+        showToast("Erro de conexão.", "erro");
+    } finally {
+        // Restaura o botão
+        btn.innerText = originalText;
+        btn.disabled = false;
+    }
+};
         const data = await res.json();
         if (!data.ok) throw new Error(data.error || 'Erro ao adicionar produto.');
 
