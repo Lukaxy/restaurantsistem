@@ -55,65 +55,79 @@
 </main>
 
 <script>
-// === LÓGICA INTERNA DO BAR (FILTRO APLICADO) ===
+// ============================================================
+// LÓGICA DO BAR (SOMENTE NOVO E PREPARANDO)
+// ============================================================
 const user = JSON.parse(localStorage.getItem("user"));
 const ordersDiv = document.getElementById("orders");
 
+// Loop de atualização (5 segundos)
+setInterval(loadOrders, 5000);
+loadOrders();
+
 async function loadOrders() {
+    if (!user || !user.company_id) return;
+
     try {
         const res = await fetch(`/api/orders?company_id=${user.company_id}`);
         const data = await res.json();
         
         if (!data.ok) return;
 
-        const activeOrders = data.pedidos.filter(p => p.status !== 'finalizado' && p.status !== 'entregue' && p.status !== 'cancelado');
+        // 1. FILTRO PRINCIPAL:
+        // Só mostra se for NOVO ou PREPARANDO. 
+        // Se for 'pronto', 'entregue' ou qualquer outra coisa, NÃO MOSTRA.
+        const activeOrders = data.pedidos.filter(p => 
+            p.status === 'novo' || p.status === 'preparando'
+        );
 
         if(activeOrders.length === 0) {
-            ordersDiv.innerHTML = '<p style="text-align:center; margin-top: 20px; color: #adb5bd;">Sem pedidos de bebidas.</p>';
+            ordersDiv.innerHTML = '<p style="text-align:center; margin-top: 50px; color: #adb5bd;">Sem bebidas pendentes.</p>';
             return;
         }
 
-        ordersDiv.innerHTML = "";
+        ordersDiv.innerHTML = ""; // Limpa a tela
 
         activeOrders.forEach(order => {
-            // ============================================================
-            // 🛑 O FILTRO MÁGICO DO BAR
-            // Mostra APENAS itens que têm destination == 'bar'
-            // ============================================================
+            // 2. FILTRO DE ITEM:
+            // Só mostra itens marcados para o BAR
             const itemsToShow = order.items.filter(item => item.destination === 'bar');
 
-            if (itemsToShow.length === 0) return; // Se só tem comida, não mostra pro barman
+            if (itemsToShow.length === 0) return; // Se for só comida, pula
 
             const card = document.createElement("div");
             card.className = "order-card";
+            
+            // Cores: Rosa (Novo) ou Verde (Preparando)
             const statusColor = order.status === 'novo' ? '#d63384' : '#51cf66';
             card.style.borderLeft = `5px solid ${statusColor}`;
 
             let itemsHtml = itemsToShow.map(item => `
                 <div class="order-item">
-                    1x ${item.name}
+                    <span style="font-weight:bold;">1x</span> ${item.name}
                     ${item.notes ? `<div class="order-obs">⚠️ ${item.notes}</div>` : ''}
                 </div>
             `).join("");
 
+            // Botões (Sem o botão cinza "Aguardando")
             let btnHtml = "";
             if (order.status === 'novo') {
                 btnHtml = `<button class="btn-action btn-accept" onclick="updateStatus(${order.id}, 'preparando')">🍸 Preparar Bebidas</button>`;
             } else if (order.status === 'preparando') {
+                // Ao clicar aqui, o status vira 'pronto' e ele vai SUMIR da lista
                 btnHtml = `<button class="btn-action btn-ready" onclick="updateStatus(${order.id}, 'pronto')">✅ Bebidas Prontas</button>`;
-            } else {
-                btnHtml = `<button class="btn-action" style="background:#444;">Aguardando Entrega</button>`;
             }
 
             card.innerHTML = `
                 <div class="order-header">
-                    <span>${order.table_name || 'Balcão'}</span>
+                    <span style="font-size:1.1rem;">${order.table_name || 'Balcão'}</span>
                     <span>#${order.id}</span>
                 </div>
-                <div style="margin-bottom:10px; font-size:0.9rem; color:#888;">${new Date(order.created_at).toLocaleTimeString().substring(0,5)}</div>
+                <div style="margin-bottom:10px; font-size:0.8rem; color:#888;">⏰ ${new Date(order.created_at).toLocaleTimeString().substring(0,5)}</div>
                 ${itemsHtml}
                 ${btnHtml}
             `;
+            
             ordersDiv.appendChild(card);
         });
 
@@ -123,21 +137,20 @@ async function loadOrders() {
 }
 
 async function updateStatus(id, status) {
-    if(!confirm(`Confirmar que as bebidas estão prontas?`)) return;
+    if(!confirm(`Confirmar ação?`)) return;
     
-    await fetch(`/api/orders/${id}/status`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ status })
-    });
-    loadOrders();
+    try {
+        await fetch(`/api/orders/${id}/status`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ status })
+        });
+        loadOrders(); // Recarrega imediatamente para sumir o card
+    } catch (e) { alert("Erro de conexão."); }
 }
 
-setInterval(loadOrders, 5000);
-loadOrders();
-
 function toggleMenu() {
-  document.getElementById("menuDropdown").classList.toggle("show");
+    document.getElementById("menuDropdown").classList.toggle("show");
 }
 document.addEventListener("click", e => {
   if (!e.target.closest(".menu-wrapper")) {
@@ -145,6 +158,5 @@ document.addEventListener("click", e => {
   }
 });
 </script>
-
 </body>
 </html>
