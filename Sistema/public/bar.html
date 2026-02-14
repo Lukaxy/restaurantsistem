@@ -53,15 +53,10 @@
      <p style="text-align:center; margin-top: 20px; color: #adb5bd;">Aguardando bebidas...</p>
   </div>
 </main>
-
 <script>
-// ============================================================
-// LÓGICA DO BAR (SOMENTE NOVO E PREPARANDO)
-// ============================================================
-const user = JSON.parse(localStorage.getItem("user"));
 const ordersDiv = document.getElementById("orders");
+const user = JSON.parse(localStorage.getItem("user"));
 
-// Loop de atualização (5 segundos)
 setInterval(loadOrders, 5000);
 loadOrders();
 
@@ -74,32 +69,31 @@ async function loadOrders() {
         
         if (!data.ok) return;
 
-        // 1. FILTRO PRINCIPAL:
-        // Só mostra se for NOVO ou PREPARANDO. 
-        // Se for 'pronto', 'entregue' ou qualquer outra coisa, NÃO MOSTRA.
-        const activeOrders = data.pedidos.filter(p => 
-            p.status === 'novo' || p.status === 'preparando'
-        );
+        // FILTRO DO BAR:
+        // Olha a coluna 'status_bar'
+        const activeOrders = data.pedidos.filter(p => {
+            const statusB = p.status_bar || 'novo'; 
+            return statusB === 'novo' || statusB === 'preparando';
+        });
 
         if(activeOrders.length === 0) {
-            ordersDiv.innerHTML = '<p style="text-align:center; margin-top: 50px; color: #adb5bd;">Sem bebidas pendentes.</p>';
+            ordersDiv.innerHTML = '<p style="text-align:center; margin-top: 50px; color: #adb5bd;">Bar tranquilo!</p>';
             return;
         }
 
-        ordersDiv.innerHTML = ""; // Limpa a tela
+        ordersDiv.innerHTML = "";
 
         activeOrders.forEach(order => {
-            // 2. FILTRO DE ITEM:
-            // Só mostra itens marcados para o BAR
+            // Filtra SÓ itens do Bar
             const itemsToShow = order.items.filter(item => item.destination === 'bar');
+            if (itemsToShow.length === 0) return; 
 
-            if (itemsToShow.length === 0) return; // Se for só comida, pula
+            // Status Específico do Bar
+            const currentStatus = order.status_bar || 'novo';
 
             const card = document.createElement("div");
             card.className = "order-card";
-            
-            // Cores: Rosa (Novo) ou Verde (Preparando)
-            const statusColor = order.status === 'novo' ? '#d63384' : '#51cf66';
+            const statusColor = currentStatus === 'novo' ? '#d63384' : '#51cf66';
             card.style.borderLeft = `5px solid ${statusColor}`;
 
             let itemsHtml = itemsToShow.map(item => `
@@ -109,54 +103,45 @@ async function loadOrders() {
                 </div>
             `).join("");
 
-            // Botões (Sem o botão cinza "Aguardando")
             let btnHtml = "";
-            if (order.status === 'novo') {
-                btnHtml = `<button class="btn-action btn-accept" onclick="updateStatus(${order.id}, 'preparando')">🍸 Preparar Bebidas</button>`;
-            } else if (order.status === 'preparando') {
-                // Ao clicar aqui, o status vira 'pronto' e ele vai SUMIR da lista
-                btnHtml = `<button class="btn-action btn-ready" onclick="updateStatus(${order.id}, 'pronto')">✅ Bebidas Prontas</button>`;
+            if (currentStatus === 'novo' || !currentStatus) {
+                // Manda atualizar SÓ o bar
+                btnHtml = `<button class="btn-action btn-accept" onclick="updateSector(${order.id}, 'bar', 'preparando')">🍸 Preparar</button>`;
+            } else if (currentStatus === 'preparando') {
+                btnHtml = `<button class="btn-action btn-ready" onclick="updateSector(${order.id}, 'bar', 'pronto')">✅ Pronto</button>`;
             }
 
             card.innerHTML = `
                 <div class="order-header">
-                    <span style="font-size:1.1rem;">${order.table_name || 'Balcão'}</span>
+                    <span>${order.table_name || 'Balcão'}</span>
                     <span>#${order.id}</span>
                 </div>
                 <div style="margin-bottom:10px; font-size:0.8rem; color:#888;">⏰ ${new Date(order.created_at).toLocaleTimeString().substring(0,5)}</div>
                 ${itemsHtml}
                 ${btnHtml}
             `;
-            
             ordersDiv.appendChild(card);
         });
 
-    } catch (err) {
-        console.error("Erro ao carregar pedidos", err);
-    }
+    } catch (err) { console.error(err); }
 }
 
-async function updateStatus(id, status) {
-    if(!confirm(`Confirmar ação?`)) return;
-    
+async function updateSector(id, sector, status) {
+    if(!confirm("Confirmar?")) return;
     try {
-        await fetch(`/api/orders/${id}/status`, {
+        // CHAMA A NOVA ROTA ESPECÍFICA DE SETOR
+        await fetch(`/api/orders/${id}/status-sector`, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ status })
+            body: JSON.stringify({ sector, status })
         });
-        loadOrders(); // Recarrega imediatamente para sumir o card
-    } catch (e) { alert("Erro de conexão."); }
+        loadOrders();
+    } catch (e) { alert("Erro ao atualizar."); }
 }
 
-function toggleMenu() {
-    document.getElementById("menuDropdown").classList.toggle("show");
-}
-document.addEventListener("click", e => {
-  if (!e.target.closest(".menu-wrapper")) {
-    document.getElementById("menuDropdown").classList.remove("show");
-  }
-});
+function toggleMenu() { document.getElementById("menuDropdown").classList.toggle("show"); }
+document.addEventListener("click", e => { if (!e.target.closest(".menu-wrapper")) document.getElementById("menuDropdown").classList.remove("show"); });
 </script>
+
 </body>
 </html>
