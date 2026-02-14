@@ -96,8 +96,19 @@ async function initDb() {
         // Se der erro é porque a coluna já existe, então ignoramos
     }
 
-    // ... (continua o código do Master) ...  
+      // ATUALIZAÇÃO: Adiciona colunas independentes 
+    try {
+        await db.execute(`ALTER TABLE orders ADD COLUMN status_cozinha TEXT DEFAULT 'novo'`);
+        console.log("✅ Coluna 'status_cozinha' verificada.");
+    } catch (e) {}
 
+    try {
+        await db.execute(`ALTER TABLE orders ADD COLUMN status_bar TEXT DEFAULT 'novo'`);
+        console.log("✅ Coluna 'status_bar' verificada.");
+    } catch (e) {}
+    
+ 
+    // ... ( o código do Master) ...  
     // 2. Verificação/Criação do Master
     const checkMaster = await db.execute({ sql: "SELECT * FROM users WHERE email = ?", args: [MASTER_EMAIL] });
     
