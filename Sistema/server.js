@@ -496,6 +496,26 @@ app.get("/api/companies/:id/status", async (req, res) => {
     } catch (err) { res.status(500).json({ ok: false }); }
 });
 
+// ROTA ESPECIAL: Atualiza só um setor (Bar ou Cozinha)
+app.post("/api/orders/:id/status-sector", async (req, res) => {
+    const { id } = req.params;
+    const { sector, status } = req.body; // sector pode ser 'cozinha' ou 'bar'
+    
+    // Define qual coluna vamos mexer
+    const coluna = sector === 'bar' ? 'status_bar' : 'status_cozinha';
+
+    try {
+        await db.execute({
+            sql: `UPDATE orders SET ${coluna} = ? WHERE id = ?`,
+            args: [status, id]
+        });
+        res.json({ ok: true });
+    } catch (err) {
+        console.error(err);
+        res.status(500).json({ ok: false });
+    }
+});
+
 // =============================================================
 // 🚀 INICIALIZAÇÃO
 // =============================================================
