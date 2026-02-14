@@ -1,0 +1,150 @@
+<!doctype html>
+<html lang="pt-br">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>Painel do Bar 🍸</title>
+  <link rel="stylesheet" href="css/style.css" />
+  
+  <script src="js/auth.js"></script>
+  <style>
+    .menu-dropdown {
+      display: none;
+      position: absolute;
+      background: #1a1d21;
+      border: 1px solid var(--border-color);
+      right: 30px;
+      top: 60px;
+      z-index: 100;
+    }
+    .menu-dropdown.show { display: block; }
+    .menu-dropdown div { padding: 10px 20px; cursor: pointer; border-bottom: 1px solid #333; }
+    
+    .order-card { background: var(--bg-card); padding: 15px; margin-bottom: 15px; border-radius: 12px; border: 1px solid var(--border-color); }
+    .order-header { display: flex; justify-content: space-between; font-weight: bold; margin-bottom: 10px; color: #d63384; /* Rosa para diferenciar do bar */ }
+    .order-item { padding: 5px 0; border-bottom: 1px solid #3a3f44; color: var(--text-primary); }
+    .order-obs { color: #fcc419; font-size: 0.9em; margin-top: 2px; }
+    .btn-action { width: 100%; padding: 10px; margin-top: 10px; border: none; border-radius: 8px; cursor: pointer; font-weight: bold; }
+    .btn-accept { background: #d63384; color: white; }
+    .btn-ready { background: var(--color-green); color: white; }
+  </style>
+</head>
+
+<body>
+
+<header>
+  <div class="menu-wrapper">
+    <button class="menu-button" onclick="toggleMenu()">⋮</button>
+    <div id="menuDropdown" class="menu-dropdown">
+      <div onclick="window.location.href='meus-pedidos.html'">Meus pedidos 🧾</div>
+      <div onclick="window.location.href='relatorio.html'">Relatório 📈</div>
+      <div onclick="window.location.href='cozinha.html'">Cozinha 👨‍🍳</div>
+      <div onclick="window.location.href='bar.html'">Bar 🍸</div>
+      <div onclick="window.location.href='configuracoes.html'">Configurações ⚙️</div>
+      <div onclick="window.location.href='index.html'">Cardápio 📙</div>
+      <div onclick="logout()" style="color: var(--color-red);">Sair do Sistema 🚪</div>
+    </div>
+  </div>
+  <div class="header-title">Painel do Bar 🍸</div>
+</header>
+
+<main>
+  <div id="orders">
+     <p style="text-align:center; margin-top: 20px; color: #adb5bd;">Aguardando bebidas...</p>
+  </div>
+</main>
+
+<script>
+// === LÓGICA INTERNA DO BAR (FILTRO APLICADO) ===
+const user = JSON.parse(localStorage.getItem("user"));
+const ordersDiv = document.getElementById("orders");
+
+async function loadOrders() {
+    try {
+        const res = await fetch(`/api/orders?company_id=${user.company_id}`);
+        const data = await res.json();
+        
+        if (!data.ok) return;
+
+        const activeOrders = data.pedidos.filter(p => p.status !== 'finalizado' && p.status !== 'entregue' && p.status !== 'cancelado');
+
+        if(activeOrders.length === 0) {
+            ordersDiv.innerHTML = '<p style="text-align:center; margin-top: 20px; color: #adb5bd;">Sem pedidos de bebidas.</p>';
+            return;
+        }
+
+        ordersDiv.innerHTML = "";
+
+        activeOrders.forEach(order => {
+            // ============================================================
+            // 🛑 O FILTRO MÁGICO DO BAR
+            // Mostra APENAS itens que têm destination == 'bar'
+            // ============================================================
+            const itemsToShow = order.items.filter(item => item.destination === 'bar');
+
+            if (itemsToShow.length === 0) return; // Se só tem comida, não mostra pro barman
+
+            const card = document.createElement("div");
+            card.className = "order-card";
+            const statusColor = order.status === 'novo' ? '#d63384' : '#51cf66';
+            card.style.borderLeft = `5px solid ${statusColor}`;
+
+            let itemsHtml = itemsToShow.map(item => `
+                <div class="order-item">
+                    1x ${item.name}
+                    ${item.notes ? `<div class="order-obs">⚠️ ${item.notes}</div>` : ''}
+                </div>
+            `).join("");
+
+            let btnHtml = "";
+            if (order.status === 'novo') {
+                btnHtml = `<button class="btn-action btn-accept" onclick="updateStatus(${order.id}, 'preparando')">🍸 Preparar Bebidas</button>`;
+            } else if (order.status === 'preparando') {
+                btnHtml = `<button class="btn-action btn-ready" onclick="updateStatus(${order.id}, 'pronto')">✅ Bebidas Prontas</button>`;
+            } else {
+                btnHtml = `<button class="btn-action" style="background:#444;">Aguardando Entrega</button>`;
+            }
+
+            card.innerHTML = `
+                <div class="order-header">
+                    <span>${order.table_name || 'Balcão'}</span>
+                    <span>#${order.id}</span>
+                </div>
+                <div style="margin-bottom:10px; font-size:0.9rem; color:#888;">${new Date(order.created_at).toLocaleTimeString().substring(0,5)}</div>
+                ${itemsHtml}
+                ${btnHtml}
+            `;
+            ordersDiv.appendChild(card);
+        });
+
+    } catch (err) {
+        console.error("Erro ao carregar pedidos", err);
+    }
+}
+
+async function updateStatus(id, status) {
+    if(!confirm(`Confirmar que as bebidas estão prontas?`)) return;
+    
+    await fetch(`/api/orders/${id}/status`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ status })
+    });
+    loadOrders();
+}
+
+setInterval(loadOrders, 5000);
+loadOrders();
+
+function toggleMenu() {
+  document.getElementById("menuDropdown").classList.toggle("show");
+}
+document.addEventListener("click", e => {
+  if (!e.target.closest(".menu-wrapper")) {
+    document.getElementById("menuDropdown").classList.remove("show");
+  }
+});
+</script>
+
+</body>
+</html>
