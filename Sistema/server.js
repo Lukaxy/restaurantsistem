@@ -86,6 +86,18 @@ async function initDb() {
     
     console.log("✅ Tabelas verificadas.");
 
+    // ... (depois dos CREATE TABLE e antes do checkMaster) ...
+
+    //'destination' na tabela products (se não existir)
+    try {
+        await db.execute(`ALTER TABLE products ADD COLUMN destination TEXT DEFAULT 'cozinha'`);
+        console.log("✅ Coluna 'destination' adicionada/verificada em Products.");
+    } catch (e) {
+        // Se der erro é porque a coluna já existe, então ignoramos
+    }
+
+    // ... (continua o código do Master) ...  
+
     // 2. Verificação/Criação do Master
     const checkMaster = await db.execute({ sql: "SELECT * FROM users WHERE email = ?", args: [MASTER_EMAIL] });
     
@@ -213,14 +225,22 @@ app.get("/api/products", async (req, res) => {
 });
 
 app.post("/api/products", async (req, res) => {
-  const { company_id, name, price, category, description } = req.body;
+  // Agora recebemos também o 'destination'
+  const { company_id, name, price, category, description, destination } = req.body;
+  
+  // Se não vier nada, assume que é para a 'cozinha'
+  const destinoFinal = destination || 'cozinha';
+
   try {
       await db.execute({
-          sql: `INSERT INTO products (company_id, name, price, category, description) VALUES (?,?,?,?,?)`,
-          args: [Number(company_id), name, price, category, description]
+          sql: `INSERT INTO products (company_id, name, price, category, description, destination) VALUES (?,?,?,?,?,?)`,
+          args: [Number(company_id), name, price, category, description, destinoFinal]
       });
       res.json({ ok: true });
-  } catch (err) { res.status(500).json({ ok: false }); }
+  } catch (err) { 
+      console.error(err);
+      res.status(500).json({ ok: false }); 
+  }
 });
 
 app.delete("/api/products/:id", async (req, res) => {
