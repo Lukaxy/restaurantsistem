@@ -7,9 +7,8 @@
   <link rel="stylesheet" href="css/style.css" />
   
   <script src="js/auth.js"></script>
-</head>
   <style>
-        .menu-dropdown {
+    .menu-dropdown {
       display: none;
       position: absolute;
       background: #1a1d21;
@@ -20,8 +19,18 @@
     }
     .menu-dropdown.show { display: block; }
     .menu-dropdown div { padding: 10px 20px; cursor: pointer; border-bottom: 1px solid #333; }
+    
+    /* Estilos extras para os cards ficarem organizados */
+    .order-card { background: var(--bg-card); padding: 15px; margin-bottom: 15px; border-radius: 12px; border: 1px solid var(--border-color); }
+    .order-header { display: flex; justify-content: space-between; font-weight: bold; margin-bottom: 10px; color: var(--color-blue); }
+    .order-item { padding: 5px 0; border-bottom: 1px solid #3a3f44; color: var(--text-primary); }
+    .order-obs { color: #fcc419; font-size: 0.9em; margin-top: 2px; }
+    .btn-action { width: 100%; padding: 10px; margin-top: 10px; border: none; border-radius: 8px; cursor: pointer; font-weight: bold; }
+    .btn-accept { background: var(--color-blue); color: white; }
+    .btn-ready { background: var(--color-green); color: white; }
   </style>
-  
+</head>
+
 <body>
 
 <header>
@@ -31,6 +40,7 @@
       <div onclick="window.location.href='meus-pedidos.html'">Meus pedidos 🧾</div>
       <div onclick="window.location.href='relatorio.html'">Relatório 📈</div>
       <div onclick="window.location.href='cozinha.html'">Cozinha 👨‍🍳</div>
+      <div onclick="window.location.href='bar.html'">Bar🍹</div>
       <div onclick="window.location.href='configuracoes.html'">Configurações ⚙️</div>
       <div onclick="window.location.href='index.html'">Cardápio 📙</div>
       <div onclick="location.href='company-admin.html'">Painel da Empresa  🏢</div>
@@ -43,17 +53,110 @@
 
 <main>
   <div id="orders">
-     <p style="text-align:center; margin-top: 20px;">Carregando sistema...</p>
+     <p style="text-align:center; margin-top: 20px; color: #adb5bd;">Aguardando pedidos...</p>
   </div>
 </main>
 
-<script src="js/cozinha.js"></script>
-
 <script>
+// === LÓGICA INTERNA DA COZINHA (FILTRO APLICADO) ===
+const user = JSON.parse(localStorage.getItem("user"));
+const ordersDiv = document.getElementById("orders");
+
+async function loadOrders() {
+    try {
+        // Busca todos os pedidos
+        const res = await fetch(`/api/orders?company_id=${user.company_id}`);
+        const data = await res.json();
+        
+        if (!data.ok) return;
+
+        // Filtra pedidos que não estão finalizados
+        const activeOrders = data.pedidos.filter(p => 
+            p.status !== 'finalizado' && 
+            p.status !== 'entregue' && 
+            p.status !== 'cancelado'
+        );
+
+        if(activeOrders.length === 0) {
+            ordersDiv.innerHTML = '<p style="text-align:center; margin-top: 20px; color: #adb5bd;">Sem pedidos pendentes.</p>';
+            return;
+        }
+
+        ordersDiv.innerHTML = ""; // Limpa a tela
+
+        activeOrders.forEach(order => {
+            // ============================================================
+            // 🛑 O FILTRO MÁGICO ACONTECE AQUI
+            // Mostra itens que são 'cozinha' OU que não tem destino definido
+            // ============================================================
+            const itemsToShow = order.items.filter(item => item.destination !== 'bar');
+
+            // Se depois de filtrar não sobrou nada (ex: era só cerveja), não mostra o card
+            if (itemsToShow.length === 0) return; 
+
+            // Cria o Card do Pedido
+            const card = document.createElement("div");
+            card.className = "order-card";
+            
+            // Define cor da borda baseada no status
+            const statusColor = order.status === 'novo' ? '#e8590c' : '#51cf66';
+            card.style.borderLeft = `5px solid ${statusColor}`;
+
+            let itemsHtml = itemsToShow.map(item => `
+                <div class="order-item">
+                    1x ${item.name}
+                    ${item.notes ? `<div class="order-obs">⚠️ ${item.notes}</div>` : ''}
+                </div>
+            `).join("");
+
+            // Botão muda dependendo do status
+            let btnHtml = "";
+            if (order.status === 'novo') {
+                btnHtml = `<button class="btn-action btn-accept" onclick="updateStatus(${order.id}, 'preparando')">🔥 Aceitar Pedido</button>`;
+            } else if (order.status === 'preparando') {
+                btnHtml = `<button class="btn-action btn-ready" onclick="updateStatus(${order.id}, 'pronto')">✅ Pronto / Entregar</button>`;
+            } else {
+                btnHtml = `<button class="btn-action" style="background:#444;">Aguardando Entrega</button>`;
+            }
+
+            card.innerHTML = `
+                <div class="order-header">
+                    <span>${order.table_name || 'Balcão'}</span>
+                    <span>#${order.id}</span>
+                </div>
+                <div style="margin-bottom:10px; font-size:0.9rem; color:#888;">${new Date(order.created_at).toLocaleTimeString().substring(0,5)}</div>
+                ${itemsHtml}
+                ${order.notes ? `<div style="background:#333; padding:5px; margin-top:5px; border-radius:4px; color:#fcc419;">📝 Nota: ${order.notes}</div>` : ''}
+                ${btnHtml}
+            `;
+            
+            ordersDiv.appendChild(card);
+        });
+
+    } catch (err) {
+        console.error("Erro ao carregar pedidos", err);
+    }
+}
+
+async function updateStatus(id, status) {
+    if(!confirm(`Mudar status para ${status.toUpperCase()}?`)) return;
+    
+    await fetch(`/api/orders/${id}/status`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ status })
+    });
+    loadOrders(); // Recarrega a tela
+}
+
+// Atualiza a cada 5 segundos
+setInterval(loadOrders, 5000);
+loadOrders();
+
+// Menu Toggle
 function toggleMenu() {
   document.getElementById("menuDropdown").classList.toggle("show");
 }
-
 document.addEventListener("click", e => {
   if (!e.target.closest(".menu-wrapper")) {
     document.getElementById("menuDropdown").classList.remove("show");
