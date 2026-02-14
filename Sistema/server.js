@@ -64,7 +64,28 @@ const MASTER_EMAIL = "lucasferreira123459966@gmail.com";
 const MASTER_SENHA = "Lu@14032004";
 
 function getHoraLocalISOString() {
-  return new Date().toISOString().replace('T', ' ').substring(0, 19); 
+  // Cria a data atual
+  const date = new Date();
+  
+  // Força o fuso horário de Campo Grande - MS
+  const options = {
+    timeZone: 'America/Campo_Grande',
+    year: 'numeric',
+    month: '2-digit',
+    day: '2-digit',
+    hour: '2-digit',
+    minute: '2-digit',
+    second: '2-digit',
+    hour12: false
+  };
+  
+  // Formata para pegar as partes certas
+  const formatter = new Intl.DateTimeFormat('pt-BR', options);
+  const parts = formatter.formatToParts(date);
+  const getPart = (type) => parts.find(p => p.type === type).value;
+  
+  // Monta no padrão de banco de dados: AAAA-MM-DD HH:MM:SS
+  return `${getPart('year')}-${getPart('month')}-${getPart('day')} ${getPart('hour')}:${getPart('minute')}:${getPart('second')}`;
 }
 
 // =============================================================
