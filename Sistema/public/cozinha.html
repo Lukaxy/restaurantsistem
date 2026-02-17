@@ -61,40 +61,47 @@
 const ordersDiv = document.getElementById("orders");
 const user = JSON.parse(localStorage.getItem("user"));
 
+// Verifica login
+if (!user || !user.company_id) window.location.href = "login.html";
+
 setInterval(loadOrders, 5000);
 loadOrders();
 
 async function loadOrders() {
-    if (!user || !user.company_id) return;
-
     try {
         const res = await fetch(`/api/orders?company_id=${user.company_id}`);
         const data = await res.json();
         
         if (!data.ok) return;
 
-        // FILTRO DA COZINHA: 
-        // 1. Olha a coluna 'status_cozinha'
-        // 2. Se for pedido antigo (sem coluna), assume 'novo'
+        // FILTRO DA COZINHA (Mantemos a lógica original de setor)
         const activeOrders = data.pedidos.filter(p => {
             const statusK = p.status_cozinha || 'novo'; 
+            // Mostra se for novo ou preparando. Se já for 'pronto', sai da tela.
             return statusK === 'novo' || statusK === 'preparando';
         });
 
         if(activeOrders.length === 0) {
-            ordersDiv.innerHTML = '<p style="text-align:center; margin-top: 50px; color: #adb5bd;">Cozinha livre!</p>';
+            ordersDiv.innerHTML = '<p style="text-align:center; margin-top: 50px; color: #adb5bd;">Cozinha livre! 👨‍🍳</p>';
             return;
         }
 
         ordersDiv.innerHTML = "";
 
         activeOrders.forEach(order => {
-            // Filtra itens que NÃO são Bar
+            // 1. Filtra itens que NÃO são Bar
             const itemsToShow = order.items.filter(item => item.destination !== 'bar');
+            
+            // Se o pedido só tem bebida, não mostra na cozinha
             if (itemsToShow.length === 0) return; 
 
-            // Status Específico da Cozinha
+            // 2. Descobre o Status da Cozinha
             const currentStatus = order.status_cozinha || 'novo';
+
+            // 3. VERIFICAÇÃO INTELIGENTE DO BAR
+            // Verifica se existe item de bar E se ele ainda não está pronto
+            const temBar = order.items.some(item => item.destination === 'bar');
+            const barPendente = temBar && (order.status_bar !== 'pronto' && order.status_bar !== 'entregue');
 
             const card = document.createElement("div");
             card.className = "order-card";
@@ -103,17 +110,21 @@ async function loadOrders() {
 
             let itemsHtml = itemsToShow.map(item => `
                 <div class="order-item">
-                    <span style="font-weight:bold;">1x</span> ${item.name}
+                    <span style="font-weight:bold;">${item.qty || '1'}x</span> ${item.name}
                     ${item.notes ? `<div class="order-obs">⚠️ ${item.notes}</div>` : ''}
                 </div>
             `).join("");
 
             let btnHtml = "";
-            if (currentStatus === 'novo' || !currentStatus) {
-                // Manda atualizar SÓ a cozinha
-                btnHtml = `<button class="btn-action btn-accept" onclick="updateSector(${order.id}, 'cozinha', 'preparando')">🔥 Aceitar</button>`;
+            
+            // Lógica dos Botões
+            if (currentStatus === 'novo') {
+                // Ao ACEITAR: Atualiza Cozinha para 'preparando' E Global para 'preparando' (pro cliente ver que começou)
+                btnHtml = `<button class="btn-action btn-accept" onclick="processarEtapa(${order.id}, 'aceitar')">🔥 Aceitar</button>`;
+            
             } else if (currentStatus === 'preparando') {
-                btnHtml = `<button class="btn-action btn-ready" onclick="updateSector(${order.id}, 'cozinha', 'pronto')">✅ Pronto</button>`;
+                // Ao FINALIZAR: Passamos o flag se o bar está pendente ou não
+                btnHtml = `<button class="btn-action btn-ready" onclick="processarEtapa(${order.id}, 'finalizar', ${barPendente})">✅ Pronto</button>`;
             }
 
             card.innerHTML = `
@@ -121,7 +132,10 @@ async function loadOrders() {
                     <span>${order.table_name || 'Balcão'}</span>
                     <span>#${order.id}</span>
                 </div>
-                <div style="margin-bottom:10px; font-size:0.8rem; color:#888;">⏰ ${new Date(order.created_at).toLocaleTimeString().substring(0,5)}</div>
+                <div style="margin-bottom:10px; font-size:0.8rem; color:#888;">
+                    ⏰ ${new Date(order.created_at).toLocaleTimeString().substring(0,5)}
+                    ${barPendente ? '<span style="float:right; color:#fcc419;">🍹 Bar preparando...</span>' : ''}
+                </div>
                 ${itemsHtml}
                 ${order.notes ? `<div style="background:#333; padding:5px; margin-top:5px; border-radius:4px; color:#fcc419;">📝 ${order.notes}</div>` : ''}
                 ${btnHtml}
@@ -132,19 +146,59 @@ async function loadOrders() {
     } catch (err) { console.error(err); }
 }
 
-async function updateSector(id, sector, status) {
-    if(!confirm("Mudar status?")) return;
+// FUNÇÃO UNIFICADA E INTELIGENTE
+async function processarEtapa(id, acao, barPendente = false) {
+    const btn = event.target;
+    btn.innerHTML = "...";
+    btn.disabled = true;
+
     try {
-        // CHAMA A NOVA ROTA ESPECÍFICA DE SETOR
-        await fetch(`/api/orders/${id}/status-sector`, {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ sector, status })
-        });
+        if (acao === 'aceitar') {
+            // 1. Avisa que a cozinha pegou (Setor)
+            await updateSector(id, 'cozinha', 'preparando');
+            // 2. Avisa o Global que começou (para sair de 'novo' nos Meus Pedidos)
+            await updateGlobal(id, 'preparando');
+        
+        } else if (acao === 'finalizar') {
+            // 1. Cozinha terminou
+            await updateSector(id, 'cozinha', 'pronto');
+
+            // 2. O PULO DO GATO:
+            // Só marca o pedido Global como 'pronto' se o Bar NÃO estiver pendente.
+            if (!barPendente) {
+                console.log("Cozinha terminou e Bar está ok/inexistente. Finalizando pedido Global.");
+                await updateGlobal(id, 'pronto');
+            } else {
+                console.log("Cozinha terminou, mas Bar ainda trabalha. Mantendo Global em preparando.");
+            }
+        }
+        
         loadOrders();
-    } catch (e) { alert("Erro ao atualizar."); }
+    } catch (e) {
+        console.error(e);
+        alert("Erro ao processar");
+        btn.disabled = false;
+    }
 }
 
+// Funções auxiliares de API
+async function updateSector(id, sector, status) {
+    await fetch(`/api/orders/${id}/status-sector`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ sector, status })
+    });
+}
+
+async function updateGlobal(id, status) {
+    await fetch(`/api/orders/${id}/status`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ status })
+    });
+}
+
+// Menu Mobile
 function toggleMenu() { document.getElementById("menuDropdown").classList.toggle("show"); }
 document.addEventListener("click", e => { if (!e.target.closest(".menu-wrapper")) document.getElementById("menuDropdown").classList.remove("show"); });
 </script>
