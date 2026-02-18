@@ -520,16 +520,48 @@ app.get("/api/companies/:id/status", async (req, res) => {
 // ROTA ESPECIAL: Atualiza só um setor (Bar ou Cozinha)
 app.post("/api/orders/:id/status-sector", async (req, res) => {
     const { id } = req.params;
-    const { sector, status } = req.body; // sector pode ser 'cozinha' ou 'bar'
-    
-    // Define qual coluna vamos mexer
+    const { sector, status } = req.body; 
     const coluna = sector === 'bar' ? 'status_bar' : 'status_cozinha';
+    const agora = getHoraLocalISOString();
 
     try {
+        // 1. Atualiza o status do setor (Bar ou Cozinha)
         await db.execute({
-            sql: `UPDATE orders SET ${coluna} = ? WHERE id = ?`,
-            args: [status, id]
+            sql: `UPDATE orders SET ${coluna} = ?, status_updated_at = ? WHERE id = ?`,
+            args: [status, agora, id]
         });
+
+        // 2. BUSCA O PEDIDO PARA DECIDIR O STATUS GLOBAL
+        const result = await db.execute({ sql: "SELECT items, status_cozinha, status_bar FROM orders WHERE id = ?", args: [id] });
+        const order = result.rows[0];
+        const items = JSON.parse(order.items || "[]");
+
+        const temBar = items.some(i => i.destination === 'bar');
+        const temCozinha = items.some(i => i.destination !== 'bar');
+
+        let novoStatusGlobal = null;
+
+        // Lógica para definir se o pedido GLOBAL mudou
+        if (status === 'preparando') {
+            novoStatusGlobal = 'preparando';
+        } 
+        else if (status === 'pronto') {
+            const barOk = !temBar || order.status_bar === 'pronto';
+            const cozinhaOk = !temCozinha || order.status_cozinha === 'pronto';
+
+            if (barOk && cozinhaOk) {
+                novoStatusGlobal = 'pronto';
+            }
+        }
+
+        // 3. Se decidimos que o global mudou, atualiza a tabela
+        if (novoStatusGlobal) {
+            await db.execute({
+                sql: `UPDATE orders SET status = ?, status_updated_at = ? WHERE id = ?`,
+                args: [novoStatusGlobal, agora, id]
+            });
+        }
+
         res.json({ ok: true });
     } catch (err) {
         console.error(err);
