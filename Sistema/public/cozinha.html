@@ -37,12 +37,11 @@
   <div class="menu-wrapper">
     <button class="menu-button" onclick="toggleMenu()">⋮</button>
     <div id="menuDropdown" class="menu-dropdown">
+      <div onclick="window.location.href='index.html'">Cardápio 📙</div>
+      <div onclick="window.location.href='bar.html'">Bar🍹</div>
       <div onclick="window.location.href='meus-pedidos.html'">Meus pedidos 🧾</div>
       <div onclick="window.location.href='relatorio.html'">Relatório 📈</div>
-      <div onclick="window.location.href='cozinha.html'">Cozinha 👨‍🍳</div>
-      <div onclick="window.location.href='bar.html'">Bar🍹</div>
       <div onclick="window.location.href='configuracoes.html'">Configurações ⚙️</div>
-      <div onclick="window.location.href='index.html'">Cardápio 📙</div>
       <div onclick="location.href='company-admin.html'">Painel da Empresa  🏢</div>
       <div onclick="location.href='tutorial.html'">Tutoriais 📚</div>
       <div onclick="logout()" style="color: var(--color-red);">Sair do Sistema 🚪</div>
@@ -120,11 +119,11 @@ async function loadOrders() {
             // Lógica dos Botões
             if (currentStatus === 'novo') {
                 // Ao ACEITAR: Atualiza Cozinha para 'preparando' E Global para 'preparando' (pro cliente ver que começou)
-                btnHtml = `<button class="btn-action btn-accept" onclick="processarEtapa(${order.id}, 'aceitar')">🔥 Aceitar</button>`;
+                btnHtml = `<button class="btn-action btn-accept" onclick="processarEtapa(${order.id}, 'aceitar')">Aceitar 🔥</button>`;
             
             } else if (currentStatus === 'preparando') {
                 // Ao FINALIZAR: Passamos o flag se o bar está pendente ou não
-                btnHtml = `<button class="btn-action btn-ready" onclick="processarEtapa(${order.id}, 'finalizar', ${barPendente})">✅ Pronto</button>`;
+                btnHtml = `<button class="btn-action btn-ready" onclick="processarEtapa(${order.id}, 'finalizar', ${barPendente})">Pronto ✅</button>`;
             }
 
             card.innerHTML = `
@@ -134,7 +133,7 @@ async function loadOrders() {
                 </div>
                 <div style="margin-bottom:10px; font-size:0.8rem; color:#888;">
                     ⏰ ${new Date(order.created_at).toLocaleTimeString().substring(0,5)}
-                    ${barPendente ? '<span style="float:right; color:#fcc419;">🍹 Bar preparando...</span>' : ''}
+                    ${barPendente ? '<span style="float:right; color:#fcc419;">Aguarde o bar finalizar para clicar em pronto! 🍹</span>' : ''}
                 </div>
                 ${itemsHtml}
                 ${order.notes ? `<div style="background:#333; padding:5px; margin-top:5px; border-radius:4px; color:#fcc419;">📝 ${order.notes}</div>` : ''}
