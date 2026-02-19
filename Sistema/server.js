@@ -363,6 +363,9 @@ app.get("/api/orders/history", async (req, res) => {
 // =============================================================
 // 🧠 ROTA ESPECIAL: Atualiza Setor e Lógica de Cancelamento Parcial
 // =============================================================
+// =============================================================
+// 🧠 ROTA ESPECIAL: Atualiza Setor e Lógica de Cancelamento Parcial
+// =============================================================
 app.post("/api/orders/:id/status-sector", async (req, res) => {
     const { id } = req.params;
     const { sector, status } = req.body; 
@@ -370,14 +373,34 @@ app.post("/api/orders/:id/status-sector", async (req, res) => {
     const agora = getHoraLocalISOString();
 
     try {
+        // 1. Atualiza o status do setor no banco
         await db.execute({
             sql: `UPDATE orders SET ${coluna} = ?, status_updated_at = ? WHERE id = ?`,
             args: [status, agora, id]
         });
 
-        const result = await db.execute({ sql: "SELECT items, status_cozinha, status_bar FROM orders WHERE id = ?", args: [id] });
+        // 2. Busca o pedido para arrumar o dinheiro e o status global
+        const result = await db.execute({ sql: "SELECT total, items, status_cozinha, status_bar FROM orders WHERE id = ?", args: [id] });
         const order = result.rows[0];
         const items = JSON.parse(order.items || "[]");
+
+        // ---> A MÁGICA DO B.O. 2: DESCONTO FINANCEIRO <---
+        if (status === 'cancelado') {
+            // Pega os itens só do setor que cancelou e soma: (preço * quantidade)
+            const valorDescontar = items
+                .filter(i => sector === 'bar' ? i.destination === 'bar' : i.destination !== 'bar')
+                .reduce((s, i) => s + (Number(i.price || 0) * Number(i.qty || 1)), 0);
+            
+            // Subtrai do total do pedido (o Math.max impede que o valor fique negativo por algum bug bizarro)
+            const novoTotal = Math.max(0, order.total - valorDescontar);
+            
+            // Salva o novo valor no banco
+            await db.execute({
+                sql: `UPDATE orders SET total = ? WHERE id = ?`,
+                args: [novoTotal, id]
+            });
+        }
+        // --------------------------------------------------
 
         const temBar = items.some(i => i.destination === 'bar');
         const temCozinha = items.some(i => i.destination !== 'bar');
