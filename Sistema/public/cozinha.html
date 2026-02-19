@@ -204,9 +204,7 @@ async function cancelarPedido(id) {
 
     try {
         // Atualiza a cozinha e o pedido geral para "cancelado"
-        await updateSector(id, 'cozinha', 'cancelado');
-        await updateGlobal(id, 'cancelado');
-        
+        await updateSector(id, 'cozinha', 'cancelado');        
         loadOrders();
     } catch (e) {
         console.error(e);
