@@ -35,7 +35,6 @@
     .kpi-card span { display: block; color: #adb5bd; font-size: 0.9rem; margin-bottom: 5px; }
     .kpi-card strong { font-size: 1.4rem; color: var(--color-blue); }
 
-    /* --- LAYOUT DO DASHBOARD --- */
     .dashboard-container {
       display: grid;
       grid-template-columns: 1fr 1fr;
@@ -48,47 +47,31 @@
       align-items: center;
     }
 
-    .chart-box { position: relative; height: 250px; display: flex; justify-content: center; }
-    .legend-box { display: flex; flex-direction: column; gap: 15px; }
+    .chart-box { position: relative; height: 250px; width: 100%; display: flex; justify-content: center; }
+    .legend-box { display: flex; flex-direction: column; gap: 10px; }
 
     .legend-item {
       display: flex;
       align-items: center;
       justify-content: space-between;
       background: #0d0d0d;
-      padding: 12px 15px;
+      padding: 10px 15px;
       border-radius: 8px;
       border-left: 4px solid transparent;
-      transition: 0.3s;
     }
-    .legend-item:hover { transform: translateX(5px); background: #252a2e; }
 
     .legend-pronto { border-color: var(--color-green); }
     .legend-pendente { border-color: var(--color-amber); }
     .legend-cancelado { border-color: var(--color-red); }
 
-    .legend-title { font-weight: bold; color: #fff; font-size: 1.1rem; }
-    .legend-value { font-size: 1.2rem; font-weight: bold; }
+    .legend-title { font-weight: bold; color: #fff; font-size: 0.9rem; }
+    .legend-value { font-size: 1.1rem; font-weight: bold; }
     .legend-pronto .legend-value { color: var(--color-green); }
     .legend-pendente .legend-value { color: var(--color-amber); }
     .legend-cancelado .legend-value { color: var(--color-red); }
 
-    /* --- LISTA E CARDS --- */
-    .dia-group {
-      margin-bottom: 15px;
-      border: 1px solid var(--border-color);
-      border-radius: 8px;
-      overflow: hidden;
-    }
-    .dia-header {
-      background: var(--bg-card);
-      padding: 15px;
-      cursor: pointer;
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      font-weight: bold;
-    }
+    .dia-group { margin-bottom: 15px; border: 1px solid var(--border-color); border-radius: 8px; overflow: hidden; }
+    .dia-header { background: var(--bg-card); padding: 15px; cursor: pointer; display: flex; justify-content: space-between; align-items: center; font-weight: bold; }
     .dia-content { display: none; padding: 15px; background: #0d0d0d; }
 
     .pedido-card {
@@ -96,11 +79,10 @@
       padding: 12px;
       border-radius: 8px;
       margin-bottom: 10px;
-      border-left: 4px solid var(--color-green); /* Padrão verde */
+      border-left: 4px solid var(--color-green);
       transition: 0.2s;
     }
 
-    /* Menu Dropdown */
     .menu-dropdown { display: none; position: absolute; background: #1a1d21; border: 1px solid var(--border-color); right: 30px; top: 60px; z-index: 100; }
     .menu-dropdown.show { display: block; }
     .menu-dropdown div { padding: 10px 20px; cursor: pointer; border-bottom: 1px solid #333; }
@@ -127,38 +109,40 @@
   <div class="header-title">Relatório 📈</div>
 </header>
 
-  <main style="padding: 20px;">
-    <h3 style="margin-bottom: 15px; color: var(--color-blue);">📊 Desempenho do Mês Atual</h3>
+<main style="padding: 20px;">
+    <h3 style="margin-bottom: 15px; color: var(--color-blue); display: flex; align-items: center; gap: 10px;">📊 Desempenho do Mês Atual</h3>
     <div class="dashboard-container">
-        <div class="chart-box"><canvas id="meuGrafico"></canvas></div>
+        <div class="chart-box">
+            <canvas id="meuGrafico"></canvas>
+        </div>
         <div class="legend-box">
             <div class="legend-item legend-pronto">
-                <div><div class="legend-title">✅ Prontos / Entregues</div><small style="color: #888;" id="percProntos">0% do total</small></div>
+                <div><div class="legend-title">✅ Prontos / Entregues</div><small style="color: #888;" id="percProntos">0%</small></div>
                 <div class="legend-value" id="valProntos">0</div>
             </div>
             <div class="legend-item legend-pendente">
-                <div><div class="legend-title">🕒 Pendentes / Andamento</div><small style="color: #888;" id="percPendentes">0% do total</small></div>
+                <div><div class="legend-title">🕒 Pendentes</div><small style="color: #888;" id="percPendentes">0%</small></div>
                 <div class="legend-value" id="valPendentes">0</div>
             </div>
             <div class="legend-item legend-cancelado">
-                <div><div class="legend-title">❌ Cancelados</div><small style="color: #888;" id="percCancelados">0% do total</small></div>
+                <div><div class="legend-title">❌ Cancelados</div><small style="color: #888;" id="percCancelados">0%</small></div>
                 <div class="legend-value" id="valCancelados">0</div>
             </div>
         </div>
     </div>
 
-    <h3 style="margin-bottom: 15px; color: var(--color-blue);">💰 Faturamento Histórico</h3>
+    <h3 style="margin-bottom: 15px; color: var(--color-blue); display: flex; align-items: center; gap: 10px;">💰 Faturamento Histórico</h3>
     <div id="resumo" class="resumo-grid">
-        <div class="kpi-card"><span>Total de Pedidos</span><strong id="kpiTotalPedidos">...</strong></div>
-        <div class="kpi-card"><span>Faturamento Líquido</span><strong style="color: var(--color-green);" id="kpiFaturamento">...</strong></div>
+        <div class="kpi-card"><span>Total de Pedidos</span><strong id="kpiTotalPedidos">0</strong></div>
+        <div class="kpi-card"><span>Faturamento Líquido</span><strong style="color: var(--color-green);" id="kpiFaturamento">R$ 0,00</strong></div>
     </div>
 
     <section id="listaPedidos">
         <p style="text-align: center; color: #888;">Buscando histórico de vendas...</p>
     </section>
-  </main>
+</main>
 
-  <script>
+<script>
     window.toggleMenu = () => document.getElementById("menuDropdown").classList.toggle("show");
     window.toggleDia = (header) => {
       const content = header.nextElementSibling;
@@ -168,8 +152,6 @@
     document.addEventListener("DOMContentLoaded", async () => {
       const user = JSON.parse(localStorage.getItem("user") || "{}");
       const company_id = user.company_id || user.id;
-
-      const resumoEl = document.getElementById("resumo");
       const listaEl = document.getElementById("listaPedidos");
 
       if (!company_id) {
@@ -178,123 +160,107 @@
       }
 
       try {
-        // 1. CARREGAR DADOS DO GRÁFICO
-        const resDashboard = await fetch(`/api/reports/dashboard?company_id=${company_id}`);
-        const dataDashboard = await resDashboard.json();
+        // 1. DADOS DO DASHBOARD/GRÁFICO
+        const resDash = await fetch(`/api/reports/dashboard?company_id=${company_id}`);
+        const dash = await resDash.json();
 
-        if (dataDashboard.ok) {
-            const stats = dataDashboard.stats;
-            const totalMes = stats.prontos + stats.pendentes + stats.cancelados;
-            
-            document.getElementById('valProntos').innerText = stats.prontos;
-            document.getElementById('valPendentes').innerText = stats.pendentes;
-            document.getElementById('valCancelados').innerText = stats.cancelados;
+        if (dash.ok) {
+            const { prontos, pendentes, cancelados } = dash.stats;
+            const total = prontos + pendentes + cancelados;
 
-            if(totalMes > 0) {
-                document.getElementById('percProntos').innerText = ((stats.prontos / totalMes) * 100).toFixed(1) + "%";
-                document.getElementById('percPendentes').innerText = ((stats.pendentes / totalMes) * 100).toFixed(1) + "%";
-                document.getElementById('percCancelados').innerText = ((stats.cancelados / totalMes) * 100).toFixed(1) + "%";
+            document.getElementById('valProntos').innerText = prontos;
+            document.getElementById('valPendentes').innerText = pendentes;
+            document.getElementById('valCancelados').innerText = cancelados;
+
+            if (total > 0) {
+                document.getElementById('percProntos').innerText = ((prontos/total)*100).toFixed(1) + "%";
+                document.getElementById('percPendentes').innerText = ((pendentes/total)*100).toFixed(1) + "%";
+                document.getElementById('percCancelados').innerText = ((cancelados/total)*100).toFixed(1) + "%";
             }
 
-            const ctx = document.getElementById('meuGrafico').getContext('2d');
-            new Chart(ctx, {
+            new Chart(document.getElementById('meuGrafico'), {
                 type: 'doughnut',
                 data: {
                     labels: ['Prontos', 'Pendentes', 'Cancelados'],
                     datasets: [{
-                        data: [stats.prontos, stats.pendentes, stats.cancelados],
+                        data: [prontos, pendentes, cancelados],
                         backgroundColor: ['#51cf66', '#fcc419', '#fa5252'],
-                        borderColor: '#1a1a1a', borderWidth: 2, hoverOffset: 15
+                        borderColor: '#1a1a1a',
+                        borderWidth: 3
                     }]
                 },
-                options: {
-                    responsive: true, maintainAspectRatio: false, cutout: '70%',
-                    plugins: {
-                        legend: { display: false },
-                        tooltip: { backgroundColor: 'rgba(0,0,0,0.8)', titleFont: { size: 14 }, bodyFont: { size: 16, weight: 'bold' }, padding: 15, cornerRadius: 8, displayColors: false, callbacks: { label: function(context) { return ` ${context.raw} Pedidos`; } } }
-                    }
+                options: { 
+                    responsive: true, 
+                    maintainAspectRatio: false, 
+                    cutout: '70%',
+                    plugins: { legend: { display: false } } 
                 }
             });
         }
 
-        // 2. CARREGAR HISTÓRICO DE VENDAS
-        const resHistory = await fetch(`/api/orders/history?company_id=${company_id}`);
-        const dataHistory = await resHistory.json();
+        // 2. HISTÓRICO DE PEDIDOS
+        const resHis = await fetch(`/api/orders/history?company_id=${company_id}`);
+        const data = await resHis.json();
 
-        if (!dataHistory.ok) throw new Error(dataHistory.error || "Erro.");
-
-        const pedidos = dataHistory.pedidos || [];
-        if (pedidos.length === 0) {
-          listaEl.innerHTML = "<p style='text-align:center; color:#888;'>Nenhum histórico encontrado.</p>";
-          return;
-        }
-
-        // Soma TOTAL pulando os cancelados
-        const totalVendas = pedidos.reduce((s, p) => p.status === 'cancelado' ? s : s + (Number(p.total) || 0), 0);
-        document.getElementById("kpiTotalPedidos").innerText = pedidos.length;
-        document.getElementById("kpiFaturamento").innerText = `R$ ${totalVendas.toFixed(2).replace('.',',')}`;
-
-        const porDia = {};
-        pedidos.forEach(p => {
-          const dia = new Date(p.status_updated_at || p.created_at).toLocaleDateString("pt-BR");
-          if (!porDia[dia]) porDia[dia] = [];
-          porDia[dia].push(p);
-        });
-
-        listaEl.innerHTML = Object.keys(porDia).sort((a,b) => {
-           return b.split('/').reverse().join('') - a.split('/').reverse().join('');
-        }).map(dia => {
-          
-          // Soma DO DIA pulando os cancelados
-          const totalDia = porDia[dia].reduce((s, p) => p.status === 'cancelado' ? s : s + (Number(p.total) || 0), 0);
-          
-          const cardsHtml = porDia[dia].map(p => {
-            let items = [];
-            try { items = Array.isArray(p.items) ? p.items : JSON.parse(p.items || "[]"); } catch { items = []; }
+        if (data.ok && data.pedidos) {
+            const pedidos = data.pedidos;
             
-            const isCancelado = p.status === 'cancelado';
-            const corBorda = isCancelado ? 'var(--color-red)' : 'var(--color-green)';
-            const opacidade = isCancelado ? '0.6' : '1';
-            const tagCancelado = isCancelado ? `<span style="background: var(--color-red); color: white; font-size: 0.7rem; padding: 2px 6px; border-radius: 4px; margin-left: 10px;">CANCELADO</span>` : '';
-            const precoFormatado = Number(p.total).toFixed(2).replace('.',',');
-            const htmlPreco = isCancelado ? `<strike style="color:#888;">R$ ${precoFormatado}</strike>` : `<strong>R$ ${precoFormatado}</strong>`;
+            // Faturamento líquido ignora pedidos cancelados TOTALMENTE
+            const faturamento = pedidos.reduce((acc, p) => p.status === 'cancelado' ? acc : acc + p.total, 0);
+            document.getElementById("kpiTotalPedidos").innerText = pedidos.length;
+            document.getElementById("kpiFaturamento").innerText = `R$ ${faturamento.toLocaleString('pt-BR', {minimumFractionDigits: 2})}`;
 
-            return `
-              <div class="pedido-card" style="border-left-color: ${corBorda}; opacity: ${opacidade};">
-                <div style="display:flex; justify-content:space-between; margin-bottom:5px;">
-                  <div>
-                      <span style="color:var(--color-blue); font-weight:bold;">#${p.id}</span>
-                      ${tagCancelado}
-                  </div>
-                  <small style="color:#888;">${new Date(p.status_updated_at || p.created_at).toLocaleTimeString("pt-BR", {hour:'2-digit', minute:'2-digit'})}</small>
-                </div>
-                <div style="font-size:0.9rem; margin-bottom:8px;">
-                  ${items.map(i => `<span style="color:var(--color-amber);">${i.qty}x</span> <span style="${isCancelado ? 'text-decoration: line-through;' : ''}">${i.name}</span>`).join("<br>")}
-                </div>
-                <div style="display:flex; justify-content:space-between; border-top: 1px solid #333; padding-top:8px;">
-                  <small>${p.table_name ? 'Mesa: '+p.table_name : 'Balcão'}</small>
-                  ${htmlPreco}
-                </div>
-              </div>
-            `;
-          }).join("");
+            const porDia = {};
+            pedidos.forEach(p => {
+                const dia = new Date(p.created_at).toLocaleDateString('pt-BR');
+                if (!porDia[dia]) porDia[dia] = [];
+                porDia[dia].push(p);
+            });
 
-          return `
-            <div class="dia-group">
-              <div class="dia-header" onclick="toggleDia(this)">
-                <span>📅 ${dia}</span>
-                <span style="color:var(--color-green)">R$ ${totalDia.toFixed(2).replace('.',',')} ▾</span>
-              </div>
-              <div class="dia-content">${cardsHtml}</div>
-            </div>
-          `;
-        }).join("");
+            listaEl.innerHTML = Object.keys(porDia).sort((a,b) => b.split('/').reverse().join('') - a.split('/').reverse().join('')).map(dia => {
+                const totalDia = porDia[dia].reduce((acc, p) => p.status === 'cancelado' ? acc : acc + p.total, 0);
+                
+                const cards = porDia[dia].map(p => {
+                    const items = Array.isArray(p.items) ? p.items : JSON.parse(p.items || "[]");
+                    const isTotalCancel = p.status === 'cancelado';
+                    
+                    const itemsHtml = items.map(i => {
+                        const itemCancelado = (i.destination === 'bar' && p.status_bar === 'cancelado') || (i.destination !== 'bar' && p.status_cozinha === 'cancelado');
+                        const style = (isTotalCancel || itemCancelado) ? 'text-decoration: line-through; color: var(--color-red); opacity: 0.7;' : '';
+                        return `<div style="${style}"><span style="color:var(--color-blue); font-weight:bold;">${i.qty}x</span> ${i.name}</div>`;
+                    }).join("");
 
+                    return `
+                        <div class="pedido-card" style="border-left-color: ${isTotalCancel ? 'var(--color-red)' : 'var(--color-green)'}; opacity: ${isTotalCancel ? '0.6' : '1'}">
+                            <div style="display:flex; justify-content:space-between; margin-bottom:5px;">
+                                <span style="color:var(--color-blue); font-weight:bold;">#${p.id} ${isTotalCancel ? '(CANCELADO)' : ''}</span>
+                                <small style="color:#888;">${new Date(p.created_at).toLocaleTimeString('pt-BR', {hour:'2-digit', minute:'2-digit'})}</small>
+                            </div>
+                            <div style="font-size:0.9rem; margin-bottom:8px;">${itemsHtml}</div>
+                            <div style="display:flex; justify-content:space-between; border-top: 1px solid #333; padding-top:8px;">
+                                <small>Mesa: ${p.table_name || 'Balcão'}</small>
+                                <strong>R$ ${p.total.toLocaleString('pt-BR', {minimumFractionDigits: 2})}</strong>
+                            </div>
+                        </div>`;
+                }).join("");
+
+                return `
+                    <div class="dia-group">
+                        <div class="dia-header" onclick="toggleDia(this)">
+                            <span>📅 ${dia}</span>
+                            <span style="color:var(--color-green)">R$ ${totalDia.toLocaleString('pt-BR', {minimumFractionDigits: 2})} ▾</span>
+                        </div>
+                        <div class="dia-content">${cards}</div>
+                    </div>`;
+            }).join("");
+        }
       } catch (err) {
         console.error(err);
-        listaEl.innerHTML = `<p style="color:red; text-align:center;">Erro ao carregar: ${err.message}</p>`;
+        listaEl.innerHTML = "<p style='text-align:center;'>Erro ao carregar relatório.</p>";
       }
     });
-  </script>
+
+    function logout() { localStorage.removeItem("user"); window.location.href = 'login.html'; }
+</script>
 </body>
 </html>
