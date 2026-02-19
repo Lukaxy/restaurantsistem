@@ -350,8 +350,9 @@ app.post("/api/orders/:id/status", async (req, res) => {
 app.get("/api/orders/history", async (req, res) => {
     const { company_id } = req.query;
     try {
+        // 👇 ADICIONAMOS O 'cancelado' AQUI NA BUSCA DO BANCO
         const result = await db.execute({ 
-            sql: `SELECT * FROM orders WHERE company_id = ? AND status IN ('finalizado', 'pronto', 'entregue', 'pago', 'concluido') ORDER BY status_updated_at DESC`, 
+            sql: `SELECT * FROM orders WHERE company_id = ? AND status IN ('finalizado', 'pronto', 'entregue', 'pago', 'concluido', 'cancelado') ORDER BY status_updated_at DESC`, 
             args: [company_id] 
         });
         const rows = result.rows.map(r => ({...r, items: JSON.parse(r.items || "[]")}));
