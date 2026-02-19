@@ -98,7 +98,7 @@ async function loadOrders() {
 
             // VERIFICAÇÃO DE COZINHA PENDENTE
             const temCozinha = order.items.some(item => item.destination !== 'bar');
-            const cozinhaPendente = temCozinha && (order.status_cozinha !== 'pronto');
+            const cozinhaPendente = temCozinha && (order.status_cozinha === 'novo' || order.status_cozinha === 'preparando');
 
             const card = document.createElement("div");
             card.className = "order-card";
