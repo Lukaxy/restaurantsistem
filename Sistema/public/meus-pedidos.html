@@ -35,7 +35,7 @@
       100% { transform: scale(1); opacity: 1; }
     }
 
-      .menu-dropdown {
+    .menu-dropdown {
       display: none;
       position: absolute;
       background: #1a1d21;
@@ -113,8 +113,10 @@ document.addEventListener("DOMContentLoaded", () => {
       try { items = Array.isArray(p.items) ? p.items : JSON.parse(p.items || "[]"); } catch {}
       
       const hora = new Date(p.created_at).toLocaleTimeString("pt-BR", {hour:"2-digit",minute:"2-digit"});
+      
+      // Lógica de Status Dinâmica
       let statusClass = "status-novo";
-      let statusTxt = "🕒 Aguardando Cozinha";
+      let statusTxt = "🕒 Aguardando Preparo";
       let alertVisual = ""; 
 
       if(p.status === "preparando" || p.status === "em preparo") {
@@ -154,7 +156,6 @@ document.addEventListener("DOMContentLoaded", () => {
       const data = await res.json();
       if (!data.ok) throw new Error(data.error || "Erro.");
 
-      // Lógica de Notificação (Alerta visual na aba)
       const listaProntos = data.pedidos.filter(p => p.status === 'pronto');
       if (listaProntos.length > 0) {
           const idMaisRecente = Math.max(...listaProntos.map(p => p.id));
@@ -166,17 +167,12 @@ document.addEventListener("DOMContentLoaded", () => {
 
       const agora = new Date().getTime();
       pedidos = data.pedidos.filter(p => {
-        if (p.status === "cancelado") return false;
+        if (p.status === "cancelado" || p.status === "entregue" || p.status === "pago") return false;
+        
         if (p.status === "pronto") {
           const dataRef = p.status_updated_at || p.created_at;
-          if (!dataRef) return true;
-
           const atualizado = new Date(dataRef).getTime();
           const diferenca = agora - atualizado;
-
-          // Se a diferença for negativa (devido a pequenos atrasos de sincronia), mantém o pedido
-          if (diferenca < 0) return true;
-          
           return diferenca < CINCO_MINUTOS;
         }
         return true;
@@ -194,6 +190,10 @@ document.addEventListener("DOMContentLoaded", () => {
 
 function toggleMenu() {
   document.getElementById("menuDropdown").classList.toggle("show");
+}
+function logout() {
+  localStorage.removeItem("user");
+  window.location.href = 'login.html';
 }
 </script>
 
