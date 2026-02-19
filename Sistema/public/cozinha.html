@@ -173,13 +173,12 @@ async function processarEtapa(id, acao, barPendente = false) {
 
     try {
         if (acao === 'aceitar') {
+            // Manda só o status da cozinha pro backend
             await updateSector(id, 'cozinha', 'preparando');
-            await updateGlobal(id, 'preparando');
         
         } else if (acao === 'finalizar') {
+            // Manda só o status da cozinha pro backend
             await updateSector(id, 'cozinha', 'pronto');
-            // Se chegou aqui, barPendente já é false (pela trava do botão)
-            await updateGlobal(id, 'pronto');
         }
         
         loadOrders();
@@ -203,7 +202,7 @@ async function cancelarPedido(id) {
     btn.disabled = true;
 
     try {
-        // Atualiza a cozinha e o pedido geral para "cancelado"
+        // Atualiza SÓ A COZINHA para "cancelado". O backend calcula o global.
         await updateSector(id, 'cozinha', 'cancelado');        
         loadOrders();
     } catch (e) {
@@ -219,14 +218,6 @@ async function updateSector(id, sector, status) {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ sector, status })
-    });
-}
-
-async function updateGlobal(id, status) {
-    await fetch(`/api/orders/${id}/status`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ status })
     });
 }
 
