@@ -102,7 +102,7 @@ async function loadOrders() {
 
             // LÓGICA DE VERIFICAÇÃO DO BAR
             const temBar = order.items.some(item => item.destination === 'bar');
-            const barPendente = temBar && (order.status_bar !== 'pronto' && order.status_bar !== 'entregue');
+            const barPendente = temBar && (order.status_bar === 'novo' || order.status_bar === 'preparando');
 
             const card = document.createElement("div");
             card.className = "order-card";
