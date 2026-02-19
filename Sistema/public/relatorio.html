@@ -7,6 +7,8 @@
   
   <link rel="stylesheet" href="css/style.css" />
   
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  
   <style>
     :root {
       --bg-card: #1a1a1a;
@@ -14,6 +16,7 @@
       --color-amber: #fcc419;
       --color-green: #51cf66;
       --color-blue: #339af0;
+      --color-red: #fa5252;
     }
 
     .resumo-grid {
@@ -30,8 +33,61 @@
       text-align: center;
       border: 1px solid var(--border-color);
     }
-    .kpi-card span { display: block; color: #adb5bd; font-size: 0.9rem; }
+    .kpi-card span { display: block; color: #adb5bd; font-size: 0.9rem; margin-bottom: 5px; }
     .kpi-card strong { font-size: 1.4rem; color: var(--color-blue); }
+
+    /* --- LAYOUT DO DASHBOARD (Gráfico + Legenda) --- */
+    .dashboard-container {
+      display: grid;
+      grid-template-columns: 1fr 1fr; /* Divide em duas colunas iguais */
+      gap: 20px;
+      background: var(--bg-card);
+      padding: 20px;
+      border-radius: 12px;
+      border: 1px solid var(--border-color);
+      margin-bottom: 25px;
+      align-items: center;
+    }
+
+    .chart-box {
+      position: relative;
+      height: 250px; /* Altura fixa pro gráfico não explodir */
+      display: flex;
+      justify-content: center;
+    }
+
+    .legend-box {
+      display: flex;
+      flex-direction: column;
+      gap: 15px;
+    }
+
+    .legend-item {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      background: #0d0d0d;
+      padding: 12px 15px;
+      border-radius: 8px;
+      border-left: 4px solid transparent;
+      transition: 0.3s;
+    }
+    
+    .legend-item:hover {
+      transform: translateX(5px);
+      background: #252a2e;
+    }
+
+    .legend-pronto { border-color: var(--color-green); }
+    .legend-pendente { border-color: var(--color-amber); }
+    .legend-cancelado { border-color: var(--color-red); }
+
+    .legend-title { font-weight: bold; color: #fff; font-size: 1.1rem; }
+    .legend-value { font-size: 1.2rem; font-weight: bold; }
+    .legend-pronto .legend-value { color: var(--color-green); }
+    .legend-pendente .legend-value { color: var(--color-amber); }
+    .legend-cancelado .legend-value { color: var(--color-red); }
+    /* ----------------------------------------------- */
 
     .dia-group {
       margin-bottom: 15px;
@@ -74,6 +130,11 @@
     }
     .menu-dropdown.show { display: block; }
     .menu-dropdown div { padding: 10px 20px; cursor: pointer; border-bottom: 1px solid #333; }
+
+    /* Responsividade para celular: empilha o gráfico e a legenda */
+    @media (max-width: 768px) {
+      .dashboard-container { grid-template-columns: 1fr; }
+    }
   </style>
 </head>
 <body>
@@ -84,19 +145,57 @@
     <div id="menuDropdown" class="menu-dropdown">
       <div onclick="window.location.href='index.html'">Cardápio 📙</div>
       <div onclick="window.location.href='cozinha.html'">Cozinha 👨‍🍳</div>
+      <div onclick="window.location.href='bar.html'">Bar 🍹</div>
+      <div onclick="window.location.href='meus-pedidos.html'">Meus Pedidos 🧾</div>
       <div onclick="window.location.href='relatorio.html'">Relatório 📈</div>
       <div onclick="window.location.href='configuracoes.html'">Configurações ⚙️</div>
       <div onclick="window.location.href='company-admin.html'">Painel da Empresa 🏢</div>
       <div onclick="logout()" style="color: var(--color-red);">Sair do Sistema 🚪</div>
     </div>
   </div>
-  <div class="header-title">Relatório 🧾</div>
+  <div class="header-title">Relatório 📈</div>
 </header>
 
   <main style="padding: 20px;">
+    
+    <h3 style="margin-bottom: 15px; color: var(--color-blue);">📊 Desempenho do Mês Atual</h3>
+    <div class="dashboard-container">
+        
+        <div class="chart-box">
+            <canvas id="meuGrafico"></canvas>
+        </div>
+
+        <div class="legend-box">
+            <div class="legend-item legend-pronto">
+                <div>
+                    <div class="legend-title">✅ Prontos / Entregues</div>
+                    <small style="color: #888;" id="percProntos">0% do total</small>
+                </div>
+                <div class="legend-value" id="valProntos">0</div>
+            </div>
+
+            <div class="legend-item legend-pendente">
+                <div>
+                    <div class="legend-title">🕒 Pendentes / Andamento</div>
+                    <small style="color: #888;" id="percPendentes">0% do total</small>
+                </div>
+                <div class="legend-value" id="valPendentes">0</div>
+            </div>
+
+            <div class="legend-item legend-cancelado">
+                <div>
+                    <div class="legend-title">❌ Cancelados</div>
+                    <small style="color: #888;" id="percCancelados">0% do total</small>
+                </div>
+                <div class="legend-value" id="valCancelados">0</div>
+            </div>
+        </div>
+    </div>
+
+    <h3 style="margin-bottom: 15px; color: var(--color-blue);">💰 Faturamento Histórico</h3>
     <div id="resumo" class="resumo-grid">
-        <div class="kpi-card"><span>Pedidos</span><strong>...</strong></div>
-        <div class="kpi-card"><span>Total</span><strong>...</strong></div>
+        <div class="kpi-card"><span>Pedidos Concluídos</span><strong>...</strong></div>
+        <div class="kpi-card"><span>Faturamento Total</span><strong>...</strong></div>
     </div>
 
     <section id="listaPedidos">
@@ -105,7 +204,6 @@
   </main>
 
   <script>
-    // Funções Globais
     window.toggleMenu = () => document.getElementById("menuDropdown").classList.toggle("show");
     
     window.toggleDia = (header) => {
@@ -114,7 +212,6 @@
     };
 
     document.addEventListener("DOMContentLoaded", async () => {
-      // 1. Pegar dados do usuário (Importante: usar company_id com underline)
       const user = JSON.parse(localStorage.getItem("user") || "{}");
       const company_id = user.company_id || user.id;
 
@@ -127,20 +224,85 @@
       }
 
       try {
-        // 2. Chamar a API de histórico
-        const res = await fetch(`/api/orders/history?company_id=${company_id}`);
-        const data = await res.json();
+        // ==========================================
+        // 1. CARREGAR DADOS DO GRÁFICO (MÊS ATUAL)
+        // ==========================================
+        const resDashboard = await fetch(`/api/reports/dashboard?company_id=${company_id}`);
+        const dataDashboard = await resDashboard.json();
 
-        if (!data.ok) throw new Error(data.error || "Erro ao carregar dados.");
+        if (dataDashboard.ok) {
+            const stats = dataDashboard.stats;
+            const totalMes = stats.prontos + stats.pendentes + stats.cancelados;
+            
+            // Atualiza os números na Legenda da Direita
+            document.getElementById('valProntos').innerText = stats.prontos;
+            document.getElementById('valPendentes').innerText = stats.pendentes;
+            document.getElementById('valCancelados').innerText = stats.cancelados;
 
-        const pedidos = data.pedidos || [];
+            // Calcula as porcentagens
+            if(totalMes > 0) {
+                document.getElementById('percProntos').innerText = ((stats.prontos / totalMes) * 100).toFixed(1) + "% do total";
+                document.getElementById('percPendentes').innerText = ((stats.pendentes / totalMes) * 100).toFixed(1) + "% do total";
+                document.getElementById('percCancelados').innerText = ((stats.cancelados / totalMes) * 100).toFixed(1) + "% do total";
+            }
+
+            // Injeta o Gráfico Chart.js
+            const ctx = document.getElementById('meuGrafico').getContext('2d');
+            new Chart(ctx, {
+                type: 'doughnut', // Tipo Pizza com furo no meio
+                data: {
+                    labels: ['Prontos', 'Pendentes', 'Cancelados'],
+                    datasets: [{
+                        data: [stats.prontos, stats.pendentes, stats.cancelados],
+                        backgroundColor: [
+                            '#51cf66', // Verde (Pronto)
+                            '#fcc419', // Amarelo (Pendente)
+                            '#fa5252'  // Vermelho (Cancelado)
+                        ],
+                        borderColor: '#1a1a1a', // Cor da borda combinando com o fundo
+                        borderWidth: 2,
+                        hoverOffset: 15 // Efeito de pular pra fora ao passar o mouse!
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: { display: false }, // Escondemos a legenda padrão pq fizemos uma melhor!
+                        tooltip: {
+                            backgroundColor: 'rgba(0,0,0,0.8)',
+                            titleFont: { size: 14 },
+                            bodyFont: { size: 16, weight: 'bold' },
+                            padding: 15,
+                            cornerRadius: 8,
+                            displayColors: false, // Esconde o quadradinho de cor na tooltip
+                            callbacks: {
+                                label: function(context) {
+                                    return ` ${context.raw} Pedidos`;
+                                }
+                            }
+                        }
+                    },
+                    cutout: '70%', // Tamanho do buraco no meio (deixa mais fino e elegante)
+                }
+            });
+        }
+
+        // ==========================================
+        // 2. CARREGAR HISTÓRICO DE VENDAS (COMO ERA ANTES)
+        // ==========================================
+        const resHistory = await fetch(`/api/orders/history?company_id=${company_id}`);
+        const dataHistory = await resHistory.json();
+
+        if (!dataHistory.ok) throw new Error(dataHistory.error || "Erro ao carregar dados.");
+
+        const pedidos = dataHistory.pedidos || [];
         if (pedidos.length === 0) {
           resumoEl.innerHTML = "";
-          listaEl.innerHTML = "<p style='text-align:center; color:#888;'>Nenhum pedido finalizado encontrado.</p>";
+          listaEl.innerHTML = "<p style='text-align:center; color:#888;'>Nenhum pedido finalizado encontrado no histórico.</p>";
           return;
         }
 
-        // 3. Calcular Resumo Geral
         const totalVendas = pedidos.reduce((s, p) => s + (Number(p.total) || 0), 0);
         resumoEl.innerHTML = `
           <div class="kpi-card">
@@ -153,7 +315,6 @@
           </div>
         `;
 
-        // 4. Agrupar por data
         const porDia = {};
         pedidos.forEach(p => {
           const dia = new Date(p.status_updated_at || p.created_at).toLocaleDateString("pt-BR");
@@ -161,7 +322,6 @@
           porDia[dia].push(p);
         });
 
-        // 5. Gerar a lista com efeito Abre/Fecha
         listaEl.innerHTML = Object.keys(porDia).sort((a,b) => {
            return b.split('/').reverse().join('') - a.split('/').reverse().join('');
         }).map(dia => {
@@ -207,11 +367,3 @@
   </script>
 </body>
 </html>
-
-
-
-
-
-
-
-
