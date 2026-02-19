@@ -24,9 +24,17 @@
     .order-header { display: flex; justify-content: space-between; font-weight: bold; margin-bottom: 10px; color: #d63384; }
     .order-item { padding: 5px 0; border-bottom: 1px solid #3a3f44; color: var(--text-primary); }
     .order-obs { color: #fcc419; font-size: 0.9em; margin-top: 2px; }
-    .btn-action { width: 100%; padding: 10px; margin-top: 10px; border: none; border-radius: 8px; cursor: pointer; font-weight: bold; }
+    
+    /* Novo layout para os botões ficarem lado a lado */
+    .button-group { display: flex; gap: 10px; margin-top: 10px; }
+    .btn-action { width: 100%; padding: 10px; border: none; border-radius: 8px; cursor: pointer; font-weight: bold; transition: 0.3s; }
+    
     .btn-accept { background: #d63384; color: white; }
     .btn-ready { background: var(--color-green); color: white; }
+    
+    /* Estilo do novo botão de cancelar */
+    .btn-cancel { background: #fa5252; color: white; }
+    .btn-cancel:hover { background: #e03131; }
   </style>
 </head>
 
@@ -104,13 +112,24 @@ async function loadOrders() {
                 </div>
             `).join("");
 
-            let btnHtml = "";
+            // Construção dos Botões
+            let primaryBtn = "";
+            let cancelBtn = `<button class="btn-action btn-cancel" onclick="cancelarPedido(${order.id})">Cancelar ❌</button>`;
+            
             if (currentStatus === 'novo') {
                 // Passa os dados necessários para a função inteligente
-                btnHtml = `<button class="btn-action btn-accept" onclick="processarBar(${order.id}, 'preparando', ${cozinhaPendente})">🍸 Preparar</button>`;
+                primaryBtn = `<button class="btn-action btn-accept" onclick="processarBar(${order.id}, 'preparando', ${cozinhaPendente})">🍸 Preparar</button>`;
             } else if (currentStatus === 'preparando') {
-                btnHtml = `<button class="btn-action btn-ready" onclick="processarBar(${order.id}, 'pronto', ${cozinhaPendente})">✅ Pronto</button>`;
+                primaryBtn = `<button class="btn-action btn-ready" onclick="processarBar(${order.id}, 'pronto', ${cozinhaPendente})">✅ Pronto</button>`;
             }
+
+            // Agrupa os botões
+            let btnHtml = `
+                <div class="button-group">
+                    ${primaryBtn}
+                    ${cancelBtn}
+                </div>
+            `;
 
             card.innerHTML = `
                 <div class="order-header">
@@ -157,6 +176,37 @@ async function processarBar(id, novoStatus, cozinhaPendente) {
     } catch (e) { 
         console.error(e);
         alert("Erro ao atualizar o bar."); 
+    }
+}
+
+// Nova função para cancelar o pedido
+async function cancelarPedido(id) {
+    const confirmacao = confirm("Tem certeza que deseja CANCELAR este pedido? Essa ação não pode ser desfeita.");
+    
+    if (!confirmacao) return;
+
+    const btn = event.target;
+    const originalText = btn.innerHTML;
+    btn.innerHTML = "...";
+    btn.disabled = true;
+
+    try {
+        // Atualiza o bar para cancelado
+        await fetch(`/api/orders/${id}/status-sector`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ sector: 'bar', status: 'cancelado' })
+        });
+
+        // Atualiza o pedido global para cancelado
+        await updateGlobal(id, 'cancelado');
+        
+        loadOrders();
+    } catch (e) {
+        console.error(e);
+        alert("Erro ao cancelar o pedido.");
+        btn.innerHTML = originalText;
+        btn.disabled = false;
     }
 }
 
