@@ -15,32 +15,26 @@ const app = express();
 app.use(cors());
 app.use(bodyParser.json({ limit: "5mb" }));
 
-// 1. DEFINIR PASTA PÚBLICA E CRIAR PASTA DE IMAGENS (ESSENCIAL PRO RENDER)
+// 1. DEFINIR PASTA PÚBLICA E CRIAR PASTA DE IMAGENS
 const publicPath = path.join(__dirname, "public");
 const uploadDir = path.join(publicPath, "img");
 
-// Garante que a pasta 'public/img' existe antes de qualquer coisa
 if (!fs.existsSync(uploadDir)){
     console.log("📁 Criando diretório de imagens...");
     fs.mkdirSync(uploadDir, { recursive: true });
 }
 
-// Libera o acesso aos arquivos estáticos (HTML, CSS, IMAGENS)
 app.use(express.static(publicPath));
 
 // =============================================================
-// 📸 CONFIGURAÇÃO DE UPLOAD (MULTER) - NOVO!
+// 📸 CONFIGURAÇÃO DE UPLOAD (MULTER)
 // =============================================================
 const storage = multer.diskStorage({
     destination: function (req, file, cb) {
-        cb(null, uploadDir); // Salva dentro de public/img criado acima
+        cb(null, uploadDir); 
     },
     filename: function (req, file, cb) {
-        // Pega o ID da empresa vindo do corpo da requisição
         const idEmpresa = req.body.companyId;
-        
-        // Força o nome: logo-companyid-{ID}.png
-        // Isso permite que o front-end "adivinhe" a imagem sem consultar o banco
         cb(null, `logo-companyid-${idEmpresa}.png`);
     }
 });
@@ -64,27 +58,16 @@ const MASTER_EMAIL = "lucasferreira123459966@gmail.com";
 const MASTER_SENHA = "Lu@14032004";
 
 function getHoraLocalISOString() {
-  // Cria a data atual
   const date = new Date();
-  
-  // Força o fuso horário de Campo Grande - MS
   const options = {
     timeZone: 'America/Campo_Grande',
-    year: 'numeric',
-    month: '2-digit',
-    day: '2-digit',
-    hour: '2-digit',
-    minute: '2-digit',
-    second: '2-digit',
+    year: 'numeric', month: '2-digit', day: '2-digit',
+    hour: '2-digit', minute: '2-digit', second: '2-digit',
     hour12: false
   };
-  
-  // Formata para pegar as partes certas
   const formatter = new Intl.DateTimeFormat('pt-BR', options);
   const parts = formatter.formatToParts(date);
   const getPart = (type) => parts.find(p => p.type === type).value;
-  
-  // Monta no padrão de banco de dados: AAAA-MM-DD HH:MM:SS
   return `${getPart('year')}-${getPart('month')}-${getPart('day')} ${getPart('hour')}:${getPart('minute')}:${getPart('second')}`;
 }
 
@@ -94,42 +77,19 @@ function getHoraLocalISOString() {
 async function initDb() {
   console.log("🔄 Iniciando verificação do Banco de Dados...");
   try {
-    // 1. Criação das Tabelas
     await db.execute(`CREATE TABLE IF NOT EXISTS companies (id INTEGER PRIMARY KEY AUTOINCREMENT, name TEXT, email_admin TEXT UNIQUE, whatsapp TEXT, senha_hash TEXT, plano TEXT DEFAULT 'trial', trial_expires_at TEXT, created_at TEXT)`);
     await db.execute(`CREATE TABLE IF NOT EXISTS users (id INTEGER PRIMARY KEY AUTOINCREMENT, company_id INTEGER, name TEXT, email TEXT UNIQUE, senha_hash TEXT, role TEXT DEFAULT 'atendente', ativo INTEGER DEFAULT 1, created_at TEXT)`);
     await db.execute(`CREATE TABLE IF NOT EXISTS orders (id INTEGER PRIMARY KEY AUTOINCREMENT, company_id INTEGER, items TEXT, total REAL, table_name TEXT, notes TEXT, status TEXT DEFAULT 'novo', created_at TEXT, status_updated_at TEXT, payment_method TEXT)`);
     await db.execute(`CREATE TABLE IF NOT EXISTS products (id INTEGER PRIMARY KEY AUTOINCREMENT, company_id INTEGER, name TEXT, price REAL, category TEXT, description TEXT)`);
     
-    // Tenta adicionar a coluna visible se não existir (ignora erro se já existir)
-    try {
-        await db.execute(`ALTER TABLE products ADD COLUMN visible INTEGER DEFAULT 1`);
-    } catch (e) { /* Coluna já existe, segue o jogo */ }
+    try { await db.execute(`ALTER TABLE products ADD COLUMN visible INTEGER DEFAULT 1`); } catch (e) { }
+    try { await db.execute(`ALTER TABLE products ADD COLUMN destination TEXT DEFAULT 'cozinha'`); } catch (e) { }
+    try { await db.execute(`ALTER TABLE orders ADD COLUMN status_cozinha TEXT DEFAULT 'novo'`); } catch (e) {}
+    try { await db.execute(`ALTER TABLE orders ADD COLUMN status_bar TEXT DEFAULT 'novo'`); } catch (e) {}
     
     console.log("✅ Tabelas verificadas.");
-
-    //'destination' na tabela products (se não existir)
-    try {
-        await db.execute(`ALTER TABLE products ADD COLUMN destination TEXT DEFAULT 'cozinha'`);
-        console.log("✅ Coluna 'destination' adicionada/verificada em Products.");
-    } catch (e) {
-        // Se der erro é porque a coluna já existe, então ignoramos
-    }
-
-      // ATUALIZAÇÃO: Adiciona colunas independentes 
-    try {
-        await db.execute(`ALTER TABLE orders ADD COLUMN status_cozinha TEXT DEFAULT 'novo'`);
-        console.log("✅ Coluna 'status_cozinha' verificada.");
-    } catch (e) {}
-
-    try {
-        await db.execute(`ALTER TABLE orders ADD COLUMN status_bar TEXT DEFAULT 'novo'`);
-        console.log("✅ Coluna 'status_bar' verificada.");
-    } catch (e) {}
-    
  
-    // 2. Verificação/Criação do Master
     const checkMaster = await db.execute({ sql: "SELECT * FROM users WHERE email = ?", args: [MASTER_EMAIL] });
-    
     if (checkMaster.rows.length === 0) {
       console.log("👤 Criando Usuário Master...");
       const hash = bcrypt.hashSync(MASTER_SENHA, 10);
@@ -138,7 +98,6 @@ async function initDb() {
         args: ["Admin Master", MASTER_EMAIL, hash, getHoraLocalISOString()]
       });
     }
-
   } catch (err) { 
     console.error("❌ FALHA CRÍTICA NO BANCO:", err);
     process.exit(1);
@@ -148,7 +107,6 @@ async function initDb() {
 // =============================================================
 // 📡 ROTAS DE AUTENTICAÇÃO
 // =============================================================
-
 app.post("/api/login", async (req, res) => {
   const { email, senha } = req.body;
   try {
@@ -165,16 +123,10 @@ app.post("/api/login", async (req, res) => {
     
     if (user.plano === 'bloqueado') return res.status(403).json({ ok: false, error: "Conta suspensa." });
 
-    const expirou = user.role !== 'master' && 
-                    user.trial_expires_at && 
-                    (new Date() > new Date(user.trial_expires_at));
-
-    if (expirou) {
-        return res.json({ ok: true, user: { ...user, planoExpirado: true } });
-    }
+    const expirou = user.role !== 'master' && user.trial_expires_at && (new Date() > new Date(user.trial_expires_at));
+    if (expirou) return res.json({ ok: true, user: { ...user, planoExpirado: true } });
 
     res.json({ ok: true, user: { ...user, planoExpirado: false } });
-
   } catch (err) {
     console.error("Erro Login:", err);
     if (!res.headersSent) res.status(500).json({ ok: false, error: "Erro interno." });
@@ -186,7 +138,6 @@ app.post("/api/admin-login", async (req, res) => {
   try {
     const result = await db.execute({ sql: "SELECT * FROM users WHERE email = ? AND role = 'master'", args: [email] });
     const user = result.rows[0];
-    
     if (!user) return res.status(401).json({ ok: false, error: "Master não encontrado." });
 
     const valid = await bcrypt.compare(String(senha), String(user.senha_hash));
@@ -222,29 +173,20 @@ app.post("/api/register-company", async (req, res) => {
   } catch (err) { res.status(400).json({ ok: false, error: err.message }); }
 });
 
-// =============================================================
-// 📤 ROTA DE UPLOAD DE LOGO 
-// =============================================================
 app.post("/api/upload-logo", upload.single('logo'), (req, res) => {
     try {
-        if (!req.file) {
-            return res.status(400).json({ error: "Nenhuma imagem enviada." });
-        }
-        
+        if (!req.file) return res.status(400).json({ error: "Nenhuma imagem enviada." });
         console.log(`✅ Logo atualizada para empresa ${req.body.companyId}`);
         res.redirect('/configuracoes.html?msg=logo_ok');
-        
     } catch (error) {
         console.error(error);
         res.status(500).send("Erro ao fazer upload da imagem.");
     }
 });
 
-
 // =============================================================
 // 📝 PEDIDOS E PRODUTOS
 // =============================================================
-
 app.get("/api/products", async (req, res) => {
     try {
         const result = await db.execute({ sql: `SELECT * FROM products WHERE company_id = ?`, args: [req.query.company_id] });
@@ -255,17 +197,13 @@ app.get("/api/products", async (req, res) => {
 app.post("/api/products", async (req, res) => {
   const { company_id, name, price, category, description, destination } = req.body;
   const destinoFinal = destination || 'cozinha';
-
   try {
       await db.execute({
           sql: `INSERT INTO products (company_id, name, price, category, description, destination) VALUES (?,?,?,?,?,?)`,
           args: [Number(company_id), name, price, category, description, destinoFinal]
       });
       res.json({ ok: true });
-  } catch (err) { 
-      console.error(err);
-      res.status(500).json({ ok: false }); 
-  }
+  } catch (err) { res.status(500).json({ ok: false }); }
 });
 
 app.delete("/api/products/:id", async (req, res) => {
@@ -279,10 +217,7 @@ app.put("/api/products/:id/visible", async (req, res) => {
     const { id } = req.params;
     const { visible } = req.body;
     try {
-        await db.execute({
-            sql: "UPDATE products SET visible = ? WHERE id = ?",
-            args: [visible, id]
-        });
+        await db.execute({ sql: "UPDATE products SET visible = ? WHERE id = ?", args: [visible, id] });
         res.json({ ok: true });
     } catch (err) { res.status(500).json({ ok: false }); }
 });
@@ -334,7 +269,6 @@ app.delete("/api/empresas/:id", async (req, res) => {
   } catch (err) { res.status(500).json({ ok: false }); }
 });
 
-// --- ADICIONAR DIAS / PLANOS ---
 app.post("/api/empresas/:id/add-days", async (req, res) => {
   const { id } = req.params;
   const { dias } = req.body;
@@ -364,20 +298,9 @@ app.post("/api/empresas/:id/plano", async (req, res) => {
 // --- MENU PÚBLICO ---
 app.get("/api/public/menu/:company_id", async (req, res) => {
     try {
-        const company = await db.execute({ 
-            sql: "SELECT name FROM companies WHERE id = ?", 
-            args: [req.params.company_id] 
-        });
-        
-        const products = await db.execute({ 
-            sql: "SELECT name, price, category, description FROM products WHERE company_id = ? AND visible = 1", 
-            args: [req.params.company_id] 
-        });
-
-        res.json({ 
-            restaurant: company.rows[0]?.name, 
-            menu: products.rows 
-        });
+        const company = await db.execute({ sql: "SELECT name FROM companies WHERE id = ?", args: [req.params.company_id] });
+        const products = await db.execute({ sql: "SELECT name, price, category, description FROM products WHERE company_id = ? AND visible = 1", args: [req.params.company_id] });
+        res.json({ restaurant: company.rows[0]?.name, menu: products.rows });
     } catch (err) { res.status(500).json({ error: "Erro ao carregar cardápio" }); }
 });
 
@@ -436,7 +359,9 @@ app.get("/api/orders/history", async (req, res) => {
     } catch (err) { res.status(500).json({ ok: false }); }
 });
 
-// ROTA ESPECIAL: Atualiza só um setor (Bar ou Cozinha)
+// =============================================================
+// 🧠 ROTA ESPECIAL: Atualiza Setor e Lógica de Cancelamento Parcial
+// =============================================================
 app.post("/api/orders/:id/status-sector", async (req, res) => {
     const { id } = req.params;
     const { sector, status } = req.body; 
@@ -456,16 +381,22 @@ app.post("/api/orders/:id/status-sector", async (req, res) => {
         const temBar = items.some(i => i.destination === 'bar');
         const temCozinha = items.some(i => i.destination !== 'bar');
 
+        const stCozinha = temCozinha ? order.status_cozinha : 'pronto';
+        const stBar = temBar ? order.status_bar : 'pronto';
+
         let novoStatusGlobal = null;
 
-        if (status === 'preparando') {
+        if ((!temCozinha || stCozinha === 'cancelado') && (!temBar || stBar === 'cancelado')) {
+            novoStatusGlobal = 'cancelado';
+        }
+        else if (stCozinha === 'preparando' || stBar === 'preparando') {
             novoStatusGlobal = 'preparando';
-        } 
-        else if (status === 'pronto') {
-            const barOk = !temBar || order.status_bar === 'pronto';
-            const cozinhaOk = !temCozinha || order.status_cozinha === 'pronto';
-
-            if (barOk && cozinhaOk) {
+        }
+        else {
+            const cozinhaResolvida = (!temCozinha || stCozinha === 'pronto' || stCozinha === 'cancelado');
+            const barResolvido = (!temBar || stBar === 'pronto' || stBar === 'cancelado');
+            
+            if (cozinhaResolvida && barResolvido && (stCozinha === 'pronto' || stBar === 'pronto')) {
                 novoStatusGlobal = 'pronto';
             }
         }
@@ -485,41 +416,28 @@ app.post("/api/orders/:id/status-sector", async (req, res) => {
 });
 
 // =============================================================
-// 📊 RELATÓRIOS E DASHBOARD (NOVO!)
+// 📊 RELATÓRIOS E DASHBOARD
 // =============================================================
 app.get("/api/reports/dashboard", async (req, res) => {
     const { company_id } = req.query;
-    
-    // Pega o ano e mês atual no formato "AAAA-MM" usando a sua função maravilhosa
     const mesAtual = getHoraLocalISOString().substring(0, 7); 
 
     try {
-        // Busca TODOS os pedidos deste mês (usa o LIKE no banco para filtrar só o mês atual)
         const result = await db.execute({
             sql: `SELECT status FROM orders WHERE company_id = ? AND created_at LIKE ?`,
             args: [company_id, `${mesAtual}%`]
         });
 
-        let prontos = 0;
-        let cancelados = 0;
-        let pendentes = 0;
+        let prontos = 0; let cancelados = 0; let pendentes = 0;
 
-        // Faz a contagem marota
         result.rows.forEach(row => {
-            if (row.status === 'cancelado') {
-                cancelados++;
-            } else if (['pronto', 'entregue', 'pago', 'concluido', 'finalizado'].includes(row.status)) {
-                prontos++;
-            } else {
-                pendentes++; // Se não tá pronto nem cancelado, tá rolando (novo, preparando, etc)
-            }
+            if (row.status === 'cancelado') cancelados++;
+            else if (['pronto', 'entregue', 'pago', 'concluido', 'finalizado'].includes(row.status)) prontos++;
+            else pendentes++; 
         });
 
         res.json({ ok: true, stats: { prontos, cancelados, pendentes }, mes: mesAtual });
-    } catch (err) {
-        console.error(err);
-        res.status(500).json({ ok: false, error: "Erro ao gerar estatísticas." });
-    }
+    } catch (err) { res.status(500).json({ ok: false, error: "Erro ao gerar estatísticas." }); }
 });
 
 // =============================================================
@@ -546,9 +464,7 @@ app.post("/api/pay/create", async (req, res) => {
                     number: docNumber?.replace(/\D/g, '') || '00000000000' 
                 }
             },
-            additional_info: {
-                ip_address: req.headers['x-forwarded-for'] || req.socket.remoteAddress
-            },
+            additional_info: { ip_address: req.headers['x-forwarded-for'] || req.socket.remoteAddress },
             metadata: { company_id: Number(company_id), dias_adicionar: Number(dias) }
         };
         if (deviceId) bodyPayment.metadata.device_id = deviceId;
@@ -586,10 +502,7 @@ app.post("/api/webhook", async (req, res) => {
 
 app.get("/api/companies/:id/status", async (req, res) => {
     try {
-        const result = await db.execute({ 
-            sql: "SELECT trial_expires_at, plano FROM companies WHERE id = ?", 
-            args: [req.params.id] 
-        });
+        const result = await db.execute({ sql: "SELECT trial_expires_at, plano FROM companies WHERE id = ?", args: [req.params.id] });
         const company = result.rows[0];
         if (company) res.json({ ok: true, expires_at: company.trial_expires_at, plano: company.plano });
         else res.status(404).json({ ok: false });
