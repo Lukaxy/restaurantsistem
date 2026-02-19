@@ -117,10 +117,9 @@ async function loadOrders() {
             let cancelBtn = `<button class="btn-action btn-cancel" onclick="cancelarPedido(${order.id})">Cancelar ❌</button>`;
             
             if (currentStatus === 'novo') {
-                // Passa os dados necessários para a função inteligente
-                primaryBtn = `<button class="btn-action btn-accept" onclick="processarBar(${order.id}, 'preparando', ${cozinhaPendente})">🍸 Preparar</button>`;
+                primaryBtn = `<button class="btn-action btn-accept" onclick="processarBar(${order.id}, 'preparando')">🍸 Preparar</button>`;
             } else if (currentStatus === 'preparando') {
-                primaryBtn = `<button class="btn-action btn-ready" onclick="processarBar(${order.id}, 'pronto', ${cozinhaPendente})">✅ Pronto</button>`;
+                primaryBtn = `<button class="btn-action btn-ready" onclick="processarBar(${order.id}, 'pronto')">✅ Pronto</button>`;
             }
 
             // Agrupa os botões
@@ -149,28 +148,15 @@ async function loadOrders() {
     } catch (err) { console.error(err); }
 }
 
-// FUNÇÃO INTELIGENTE DO BAR
-async function processarBar(id, novoStatus, cozinhaPendente) {
+// FUNÇÃO INTELIGENTE DO BAR (Agora o servidor faz o trabalho pesado)
+async function processarBar(id, novoStatus) {
     try {
-        // 1. Atualiza o Setor Bar
+        // Envia apenas o status do Bar para o servidor. O servidor calcula o global.
         await fetch(`/api/orders/${id}/status-sector`, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({ sector: 'bar', status: novoStatus })
         });
-
-        // 2. Lógica Global
-        if (novoStatus === 'preparando') {
-            // Se começou a preparar a bebida, avisa o global
-            await updateGlobal(id, 'preparando');
-        } 
-        else if (novoStatus === 'pronto') {
-            // Se o bar terminou e NÃO tem cozinha pendente, finaliza o global!
-            if (!cozinhaPendente) {
-                console.log("Bar finalizando pedido global sozinho.");
-                await updateGlobal(id, 'pronto');
-            }
-        }
 
         loadOrders();
     } catch (e) { 
@@ -191,15 +177,12 @@ async function cancelarPedido(id) {
     btn.disabled = true;
 
     try {
-        // Atualiza o bar para cancelado
+        // Envia apenas o cancelamento do Bar para o servidor.
         await fetch(`/api/orders/${id}/status-sector`, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({ sector: 'bar', status: 'cancelado' })
         });
-
-        // Atualiza o pedido global para cancelado
-        await updateGlobal(id, 'cancelado');
         
         loadOrders();
     } catch (e) {
@@ -208,14 +191,6 @@ async function cancelarPedido(id) {
         btn.innerHTML = originalText;
         btn.disabled = false;
     }
-}
-
-async function updateGlobal(id, status) {
-    await fetch(`/api/orders/${id}/status`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ status })
-    });
 }
 
 function toggleMenu() { document.getElementById("menuDropdown").classList.toggle("show"); }
