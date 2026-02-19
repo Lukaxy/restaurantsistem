@@ -24,9 +24,17 @@
     .order-header { display: flex; justify-content: space-between; font-weight: bold; margin-bottom: 10px; color: var(--color-blue); }
     .order-item { padding: 5px 0; border-bottom: 1px solid #3a3f44; color: var(--text-primary); }
     .order-obs { color: #fcc419; font-size: 0.9em; margin-top: 2px; }
-    .btn-action { width: 100%; padding: 10px; margin-top: 10px; border: none; border-radius: 8px; cursor: pointer; font-weight: bold; transition: 0.3s; }
+    
+    /* Novo layout para os botões ficarem lado a lado */
+    .button-group { display: flex; gap: 10px; margin-top: 10px; }
+    .btn-action { width: 100%; padding: 10px; border: none; border-radius: 8px; cursor: pointer; font-weight: bold; transition: 0.3s; }
+    
     .btn-accept { background: var(--color-blue); color: white; }
     .btn-ready { background: var(--color-green); color: white; }
+    
+    /* Estilo do novo botão de cancelar */
+    .btn-cancel { background: #fa5252; color: white; }
+    .btn-cancel:hover { background: #e03131; }
     
     /* Estilo para botão travado */
     .btn-locked { background: #444 !important; color: #888 !important; cursor: not-allowed !important; }
@@ -108,19 +116,29 @@ async function loadOrders() {
                 </div>
             `).join("");
 
-            let btnHtml = "";
+            // Construção dos Botões
+            let primaryBtn = "";
+            let cancelBtn = `<button class="btn-action btn-cancel" onclick="cancelarPedido(${order.id})">Cancelar ❌</button>`;
             
             if (currentStatus === 'novo') {
-                btnHtml = `<button class="btn-action btn-accept" onclick="processarEtapa(${order.id}, 'aceitar')">Aceitar 🔥</button>`;
+                primaryBtn = `<button class="btn-action btn-accept" onclick="processarEtapa(${order.id}, 'aceitar')">Aceitar 🔥</button>`;
             
             } else if (currentStatus === 'preparando') {
                 // SE O BAR ESTIVER PENDENTE: Desabilita o botão e avisa
                 if (barPendente) {
-                    btnHtml = `<button class="btn-action btn-locked" onclick="alert('O Bar ainda não finalizou a parte dele. Aguarde!')">Aguardando Bar 🍹</button>`;
+                    primaryBtn = `<button class="btn-action btn-locked" onclick="alert('O Bar ainda não finalizou a parte dele. Aguarde!')">Aguardando Bar 🍹</button>`;
                 } else {
-                    btnHtml = `<button class="btn-action btn-ready" onclick="processarEtapa(${order.id}, 'finalizar', false)">Pronto ✅</button>`;
+                    primaryBtn = `<button class="btn-action btn-ready" onclick="processarEtapa(${order.id}, 'finalizar', false)">Pronto ✅</button>`;
                 }
             }
+
+            // Agrupa os botões na nova div .button-group
+            let btnHtml = `
+                <div class="button-group">
+                    ${primaryBtn}
+                    ${cancelBtn}
+                </div>
+            `;
 
             card.innerHTML = `
                 <div class="order-header">
@@ -168,6 +186,31 @@ async function processarEtapa(id, acao, barPendente = false) {
     } catch (e) {
         console.error(e);
         alert("Erro ao processar");
+        btn.innerHTML = originalText;
+        btn.disabled = false;
+    }
+}
+
+// Nova função para cancelar o pedido
+async function cancelarPedido(id) {
+    const confirmacao = confirm("Tem certeza que deseja CANCELAR este pedido? Essa ação não pode ser desfeita.");
+    
+    if (!confirmacao) return;
+
+    const btn = event.target;
+    const originalText = btn.innerHTML;
+    btn.innerHTML = "...";
+    btn.disabled = true;
+
+    try {
+        // Atualiza a cozinha e o pedido geral para "cancelado"
+        await updateSector(id, 'cozinha', 'cancelado');
+        await updateGlobal(id, 'cancelado');
+        
+        loadOrders();
+    } catch (e) {
+        console.error(e);
+        alert("Erro ao cancelar o pedido.");
         btn.innerHTML = originalText;
         btn.disabled = false;
     }
