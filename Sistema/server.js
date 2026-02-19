@@ -1,7 +1,7 @@
 const express = require("express");
 const bodyParser = require("body-parser");
 const cors = require("cors");
-const path = require("path"); // Mantido apenas uma vez
+const path = require("path"); 
 const bcrypt = require("bcryptjs");
 const { MercadoPagoConfig, Payment } = require('mercadopago');
 const { createClient } = require("@libsql/client/http");
@@ -107,8 +107,6 @@ async function initDb() {
     
     console.log("✅ Tabelas verificadas.");
 
-    // ... (depois dos CREATE TABLE e antes do checkMaster) ...
-
     //'destination' na tabela products (se não existir)
     try {
         await db.execute(`ALTER TABLE products ADD COLUMN destination TEXT DEFAULT 'cozinha'`);
@@ -129,7 +127,6 @@ async function initDb() {
     } catch (e) {}
     
  
-    // ... ( o código do Master) ...  
     // 2. Verificação/Criação do Master
     const checkMaster = await db.execute({ sql: "SELECT * FROM users WHERE email = ?", args: [MASTER_EMAIL] });
     
@@ -226,7 +223,7 @@ app.post("/api/register-company", async (req, res) => {
 });
 
 // =============================================================
-// 📤 ROTA DE UPLOAD DE LOGO (NOVA!)
+// 📤 ROTA DE UPLOAD DE LOGO 
 // =============================================================
 app.post("/api/upload-logo", upload.single('logo'), (req, res) => {
     try {
@@ -235,7 +232,6 @@ app.post("/api/upload-logo", upload.single('logo'), (req, res) => {
         }
         
         console.log(`✅ Logo atualizada para empresa ${req.body.companyId}`);
-        // Redireciona de volta para a tela de configurações com sucesso
         res.redirect('/configuracoes.html?msg=logo_ok');
         
     } catch (error) {
@@ -257,10 +253,7 @@ app.get("/api/products", async (req, res) => {
 });
 
 app.post("/api/products", async (req, res) => {
-  // Agora recebemos também o 'destination'
   const { company_id, name, price, category, description, destination } = req.body;
-  
-  // Se não vier nada, assume que é para a 'cozinha'
   const destinoFinal = destination || 'cozinha';
 
   try {
@@ -368,7 +361,7 @@ app.post("/api/empresas/:id/plano", async (req, res) => {
   } catch (err) { res.status(500).json({ ok: false }); }
 });
 
-// --- MENU PÚBLICO (MODIFICADO PARA RETORNAR A LOGO PADRONIZADA NO JSON SE QUISER, MAS O HTML JA SE VIRA) ---
+// --- MENU PÚBLICO ---
 app.get("/api/public/menu/:company_id", async (req, res) => {
     try {
         const company = await db.execute({ 
@@ -381,7 +374,6 @@ app.get("/api/public/menu/:company_id", async (req, res) => {
             args: [req.params.company_id] 
         });
 
-        // O front-end vai montar o link da imagem sozinho, não precisamos mandar URL aqui
         res.json({ 
             restaurant: company.rows[0]?.name, 
             menu: products.rows 
@@ -404,7 +396,6 @@ app.post("/api/orders", async (req, res) => {
     const agora = getHoraLocalISOString();
     try {
         await db.execute({
-            // INSERE JÁ COM OS STATUS INDEPENDENTES COMO 'NOVO'
             sql: `INSERT INTO orders (company_id, items, total, table_name, notes, created_at, status_updated_at, status_cozinha, status_bar) VALUES (?,?,?,?,?,?,?, 'novo', 'novo')`,
             args: [Number(company_id), JSON.stringify(items), total, table_name, notes, agora, agora]
         });
@@ -445,7 +436,95 @@ app.get("/api/orders/history", async (req, res) => {
     } catch (err) { res.status(500).json({ ok: false }); }
 });
 
-// --- PIX / WEBHOOK ---
+// ROTA ESPECIAL: Atualiza só um setor (Bar ou Cozinha)
+app.post("/api/orders/:id/status-sector", async (req, res) => {
+    const { id } = req.params;
+    const { sector, status } = req.body; 
+    const coluna = sector === 'bar' ? 'status_bar' : 'status_cozinha';
+    const agora = getHoraLocalISOString();
+
+    try {
+        await db.execute({
+            sql: `UPDATE orders SET ${coluna} = ?, status_updated_at = ? WHERE id = ?`,
+            args: [status, agora, id]
+        });
+
+        const result = await db.execute({ sql: "SELECT items, status_cozinha, status_bar FROM orders WHERE id = ?", args: [id] });
+        const order = result.rows[0];
+        const items = JSON.parse(order.items || "[]");
+
+        const temBar = items.some(i => i.destination === 'bar');
+        const temCozinha = items.some(i => i.destination !== 'bar');
+
+        let novoStatusGlobal = null;
+
+        if (status === 'preparando') {
+            novoStatusGlobal = 'preparando';
+        } 
+        else if (status === 'pronto') {
+            const barOk = !temBar || order.status_bar === 'pronto';
+            const cozinhaOk = !temCozinha || order.status_cozinha === 'pronto';
+
+            if (barOk && cozinhaOk) {
+                novoStatusGlobal = 'pronto';
+            }
+        }
+
+        if (novoStatusGlobal) {
+            await db.execute({
+                sql: `UPDATE orders SET status = ?, status_updated_at = ? WHERE id = ?`,
+                args: [novoStatusGlobal, agora, id]
+            });
+        }
+
+        res.json({ ok: true });
+    } catch (err) {
+        console.error(err);
+        res.status(500).json({ ok: false });
+    }
+});
+
+// =============================================================
+// 📊 RELATÓRIOS E DASHBOARD (NOVO!)
+// =============================================================
+app.get("/api/reports/dashboard", async (req, res) => {
+    const { company_id } = req.query;
+    
+    // Pega o ano e mês atual no formato "AAAA-MM" usando a sua função maravilhosa
+    const mesAtual = getHoraLocalISOString().substring(0, 7); 
+
+    try {
+        // Busca TODOS os pedidos deste mês (usa o LIKE no banco para filtrar só o mês atual)
+        const result = await db.execute({
+            sql: `SELECT status FROM orders WHERE company_id = ? AND created_at LIKE ?`,
+            args: [company_id, `${mesAtual}%`]
+        });
+
+        let prontos = 0;
+        let cancelados = 0;
+        let pendentes = 0;
+
+        // Faz a contagem marota
+        result.rows.forEach(row => {
+            if (row.status === 'cancelado') {
+                cancelados++;
+            } else if (['pronto', 'entregue', 'pago', 'concluido', 'finalizado'].includes(row.status)) {
+                prontos++;
+            } else {
+                pendentes++; // Se não tá pronto nem cancelado, tá rolando (novo, preparando, etc)
+            }
+        });
+
+        res.json({ ok: true, stats: { prontos, cancelados, pendentes }, mes: mesAtual });
+    } catch (err) {
+        console.error(err);
+        res.status(500).json({ ok: false, error: "Erro ao gerar estatísticas." });
+    }
+});
+
+// =============================================================
+// 💸 PIX / WEBHOOK
+// =============================================================
 app.post("/api/pay/create", async (req, res) => {
     const { company_id, email, name, valor, dias, docNumber, deviceId } = req.body;
     const notificationUrl = "https://sistemadigitalmenu.com.br/api/webhook";
@@ -515,58 +594,6 @@ app.get("/api/companies/:id/status", async (req, res) => {
         if (company) res.json({ ok: true, expires_at: company.trial_expires_at, plano: company.plano });
         else res.status(404).json({ ok: false });
     } catch (err) { res.status(500).json({ ok: false }); }
-});
-
-// ROTA ESPECIAL: Atualiza só um setor (Bar ou Cozinha)
-app.post("/api/orders/:id/status-sector", async (req, res) => {
-    const { id } = req.params;
-    const { sector, status } = req.body; 
-    const coluna = sector === 'bar' ? 'status_bar' : 'status_cozinha';
-    const agora = getHoraLocalISOString();
-
-    try {
-        // 1. Atualiza o status do setor (Bar ou Cozinha)
-        await db.execute({
-            sql: `UPDATE orders SET ${coluna} = ?, status_updated_at = ? WHERE id = ?`,
-            args: [status, agora, id]
-        });
-
-        // 2. BUSCA O PEDIDO PARA DECIDIR O STATUS GLOBAL
-        const result = await db.execute({ sql: "SELECT items, status_cozinha, status_bar FROM orders WHERE id = ?", args: [id] });
-        const order = result.rows[0];
-        const items = JSON.parse(order.items || "[]");
-
-        const temBar = items.some(i => i.destination === 'bar');
-        const temCozinha = items.some(i => i.destination !== 'bar');
-
-        let novoStatusGlobal = null;
-
-        // Lógica para definir se o pedido GLOBAL mudou
-        if (status === 'preparando') {
-            novoStatusGlobal = 'preparando';
-        } 
-        else if (status === 'pronto') {
-            const barOk = !temBar || order.status_bar === 'pronto';
-            const cozinhaOk = !temCozinha || order.status_cozinha === 'pronto';
-
-            if (barOk && cozinhaOk) {
-                novoStatusGlobal = 'pronto';
-            }
-        }
-
-        // 3. Se decidimos que o global mudou, atualiza a tabela
-        if (novoStatusGlobal) {
-            await db.execute({
-                sql: `UPDATE orders SET status = ?, status_updated_at = ? WHERE id = ?`,
-                args: [novoStatusGlobal, agora, id]
-            });
-        }
-
-        res.json({ ok: true });
-    } catch (err) {
-        console.error(err);
-        res.status(500).json({ ok: false });
-    }
 });
 
 // =============================================================
