@@ -152,7 +152,7 @@ app.post("/api/register-company", async (req, res) => {
   try {
     const hash = bcrypt.hashSync(String(senha), 10);
     const dataExpira = new Date();
-    dataExpira.setDate(dataExpira.getDate() + 5); 
+    dataExpira.setDate(dataExpira.getDate() + 7); 
     const trial_at = dataExpira.toISOString();
     const created_at = getHoraLocalISOString();
 
