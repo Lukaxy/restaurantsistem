@@ -64,14 +64,38 @@
         </div>
     </div>
 
-    </main>
+    <div class="box" style="border-left: 4px solid #e8590c;">
+        <h3 style="color: #e9ecef; margin-bottom: 10px;">📸 Logo do Restaurante</h3>
+        <form id="formLogo" enctype="multipart/form-data" style="display: flex; flex-direction: column; gap: 15px;">
+            <input type="hidden" id="uploadCompanyId" name="companyId">
+            <div style="display: flex; align-items: center; gap: 15px;">
+                <img id="logoPreview" src="" alt="Sem Logo" style="width: 60px; height: 60px; border-radius: 50%; object-fit: cover; border: 2px solid var(--border-color); display: none; background: #fff;">
+                <input type="file" name="logo" id="logoInput" accept="image/*" required style="background: var(--bg-input); color: white; border: 1px solid var(--border-color); padding: 10px; border-radius: 8px; width: 100%;">
+            </div>
+            <button type="submit" class="btn" id="btnUpload" style="background-color: var(--color-blue); width: 100%;">💾 Salvar Nova Logo</button>
+        </form>
+    </div>
+
+    <div class="box" style="margin-bottom: 25px; border-left: 4px solid var(--color-blue);">
+        <h3 style="color: var(--color-blue); margin-bottom: 10px;">🔗 Seu Cardápio Digital</h3>
+        <div id="qr-container">
+           <div id="qrcode-display"><p style="color: var(--text-secondary); font-size: 0.8rem;">Clique no botão para gerar</p></div>
+           <button onclick="gerarQRCode()" class="btn" style="margin-top: 10px; background: var(--bg-card); border: 1px solid var(--color-blue);">🖨️ Gerar QR Code</button>
+        </div>
+    </div>
+
+    <div class="box" style="margin-top: 25px;">
+        <h3 style="margin-bottom: 20px;">Pratos Cadastrados 📋</h3>
+        <div id="productList"><p style="text-align: center; color: var(--text-secondary);">Carregando...</p></div>
+    </div>
+</main>
 
 <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
 <script src="js/auth.js"></script>
 <script src="js/configuracoes.js" type="module"></script>
 
 <script>
-  // Funções globais de UI que não dependem da API
+  // Funções de UI
   function toggleMenu() { document.getElementById('menuDropdown').classList.toggle('show'); }
   document.addEventListener('click', e => { if (!e.target.closest('.menu-wrapper')) document.getElementById('menuDropdown').classList.remove('show'); });
 
@@ -84,10 +108,19 @@
           document.body.appendChild(container);
       }
       const toast = document.createElement('div');
-      toast.style.cssText = `background: #1a1a1a; color: white; padding: 15px 25px; border-radius: 10px; border-left: 4px solid ${tipo === 'sucesso' ? '#51cf66' : '#ff6b6b'}; box-shadow: 0 10px 30px rgba(0,0,0,0.5); margin-bottom: 10px; display: flex; align-items: center; gap: 10px; font-family: 'Poppins', sans-serif;`;
+      toast.style.cssText = `background: #1a1a1a; color: white; padding: 15px 25px; border-radius: 10px; border-left: 4px solid ${tipo === 'sucesso' ? '#51cf66' : '#ff6b6b'}; box-shadow: 0 10px 30px rgba(0,0,0,0.5); margin-bottom: 10px; display: flex; align-items: center; gap: 10px; font-family: sans-serif;`;
       toast.innerHTML = `<span>${tipo === 'sucesso' ? '✅' : '❌'}</span> <span>${mensagem}</span>`;
       container.appendChild(toast);
       setTimeout(() => toast.remove(), 3000);
+  }
+
+  // Gerador de QR Code
+  function gerarQRCode() {
+    const user = JSON.parse(localStorage.getItem("user"));
+    const display = document.getElementById('qrcode-display');
+    display.innerHTML = "";
+    new QRCode(display, { text: `${window.location.origin}/menu.html?id=${user.company_id}`, width: 150, height: 150, colorDark: "#ffffff", colorLight: "#2c3035", correctLevel: QRCode.CorrectLevel.H });
+    showToast("QR Code gerado!");
   }
 </script>
 </body>
