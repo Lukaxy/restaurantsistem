@@ -9,98 +9,20 @@
 
   <style>
     /* CSS DO TOGGLE SWITCH */
-    .switch {
-      position: relative;
-      display: inline-block;
-      width: 40px;
-      height: 22px;
-    }
+    .switch { position: relative; display: inline-block; width: 40px; height: 22px; }
     .switch input { opacity: 0; width: 0; height: 0; }
-    .slider {
-      position: absolute;
-      cursor: pointer;
-      top: 0; left: 0; right: 0; bottom: 0;
-      background-color: var(--bg-input);
-      transition: .4s;
-      border-radius: 34px;
-      border: 1px solid var(--border-color);
-    }
-    .slider:before {
-      position: absolute;
-      content: "";
-      height: 14px; width: 14px;
-      left: 4px; bottom: 3px;
-      background-color: white;
-      transition: .4s;
-      border-radius: 50%;
-    }
+    .slider { position: absolute; cursor: pointer; top: 0; left: 0; right: 0; bottom: 0; background-color: var(--bg-input); transition: .4s; border-radius: 34px; border: 1px solid var(--border-color); }
+    .slider:before { position: absolute; content: ""; height: 14px; width: 14px; left: 4px; bottom: 3px; background-color: white; transition: .4s; border-radius: 50%; }
     input:checked + .slider { background-color: var(--color-green); border-color: var(--color-green); }
     input:checked + .slider:before { transform: translateX(18px); }
 
     /* ESTILO DO QR CODE */
-    #qr-container {
-      text-align: center;
-      padding: 20px;
-      background: var(--bg-input);
-      border-radius: var(--radius);
-      margin-top: 15px;
-      border: 1px dashed var(--color-blue);
-    }
+    #qr-container { text-align: center; padding: 20px; background: var(--bg-input); border-radius: var(--radius); margin-top: 15px; border: 1px dashed var(--color-blue); }
     
-    .menu-dropdown {
-      display: none;
-      position: absolute;
-      background: #1a1d21;
-      border: 1px solid var(--border-color);
-      right: 30px;
-      top: 60px;
-      z-index: 100;
-    }
+    .menu-dropdown { display: none; position: absolute; background: #1a1d21; border: 1px solid var(--border-color); right: 30px; top: 60px; z-index: 100; }
     .menu-dropdown.show { display: block; }
     .menu-dropdown div { padding: 10px 20px; cursor: pointer; border-bottom: 1px solid #333; }
   </style>
-
-  <script>
-    // === SEGURANÇA COM TOAST PERSONALIZADO ===
-    (function () {
-      const user = JSON.parse(localStorage.getItem("user") || "null");
-      if (!user || user.role !== "admin") {
-        document.addEventListener("DOMContentLoaded", () => {
-          const style = document.createElement('style');
-          style.innerHTML = `
-            @keyframes slideIn { from { transform: translateX(100%); opacity: 0; } to { transform: translateX(0); opacity: 1; } }
-            @keyframes fadeOut { from { opacity: 1; } to { opacity: 0; transform: translateY(-20px); } }
-          `;
-          document.head.appendChild(style);
-
-          let container = document.getElementById('toast-container');
-          if (!container) {
-            container = document.createElement('div');
-            container.id = 'toast-container';
-            container.style.cssText = "position:fixed; top:20px; right:20px; z-index:10000;";
-            document.body.appendChild(container);
-          }
-
-          const toast = document.createElement('div');
-          toast.style.cssText = `
-            background: #1a1a1a; color: white; padding: 20px; border-radius: 12px; 
-            border-left: 5px solid #ff6b6b; box-shadow: 0 10px 30px rgba(0,0,0,0.5);
-            display: flex; align-items: center; gap: 15px; font-family: 'Poppins', sans-serif;
-            animation: slideIn 0.5s ease forwards;
-          `;
-          toast.innerHTML = `
-            <span style="font-size: 1.5rem;">🚫</span> 
-            <div>
-                <strong style="display:block;">Acesso Negado!</strong>
-                <small>Área exclusiva para Admins. Voltando...</small>
-            </div>
-          `;
-          container.appendChild(toast);
-          setTimeout(() => { window.location.replace("index.html"); }, 2500);
-        });
-      }
-    })();
-  </script>
 </head>
 
 <body>
@@ -127,163 +49,32 @@
 <main>
     <div class="box">
         <h3 style="color: var(--color-amber); margin-bottom: 20px;">➕ Adicionar Novo Prato</h3>
-
         <div class="form-row">
             <input type="text" id="newName" placeholder="Nome do Prato" style="flex: 3;">
             <input type="number" id="newPrice" placeholder="R$ 0,00" step="0.01" style="flex: 1;">
             <input type="text" id="newCategory" placeholder="Categoria (ex: Bebidas)" style="flex: 1;">
         </div>
-
-        <textarea id="newDescription" placeholder="Descrição do produto (ex: Carne suculenta, queijo derretido...)" rows="3"></textarea>
-      
-<select id="newDestination" style="flex: 1; padding: 10px; border-radius: 8px; border: 1px solid var(--border-color); background: var(--bg-input); color: white;">
-    <option value="cozinha">🍳 Cozinha</option>
-    <option value="bar">🍸 Bar / Copa</option>
-</select>      
-
+        <textarea id="newDescription" placeholder="Descrição do produto..." rows="3"></textarea>
+        <select id="newDestination" style="flex: 1; padding: 10px; border-radius: 8px; border: 1px solid var(--border-color); background: var(--bg-input); color: white;">
+            <option value="cozinha">🍳 Cozinha</option>
+            <option value="bar">🍸 Bar / Copa</option>
+        </select>
         <div style="margin-top: 10px;">
             <button onclick="addProduct()" class="btn success" style="width: 100%;">💾 Salvar Produto</button>
         </div>
     </div>
 
-  <div class="box" style="border-left: 4px solid #e8590c;">
-        <h3 style="color: #e9ecef; margin-bottom: 10px;">📸 Logo do Restaurante</h3>
-        <p style="color: var(--text-secondary); font-size: 0.9rem; margin-bottom: 15px;">
-            Essa imagem aparecerá no topo do seu cardápio digital. (Recomendado: Imagem quadrada).
-        </p>
-
-        <form id="formLogo" enctype="multipart/form-data" style="display: flex; flex-direction: column; gap: 15px;">
-            <input type="hidden" id="uploadCompanyId" name="companyId">
-
-            <div style="display: flex; align-items: center; gap: 15px;">
-                <img id="logoPreview" src="" alt="Sem Logo" 
-                     style="width: 60px; height: 60px; border-radius: 50%; object-fit: cover; border: 2px solid var(--border-color); display: none; background: #fff;">
-                
-                <input type="file" name="logo" id="logoInput" accept="image/*" required
-                       style="background: var(--bg-input); color: white; border: 1px solid var(--border-color); padding: 10px; border-radius: 8px; width: 100%;">
-            </div>
-
-            <button type="submit" class="btn" id="btnUpload" style="background-color: var(--color-blue); width: 100%;">
-                💾 Salvar Nova Logo
-            </button>
-        </form>
-    </div>
-
-  <div class="box" style="margin-bottom: 25px; border-left: 4px solid var(--color-blue);">
-    <h3 style="color: var(--color-blue); margin-bottom: 10px;">🔗 Seu Cardápio Digital</h3>
-    <p style="font-size: 0.9rem; color: var(--text-secondary);">Divulgue este link ou imprima o QR Code para as mesas.</p>
-    
-    <div id="qr-container">
-       <div id="qrcode-display">
-         <p style="color: var(--text-secondary); font-size: 0.8rem;">Clique no botão para gerar</p>
-       </div>
-       <button onclick="gerarQRCode()" class="btn" style="margin-top: 10px; background: var(--bg-card); border: 1px solid var(--color-blue); font-size: 0.9rem;">
-         🖨️ Gerar QR Code para Impressão
-       </button>
-    </div>
-  </div>
-
-  <div class="box" style="margin-top: 25px;">
-    <h3 style="margin-bottom: 20px;">Pratos Cadastrados 📋</h3>
-    <div id="productList">
-       <p style="text-align: center; color: var(--text-secondary);">Carregando produtos...</p>
-    </div>
-  </div>
-</main>
+    </main>
 
 <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
 <script src="js/auth.js"></script>
-<script src="js/configuracoes.js"></script>
+<script src="js/configuracoes.js" type="module"></script>
 
 <script>
-  // === LÓGICA DE UPLOAD DE LOGO ===
-  document.addEventListener("DOMContentLoaded", () => {
-      const user = JSON.parse(localStorage.getItem("user"));
-      
-      if (user && user.company_id) {
-          // 1. Preenche o input hidden com o ID da empresa
-          const inputId = document.getElementById('uploadCompanyId');
-          if(inputId) inputId.value = user.company_id;
+  // Funções globais de UI que não dependem da API
+  function toggleMenu() { document.getElementById('menuDropdown').classList.toggle('show'); }
+  document.addEventListener('click', e => { if (!e.target.closest('.menu-wrapper')) document.getElementById('menuDropdown').classList.remove('show'); });
 
-          // 2. Tenta mostrar a logo atual (se existir)
-          const imgPreview = document.getElementById('logoPreview');
-          // O timestamp ?v=Date.now() evita que o navegador mostre a imagem velha do cache
-          imgPreview.src = `img/logo-companyid-${user.company_id}.png?v=${Date.now()}`;
-          
-          imgPreview.onload = function() {
-              this.style.display = 'block'; // Mostra se carregou
-          };
-          imgPreview.onerror = function() {
-              this.style.display = 'none'; // Esconde se der erro (404)
-          };
-      }
-
-      // 3. Enviar o formulário via AJAX
-      const formLogo = document.getElementById('formLogo');
-      if (formLogo) {
-          formLogo.addEventListener('submit', async (e) => {
-              e.preventDefault();
-              
-              const btn = document.getElementById('btnUpload');
-              const originalText = btn.innerText;
-              btn.innerText = "Enviando...";
-              btn.disabled = true;
-
-              try {
-                  const formData = new FormData(formLogo);
-                  
-                  // Envia para o servidor
-                  const res = await fetch('/api/upload-logo', {
-                      method: 'POST',
-                      body: formData
-                  });
-
-                  if (res.ok) {
-                      showToast("Logo atualizada com sucesso!");
-                      
-                      // Atualiza a visualização da imagem na hora
-                      const imgPreview = document.getElementById('logoPreview');
-                      imgPreview.src = `img/logo-companyid-${user.company_id}.png?v=${Date.now()}`;
-                      imgPreview.style.display = 'block';
-                      
-                      // Limpa o input de arquivo
-                      document.getElementById('logoInput').value = "";
-                  } else {
-                      showToast("Erro ao enviar imagem. Tente novamente.", "erro");
-                  }
-              } catch (err) {
-                  console.error(err);
-                  showToast("Erro de conexão.", "erro");
-              } finally {
-                  btn.innerText = originalText;
-                  btn.disabled = false;
-              }
-          });
-      }
-  });
-
-  // === GERADOR DE QR CODE ===
-  function gerarQRCode() {
-    const user = JSON.parse(localStorage.getItem("user"));
-    const display = document.getElementById('qrcode-display');
-    display.innerHTML = ""; // Limpa
-    
-    // URL Final do seu cardápio público
-    const urlCardapio = `${window.location.origin}/menu.html?id=${user.company_id}`;
-    
-    new QRCode(display, {
-      text: urlCardapio,
-      width: 150,
-      height: 150,
-      colorDark : "#ffffff",
-      colorLight : "#2c3035",
-      correctLevel : QRCode.CorrectLevel.H
-    });
-
-    showToast("QR Code gerado com sucesso!");
-  }
-
-  // === NOTIFICAÇÕES (TOAST) GLOBAIS ===
   function showToast(mensagem, tipo = 'sucesso') {
       let container = document.getElementById('toast-container');
       if (!container) {
@@ -293,42 +84,11 @@
           document.body.appendChild(container);
       }
       const toast = document.createElement('div');
-      toast.style.cssText = `
-          background: #1a1a1a; color: white; padding: 15px 25px; border-radius: 10px; 
-          border-left: 4px solid ${tipo === 'sucesso' ? '#51cf66' : '#ff6b6b'};
-          box-shadow: 0 10px 30px rgba(0,0,0,0.5); margin-bottom: 10px;
-          display: flex; align-items: center; gap: 10px; font-family: 'Poppins', sans-serif;
-          animation: slideIn 0.5s ease forwards;
-      `;
+      toast.style.cssText = `background: #1a1a1a; color: white; padding: 15px 25px; border-radius: 10px; border-left: 4px solid ${tipo === 'sucesso' ? '#51cf66' : '#ff6b6b'}; box-shadow: 0 10px 30px rgba(0,0,0,0.5); margin-bottom: 10px; display: flex; align-items: center; gap: 10px; font-family: 'Poppins', sans-serif;`;
       toast.innerHTML = `<span>${tipo === 'sucesso' ? '✅' : '❌'}</span> <span>${mensagem}</span>`;
       container.appendChild(toast);
-      setTimeout(() => {
-          toast.style.animation = "fadeOut 0.5s ease forwards";
-          setTimeout(() => toast.remove(), 500);
-      }, 3000);
+      setTimeout(() => toast.remove(), 3000);
   }
-
-  function toggleMenu() {
-    document.getElementById('menuDropdown').classList.toggle('show');
-  }
-
-  document.addEventListener('click', e => {
-    if (!e.target.closest('.menu-wrapper')) {
-      document.getElementById('menuDropdown').classList.remove('show');
-    }
-  });
 </script>
-
-<div id="confirmModal" class="modal" style="display:none; position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.8); z-index:9999; justify-content:center; align-items:center;">
-    <div class="box" style="max-width: 400px; text-align: center; padding: 30px;">
-        <h3>Excluir Produto? 🗑️</h3>
-        <p style="color: var(--text-secondary); margin: 15px 0;">Esta ação não pode ser desfeita. Deseja continuar?</p>
-        <div style="display: flex; gap: 10px; margin-top: 20px;">
-            <button id="confirmBtn" class="btn success" style="flex:1; background: var(--color-red);">Sim, Excluir</button>
-            <button onclick="fecharConfirm()" class="btn cancel" style="flex:1;">Cancelar</button>
-        </div>
-    </div>
-</div>  
-
 </body>
 </html>
