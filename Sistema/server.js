@@ -105,6 +105,38 @@ async function initDb() {
 }
 
 // =============================================================
+// 🛡️ MIDDLEWARE DE SEGURANÇA: EXPULSA FANTASMAS
+// =============================================================
+async function verificarEmpresaAtiva(req, res, next) {
+    // Tenta capturar o company_id de várias formas possíveis na requisição
+    const company_id = req.query.company_id || req.body.company_id || req.body.companyId || req.params.company_id;
+
+    if (!company_id) {
+        return next(); // Se não houver ID na rota, segue (ex: login ou rotas master)
+    }
+
+    try {
+        const result = await db.execute({ 
+            sql: "SELECT id, plano FROM companies WHERE id = ?", 
+            args: [Number(company_id)] 
+        });
+
+        const empresa = result.rows[0];
+
+        // Se a empresa foi deletada OU o plano está explicitamente como 'bloqueado'
+        if (!empresa || empresa.plano === 'bloqueado') {
+            console.log(`🚫 Bloqueando acesso: Empresa ${company_id} não existe ou está suspensa.`);
+            return res.status(401).json({ ok: false, error: "Sessão inválida. Empresa não encontrada." });
+        }
+
+        next(); // Se estiver tudo certo, permite o acesso à rota
+    } catch (err) {
+        console.error("Erro no Middleware de segurança:", err);
+        res.status(500).json({ ok: false, error: "Erro interno de validação." });
+    }
+}
+
+// =============================================================
 // 📡 ROTAS DE AUTENTICAÇÃO
 // =============================================================
 app.post("/api/login", async (req, res) => {
@@ -185,16 +217,16 @@ app.post("/api/upload-logo", upload.single('logo'), (req, res) => {
 });
 
 // =============================================================
-// 📝 PEDIDOS E PRODUTOS
+// 📝 PEDIDOS E PRODUTOS (COM TRAVA DE SEGURANÇA)
 // =============================================================
-app.get("/api/products", async (req, res) => {
+app.get("/api/products", verificarEmpresaAtiva, async (req, res) => {
     try {
         const result = await db.execute({ sql: `SELECT * FROM products WHERE company_id = ?`, args: [req.query.company_id] });
         res.json(result.rows);
     } catch (err) { res.status(500).json([]); }
 });
 
-app.post("/api/products", async (req, res) => {
+app.post("/api/products", verificarEmpresaAtiva, async (req, res) => {
   const { company_id, name, price, category, description, destination } = req.body;
   const destinoFinal = destination || 'cozinha';
   try {
@@ -222,15 +254,15 @@ app.put("/api/products/:id/visible", async (req, res) => {
     } catch (err) { res.status(500).json({ ok: false }); }
 });
 
-// --- USUÁRIOS ---
-app.get("/api/users", async (req, res) => {
+// --- USUÁRIOS (COM TRAVA) ---
+app.get("/api/users", verificarEmpresaAtiva, async (req, res) => {
     try {
         const result = await db.execute({ sql: `SELECT id, name, email, role FROM users WHERE company_id = ?`, args: [req.query.company_id] });
         res.json({ ok: true, users: result.rows });
     } catch (err) { res.status(500).json({ ok: false }); }
 });
 
-app.post("/api/users", async (req, res) => {
+app.post("/api/users", verificarEmpresaAtiva, async (req, res) => {
     const { name, email, senha, role, company_id } = req.body;
     try {
         await db.execute({
@@ -313,8 +345,8 @@ app.get("/api/companies/:id", async (req, res) => {
   } catch (err) { res.status(500).json({ ok: false }); }
 });
 
-// --- PEDIDOS ---
-app.post("/api/orders", async (req, res) => {
+// --- PEDIDOS (COM TRAVA) ---
+app.post("/api/orders", verificarEmpresaAtiva, async (req, res) => {
     const { company_id, items, total, table_name, notes } = req.body;
     const agora = getHoraLocalISOString();
     try {
@@ -326,7 +358,7 @@ app.post("/api/orders", async (req, res) => {
     } catch (err) { console.error(err); res.status(500).json({ ok: false }); }
 });
 
-app.get("/api/orders", async (req, res) => {
+app.get("/api/orders", verificarEmpresaAtiva, async (req, res) => {
     let sql = `SELECT * FROM orders WHERE company_id = ?`;
     const args = [req.query.company_id];
     if (req.query.status) { sql += ` AND status = ?`; args.push(req.query.status); }
@@ -347,10 +379,9 @@ app.post("/api/orders/:id/status", async (req, res) => {
     } catch (err) { res.status(500).json({ ok: false }); }
 });
 
-app.get("/api/orders/history", async (req, res) => {
+app.get("/api/orders/history", verificarEmpresaAtiva, async (req, res) => {
     const { company_id } = req.query;
     try {
-        // 👇 ADICIONAMOS O 'cancelado' AQUI NA BUSCA DO BANCO
         const result = await db.execute({ 
             sql: `SELECT * FROM orders WHERE company_id = ? AND status IN ('finalizado', 'pronto', 'entregue', 'pago', 'concluido', 'cancelado') ORDER BY status_updated_at DESC`, 
             args: [company_id] 
@@ -363,9 +394,6 @@ app.get("/api/orders/history", async (req, res) => {
 // =============================================================
 // 🧠 ROTA ESPECIAL: Atualiza Setor e Lógica de Cancelamento Parcial
 // =============================================================
-// =============================================================
-// 🧠 ROTA ESPECIAL: Atualiza Setor e Lógica de Cancelamento Parcial
-// =============================================================
 app.post("/api/orders/:id/status-sector", async (req, res) => {
     const { id } = req.params;
     const { sector, status } = req.body; 
@@ -373,34 +401,27 @@ app.post("/api/orders/:id/status-sector", async (req, res) => {
     const agora = getHoraLocalISOString();
 
     try {
-        // 1. Atualiza o status do setor no banco
         await db.execute({
             sql: `UPDATE orders SET ${coluna} = ?, status_updated_at = ? WHERE id = ?`,
             args: [status, agora, id]
         });
 
-        // 2. Busca o pedido para arrumar o dinheiro e o status global
         const result = await db.execute({ sql: "SELECT total, items, status_cozinha, status_bar FROM orders WHERE id = ?", args: [id] });
         const order = result.rows[0];
         const items = JSON.parse(order.items || "[]");
 
-        // ---> A MÁGICA DO B.O. 2: DESCONTO FINANCEIRO <---
         if (status === 'cancelado') {
-            // Pega os itens só do setor que cancelou e soma: (preço * quantidade)
             const valorDescontar = items
                 .filter(i => sector === 'bar' ? i.destination === 'bar' : i.destination !== 'bar')
                 .reduce((s, i) => s + (Number(i.price || 0) * Number(i.qty || 1)), 0);
             
-            // Subtrai do total do pedido (o Math.max impede que o valor fique negativo por algum bug bizarro)
             const novoTotal = Math.max(0, order.total - valorDescontar);
             
-            // Salva o novo valor no banco
             await db.execute({
                 sql: `UPDATE orders SET total = ? WHERE id = ?`,
                 args: [novoTotal, id]
             });
         }
-        // --------------------------------------------------
 
         const temBar = items.some(i => i.destination === 'bar');
         const temCozinha = items.some(i => i.destination !== 'bar');
@@ -440,9 +461,9 @@ app.post("/api/orders/:id/status-sector", async (req, res) => {
 });
 
 // =============================================================
-// 📊 RELATÓRIOS E DASHBOARD
+// 📊 RELATÓRIOS E DASHBOARD (COM TRAVA)
 // =============================================================
-app.get("/api/reports/dashboard", async (req, res) => {
+app.get("/api/reports/dashboard", verificarEmpresaAtiva, async (req, res) => {
     const { company_id } = req.query;
     const mesAtual = getHoraLocalISOString().substring(0, 7); 
 
