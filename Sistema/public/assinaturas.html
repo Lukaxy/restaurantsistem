@@ -185,7 +185,7 @@
     // =======================================================
     // ⚠️ ATENÇÃO: COLE SUA PUBLIC KEY AQUI DENTRO DAS ASPAS
     // =======================================================
-    const MP_PUBLIC_KEY = 'APP_USR-be07e32a-3887-4859-b2ff-1c2341c0b589'; 
+    const MP_PUBLIC_KEY = 'APP_USR-bb1f2aca-bc49-40e2-ae81-565c33ff8ef8'; 
     // =======================================================
 
     const user = JSON.parse(localStorage.getItem("user") || "{}");
@@ -196,7 +196,7 @@
 
     // --- INICIALIZA MERCADO PAGO E GERA DEVICE ID ---
     try {
-        if (MP_PUBLIC_KEY === 'COLE_SUA_PUBLIC_KEY_AQUI') {
+        if (MP_PUBLIC_KEY === 'APP_USR-bb1f2aca-bc49-40e2-ae81-565c33ff8ef8') {
              console.warn("⚠️ AVISO: Você ainda não configurou a Public Key no arquivo assinatura.html");
         }
         const mp = new MercadoPago(MP_PUBLIC_KEY);
