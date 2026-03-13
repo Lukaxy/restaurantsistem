@@ -517,7 +517,11 @@ app.post("/api/pay/create", async (req, res) => {
         const result = await payment.create({ body: bodyPayment });
         const data = result.point_of_interaction.transaction_data;
         res.json({ ok: true, qr_code: data.qr_code, qr_code_base64: data.qr_code_base64, id: result.id });
-    } catch (error) { res.status(500).json({ ok: false, error: "Erro Mercado Pago" }); }
+    } catch (error) { 
+    // Isso vai imprimir o detalhe real no log do Render
+    console.error("🔥 ERRO DO MERCADO PAGO:", error.cause || error.message); 
+    res.status(500).json({ ok: false, error: "Erro Mercado Pago: " + (error.message || "Erro desconhecido") }); 
+}
 });
 
 app.post("/api/webhook", async (req, res) => {
