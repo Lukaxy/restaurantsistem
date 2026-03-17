@@ -65,6 +65,17 @@
   </div>
 </main>
 
+  <div id="customModal" class="modal-overlay" style="display: none;">
+  <div class="modal-content">
+    <h3 id="modalTitle">Título</h3>
+    <p id="modalMessage">Mensagem do modal.</p>
+    <div class="modal-buttons">
+      <button id="modalConfirm" class="btn-confirm">Confirmar</button>
+      <button id="modalCancel" class="btn-cancel-modal" onclick="closeModal()">Cancelar</button>
+    </div>
+  </div>
+</div>
+
 <script>
 const ordersDiv = document.getElementById("orders");
 const user = JSON.parse(localStorage.getItem("user"));
@@ -200,6 +211,7 @@ async function cancelarPedido(id) {
 function toggleMenu() { document.getElementById("menuDropdown").classList.toggle("show"); }
 document.addEventListener("click", e => { if (!e.target.closest(".menu-wrapper")) document.getElementById("menuDropdown").classList.remove("show"); });
 </script>
+
 
 </body>
 </html>
