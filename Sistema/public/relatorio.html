@@ -72,13 +72,14 @@
 
     .dia-group { margin-bottom: 15px; border: 1px solid var(--border-color); border-radius: 8px; overflow: hidden; }
     .dia-header { background: var(--bg-card); padding: 15px; cursor: pointer; display: flex; justify-content: space-between; align-items: center; font-weight: bold; }
-    .dia-content { display: none; padding: 15px; background: #0d0d0d; }
+    .dia-content { display: none; padding: 15px; background: #212529; }
 
     .pedido-card {
       background: #252a2e;
       padding: 12px;
       border-radius: 8px;
       margin-bottom: 10px;
+      border: 1px solid var(--border-color); /* Bordinha sutil */
       border-left: 4px solid var(--color-green);
       transition: 0.2s;
     }
@@ -187,7 +188,7 @@
                     datasets: [{
                         data: [prontos, pendentes, cancelados],
                         backgroundColor: ['#51cf66', '#fcc419', '#fa5252'],
-                        borderColor: '#1a1a1a',
+                        borderColor: '#1a1d21',
                         borderWidth: 3
                     }]
                 },
