@@ -143,6 +143,7 @@ async function loadOrders() {
                     ${cozinhaPendente ? '<span style="float:right; color:#339af0;">Cozinha em preparo... 🍳</span>' : ''}
                 </div>
                 ${itemsHtml}
+                ${order.notes ? `<div style="background:#333; padding:8px; margin-top:10px; border-radius:4px; color:#fcc419; font-size:0.9rem;">📝 ${order.notes}</div>` : ''}
                 ${btnHtml}
             `;
             ordersDiv.appendChild(card);
