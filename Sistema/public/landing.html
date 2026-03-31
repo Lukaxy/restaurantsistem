@@ -64,6 +64,49 @@
         </div>
     </section>
 
+    <section id="provas-sociais" class="testimonials-section">
+    <h2>O que os donos de restaurante dizem 🗣️</h2>
+    <div class="carousel-container">
+        <button class="carousel-btn prev-btn" onclick="moveSlide(-1)">
+            <i class="fas fa-chevron-left"></i>
+        </button>
+        
+        <div class="carousel-wrapper">
+            <div class="carousel-track">
+                
+                <div class="carousel-slide">
+                    <img src="img/prova1.jpg" alt="Cliente 1" class="testimonial-img">
+                    <div class="testimonial-text">
+                        <p>"O Digital Menu salvou minha vida! Antes era garçom gritando e papel voando. Agora a cozinha parece um relógio suíço!"</p>
+                        <h4>- Seu Zé, Cantina do Zé</h4>
+                    </div>
+                </div>
+
+                <div class="carousel-slide">
+                    <img src="img/prova2.jpg" alt="Cliente 2" class="testimonial-img">
+                    <div class="testimonial-text">
+                        <p>"Sistema top demais. O Menu QR Code facilitou muito a nossa vida, e o melhor: não precisei vender um rim para pagar."</p>
+                        <h4>- Dona Maria, Hamburgueria Express</h4>
+                    </div>
+                </div>
+
+                <div class="carousel-slide">
+                    <img src="img/prova3.jpg" alt="Cliente 3" class="testimonial-img">
+                    <div class="testimonial-text">
+                        <p>"Instalei num dia, no outro já estava todo mundo usando. O suporte é rápido e o sistema não trava nem em dia de jogo."</p>
+                        <h4>- Carlos, Pizzaria Nostra</h4>
+                    </div>
+                </div>
+
+            </div>
+        </div>
+
+        <button class="carousel-btn next-btn" onclick="moveSlide(1)">
+            <i class="fas fa-chevron-right"></i>
+        </button>
+    </div>
+</section>
+
     <section id="cadastro" class="registration">
         <div class="box">
             <h2>Crie sua conta em menos de 30 segundos 🚀</h2>
@@ -191,6 +234,113 @@
         border-top: 1px solid #3d3d3d;
         padding-top: 10px;
     }
+/*prova*/
+    /* --- ESTILOS DO CARROSSEL DE PROVAS SOCIAIS --- */
+.testimonials-section {
+    padding: 60px 20px;
+    max-width: 900px;
+    margin: 0 auto;
+    text-align: center;
+}
+
+.testimonials-section h2 {
+    color: #ffffff;
+    margin-bottom: 40px;
+}
+
+.carousel-container {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    position: relative;
+    gap: 15px;
+}
+
+.carousel-wrapper {
+    overflow: hidden; /* Esconde os slides que estão fora da caixa */
+    width: 100%;
+    border-radius: 15px;
+    background: #2d2d2d; /* Mesmo fundo dos cards do FAQ */
+    border: 1px solid #3d3d3d;
+    box-shadow: 0 4px 15px rgba(0,0,0,0.3);
+}
+
+.carousel-track {
+    display: flex;
+    transition: transform 0.5s ease-in-out; /* A mágica da suavidade aqui */
+    width: 100%;
+}
+
+.carousel-slide {
+    min-width: 100%; /* Cada slide ocupa 100% do espaço visível */
+    display: flex;
+    align-items: center;
+    padding: 30px;
+    box-sizing: border-box;
+    gap: 30px;
+}
+
+.testimonial-img {
+    width: 140px;
+    height: 140px;
+    border-radius: 50%;
+    object-fit: cover;
+    border: 3px solid #009ee3; /* Borda azul combinando com seus botões */
+    flex-shrink: 0;
+}
+
+.testimonial-text {
+    text-align: left;
+}
+
+.testimonial-text p {
+    color: #cccccc;
+    font-size: 1.1rem;
+    font-style: italic;
+    line-height: 1.6;
+    border-top: none; /* Resetando a borda que está no 'p' global do seu código */
+    padding-top: 0;
+}
+
+.testimonial-text h4 {
+    color: #ffffff;
+    margin-top: 15px;
+    font-size: 1.1rem;
+}
+
+.carousel-btn {
+    background: #009ee3;
+    color: white;
+    border: none;
+    border-radius: 50%;
+    width: 45px;
+    height: 45px;
+    cursor: pointer;
+    font-size: 1.2rem;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: background 0.3s, transform 0.2s;
+    flex-shrink: 0;
+}
+
+.carousel-btn:hover {
+    background: #007bb5;
+    transform: scale(1.1);
+}
+
+/* Deixando bonito no celular */
+@media (max-width: 768px) {
+    .carousel-slide {
+        flex-direction: column;
+        text-align: center;
+        padding: 20px;
+        gap: 15px;
+    }
+    .testimonial-text {
+        text-align: center;
+    }
+}    
 </style>
     
     <footer class="footer">
@@ -238,5 +388,29 @@
             }
         }
     </script>
+
+    <script>
+    let currentSlide = 0;
+
+    function moveSlide(direction) {
+        const track = document.querySelector('.carousel-track');
+        const slides = document.querySelectorAll('.carousel-slide');
+        const totalSlides = slides.length;
+
+        // Atualiza a posição atual
+        currentSlide += direction;
+
+        // Lógica para loop infinito
+        if (currentSlide < 0) {
+            currentSlide = totalSlides - 1; // Vai pro último
+        } else if (currentSlide >= totalSlides) {
+            currentSlide = 0; // Volta pro primeiro
+        }
+
+        // Calcula o quanto a trilha tem que se mover para a esquerda
+        const displacement = -(currentSlide * 100);
+        track.style.transform = `translateX(${displacement}%)`;
+    }
+</script>
 </body>
 </html>
