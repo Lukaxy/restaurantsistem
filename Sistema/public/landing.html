@@ -64,48 +64,28 @@
         </div>
     </section>
 
-    <section id="provas-sociais" class="testimonials-section">
+    <section id="provas-sociais" class="depoimentos">
     <h2>O que os donos de restaurante dizem 🗣️</h2>
-    <div class="carousel-container">
-        <button class="carousel-btn prev-btn" onclick="moveSlide(-1)">
-            <i class="fas fa-chevron-left"></i>
-        </button>
-        
-        <div class="carousel-wrapper">
-            <div class="carousel-track">
-                
-                <div class="carousel-slide">
-                    <img src="img/prova1.jpg" alt="Cliente 1" class="testimonial-img">
-                    <div class="testimonial-text">
-                        <p>"O Digital Menu salvou minha vida! Antes era garçom gritando e papel voando. Agora a cozinha parece um relógio suíço!"</p>
-                        <h4>- Seu Zé, Cantina do Zé</h4>
-                    </div>
-                </div>
-
-                <div class="carousel-slide">
-                    <img src="img/prova2.jpg" alt="Cliente 2" class="testimonial-img">
-                    <div class="testimonial-text">
-                        <p>"Sistema top demais. O Menu QR Code facilitou muito a nossa vida, e o melhor: não precisei vender um rim para pagar."</p>
-                        <h4>- Dona Maria, Hamburgueria Express</h4>
-                    </div>
-                </div>
-
-                <div class="carousel-slide">
-                    <img src="img/prova3.jpg" alt="Cliente 3" class="testimonial-img">
-                    <div class="testimonial-text">
-                        <p>"Instalei num dia, no outro já estava todo mundo usando. O suporte é rápido e o sistema não trava nem em dia de jogo."</p>
-                        <h4>- Carlos, Pizzaria Nostra</h4>
-                    </div>
-                </div>
-
-            </div>
+    
+    <div class="depoimentos-container">
+        <div class="depoimento-card" onclick="abrirLightbox('img/prova1.jpg')">
+            <img src="img/prova1.jpg" alt="Print de Depoimento 1">
         </div>
-
-        <button class="carousel-btn next-btn" onclick="moveSlide(1)">
-            <i class="fas fa-chevron-right"></i>
-        </button>
+        
+        <div class="depoimento-card" onclick="abrirLightbox('img/prova2.jpg')">
+            <img src="img/prova2.jpg" alt="Print de Depoimento 2">
+        </div>
+        
+        <div class="depoimento-card" onclick="abrirLightbox('img/prova3.jpg')">
+            <img src="img/prova3.jpg" alt="Print de Depoimento 3">
+        </div>
     </div>
 </section>
+
+<div id="meuLightbox" class="lightbox" onclick="fecharLightbox(event)">
+    <span class="fechar-lightbox">&times;</span>
+    <img id="imgLightbox" src="" alt="Print Ampliado">
+</div>
 
     <section id="cadastro" class="registration">
         <div class="box">
@@ -235,156 +215,111 @@
         padding-top: 10px;
     }
 /*prova*/
- /* --- ESTILOS DO CARROSSEL DE PROVAS SOCIAIS (VERSÃO OUTDOOR PREMIUM) --- */
-.testimonials-section {
+/* --- ESTILOS DE DEPOIMENTOS (PRINTS INTEIROS ESTILO WHATSAPP) --- */
+.depoimentos {
     padding: 80px 20px;
-    max-width: 1200px; /* BEM mais largo, para acompanhar as outras seções */
-    margin: 0 auto;
     text-align: center;
+    background: transparent;
 }
 
-.testimonials-section h2 {
-    color: #ffffff;
-    margin-bottom: 60px;
-    font-size: 2.5rem; /* Título maior e mais imponente */
-}
-
-.carousel-container {
+.depoimentos h2 {
+    font-size: 2.5rem;
+    font-weight: 700;
+    color: #fff;
+    margin-bottom: 50px;
     position: relative;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    width: 100%;
 }
 
-.carousel-wrapper {
-    overflow: hidden;
-    width: 100%;
+/* Linha colorida debaixo do título com a cor do seu sistema */
+.depoimentos h2::after {
+    content: "";
+    display: block;
+    width: 80px;
+    height: 4px;
+    background: linear-gradient(90deg, #009ee3, #00c4ff);
+    margin: 15px auto 0;
+    border-radius: 3px;
+}
+
+.depoimentos-container {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: center;
+    gap: 30px;
+    max-width: 1100px;
+    margin: 0 auto;
+}
+
+.depoimento-card {
+    background: #1e1e1e; /* Fundo escuro combinando com o resto do site */
     border-radius: 20px;
-    background: #1e1e1e; /* Fundo um pouco mais elegante */
-    border: 1px solid #3d3d3d;
-    box-shadow: 0 15px 40px rgba(0,0,0,0.4); /* Sombra mais espalhada e suave */
+    padding: 12px;
+    max-width: 320px; /* Largura ideal para simular uma tela de celular */
+    box-shadow: 0 0 25px rgba(0, 158, 227, 0.15); /* Sombra azulada */
+    border: 1px solid rgba(0, 158, 227, 0.3);
+    transition: transform 0.3s ease, box-shadow 0.3s ease;
+    cursor: pointer; /* Muda o mouse para a "mãozinha" indicando que dá pra clicar */
 }
 
-.carousel-track {
-    display: flex;
-    transition: transform 0.6s cubic-bezier(0.25, 1, 0.5, 1); /* Transição amanteigada */
+.depoimento-card:hover {
+    transform: translateY(-8px) scale(1.03);
+    box-shadow: 0 0 35px rgba(0, 158, 227, 0.4); /* Brilho aumenta no hover */
+}
+
+.depoimento-card img {
     width: 100%;
+    border-radius: 15px;
+    display: block;
+    transition: transform 0.3s ease, filter 0.3s ease;
 }
 
-.carousel-slide {
-    min-width: 100%;
-    display: flex;
-    align-items: center;
+.depoimento-card:hover img {
+    filter: brightness(1.1); /* Dá uma clareada na imagem quando passa o mouse */
+}
+
+/* --- LIGHTBOX (TELA CHEIA QUANDO CLICA NA FOTO) --- */
+.lightbox {
+    display: none; 
+    position: fixed;
+    z-index: 9999;
+    top: 0; left: 0;
+    width: 100%; height: 100%;
+    background: rgba(0, 0, 0, 0.85); /* Fundo preto transparente */
+    backdrop-filter: blur(5px); /* Efeito de desfoque no fundo */
     justify-content: center;
-    padding: 60px 80px; /* Muito mais respiro dentro do card */
-    box-sizing: border-box;
-    gap: 60px; /* Mais espaço entre a foto e o texto */
+    align-items: center;
 }
 
-.testimonial-img {
-    width: 220px; /* Foto beeeem maior */
-    height: 220px;
-    border-radius: 50%;
-    object-fit: cover;
-    border: 5px solid #009ee3; /* Borda azul chamativa */
-    box-shadow: 0 0 25px rgba(0, 158, 227, 0.3); /* Brilho ao redor da foto */
-    flex-shrink: 0;
+.lightbox.ativo {
+    display: flex; /* Classe que o JavaScript vai adicionar para mostrar a foto */
 }
 
-.testimonial-text {
-    text-align: left;
-    max-width: 600px; /* Controla o texto para não ficar uma linha infinita e ruim de ler */
+.lightbox img {
+    max-width: 90%;
+    max-height: 90%;
+    border-radius: 15px;
+    box-shadow: 0 0 30px rgba(0, 158, 227, 0.5); /* Sombra azul na foto gigante */
+    animation: zoomIn 0.3s ease;
 }
 
-.testimonial-text p {
-    color: #e0e0e0;
-    font-size: 1.5rem; /* Texto do depoimento bem maior */
-    font-style: italic;
-    line-height: 1.7;
-    border: none;
-    padding: 0;
-    margin-bottom: 20px;
-}
-
-.testimonial-text h4 {
-    color: #009ee3;
-    font-size: 1.3rem; /* Nome do cliente maior e em destaque */
-    font-weight: bold;
-    margin: 0;
-}
-
-/* Setas flutuantes e maiores */
-.carousel-btn {
+.fechar-lightbox {
     position: absolute;
-    top: 50%;
-    transform: translateY(-50%);
-    background: #2d2d2d;
-    color: #009ee3;
-    border: 2px solid #009ee3;
-    border-radius: 50%;
-    width: 65px; /* Botões maiores e mais fáceis de clicar */
-    height: 65px;
-    cursor: pointer;
-    font-size: 1.6rem;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    transition: all 0.3s ease;
-    z-index: 10;
-}
-
-.carousel-btn:hover {
-    background: #009ee3;
+    top: 20px;
+    right: 40px;
     color: white;
-    transform: translateY(-50%) scale(1.1);
-    box-shadow: 0 0 15px rgba(0, 158, 227, 0.5);
+    font-size: 50px;
+    font-weight: bold;
+    cursor: pointer;
+    transition: color 0.3s;
 }
 
-/* Posiciona as setas invadindo um pouco a tela fora do card */
-.prev-btn { left: -20px; }
-.next-btn { right: -20px; }
+.fechar-lightbox:hover {
+    color: #009ee3;
+}
 
-/* --- RESPONSIVO PARA O CELULAR --- */
-@media (max-width: 768px) {
-    .testimonials-section {
-        padding: 50px 15px;
-    }
-    
-    .carousel-slide {
-        flex-direction: column;
-        text-align: center;
-        padding: 40px 20px;
-        gap: 30px;
-    }
-
-    .testimonial-img {
-        width: 160px; /* Reduz um pouco no celular, mas continua com presença */
-        height: 160px;
-    }
-
-    .testimonial-text {
-        text-align: center;
-    }
-
-    .testimonial-text p {
-        font-size: 1.2rem;
-    }
-    
-    .testimonial-text h4 {
-        font-size: 1.1rem;
-    }
-
-    .carousel-btn {
-        width: 45px;
-        height: 45px;
-        font-size: 1.2rem;
-        background: rgba(45, 45, 45, 0.9); /* Fundo levemente transparente no celular */
-    }
-    
-    /* Puxa as setas um pouquinho para dentro para caberem na tela do celular */
-    .prev-btn { left: 0px; }
-    .next-btn { right: 0px; }
+@keyframes zoomIn {
+    from { transform: scale(0.8); opacity: 0; }
+    to { transform: scale(1); opacity: 1; }
 }
 </style>
     
@@ -435,26 +370,24 @@
     </script>
 
     <script>
-    let currentSlide = 0;
+    // Abre a imagem em tela cheia
+    function abrirLightbox(src) {
+        const lightbox = document.getElementById('meuLightbox');
+        const imgLightbox = document.getElementById('imgLightbox');
+        
+        imgLightbox.src = src; // Pega o caminho da imagem clicada
+        lightbox.classList.add('ativo'); // Mostra a tela preta
+    }
 
-    function moveSlide(direction) {
-        const track = document.querySelector('.carousel-track');
-        const slides = document.querySelectorAll('.carousel-slide');
-        const totalSlides = slides.length;
-
-        // Atualiza a posição atual
-        currentSlide += direction;
-
-        // Lógica para loop infinito
-        if (currentSlide < 0) {
-            currentSlide = totalSlides - 1; // Vai pro último
-        } else if (currentSlide >= totalSlides) {
-            currentSlide = 0; // Volta pro primeiro
+    // Fecha a tela cheia
+    function fecharLightbox(event) {
+        const lightbox = document.getElementById('meuLightbox');
+        const imgLightbox = document.getElementById('imgLightbox');
+        
+        // Só fecha se clicar no fundo preto ou no 'X', não fecha se clicar na foto em si
+        if (event.target === lightbox || event.target.className === 'fechar-lightbox') {
+            lightbox.classList.remove('ativo');
         }
-
-        // Calcula o quanto a trilha tem que se mover para a esquerda
-        const displacement = -(currentSlide * 100);
-        track.style.transform = `translateX(${displacement}%)`;
     }
 </script>
 </body>
