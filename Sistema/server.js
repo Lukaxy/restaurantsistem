@@ -400,6 +400,31 @@ app.get("/api/orders/history", verificarEmpresaAtiva, async (req, res) => {
         res.json({ ok: true, pedidos: rows });
     } catch (err) { res.status(500).json({ ok: false }); }
 });
+// ROTA PARA BUSCAR QUAIS MESAS ESTÃO COM PEDIDO ABERTO
+app.get('/api/orders/active', async (req, res) => {
+  const { company_id } = req.query;
+
+  if (!company_id) {
+    return res.status(400).json({ error: "Company ID é obrigatório" });
+  }
+
+  try {
+    // Buscamos mesas que tenham pedidos com status DIFERENTE de 'pago' ou 'finalizado'
+    // O DISTINCT serve para não repetir a mesma mesa várias vezes se ela tiver 10 itens
+    const result = await db.execute({
+      sql: `SELECT DISTINCT table_number 
+            FROM orders 
+            WHERE company_id = ? 
+            AND status NOT IN ('pago', 'finalizado', 'cancelado')`,
+      args: [company_id]
+    });
+
+    res.json(result.rows);
+  } catch (error) {
+    console.error("Erro ao buscar mesas ativas:", error);
+    res.status(500).json({ error: "Erro interno no servidor" });
+  }
+});
 
 // =============================================================
 // 🧠 ROTA ESPECIAL: Atualiza Setor e Lógica de Cancelamento Parcial
