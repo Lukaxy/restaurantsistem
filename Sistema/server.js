@@ -409,16 +409,16 @@ app.get('/api/orders/active', async (req, res) => {
   }
 
   try {
-    // Buscamos mesas que tenham pedidos com status DIFERENTE de 'pago' ou 'finalizado'
-    // O DISTINCT serve para não repetir a mesma mesa várias vezes se ela tiver 10 itens
+    // CORREÇÃO: Usando 'table_name' que é o nome real da sua coluna no banco
     const result = await db.execute({
-      sql: `SELECT DISTINCT table_number 
+      sql: `SELECT DISTINCT table_name 
             FROM orders 
             WHERE company_id = ? 
             AND status NOT IN ('pago', 'finalizado', 'cancelado')`,
-      args: [company_id]
+      args: [Number(company_id)]
     });
 
+    // Retorna as linhas encontradas
     res.json(result.rows);
   } catch (error) {
     console.error("Erro ao buscar mesas ativas:", error);
