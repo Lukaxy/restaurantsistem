@@ -370,11 +370,21 @@ app.get("/api/orders", verificarEmpresaAtiva, async (req, res) => {
 });
 
 app.post("/api/orders/:id/status", async (req, res) => {
+    const { status, payment_method } = req.body; // O servidor agora pega a forma de pagamento
     try {
-        await db.execute({
-            sql: `UPDATE orders SET status = ?, status_updated_at = ? WHERE id = ?`,
-            args: [req.body.status, getHoraLocalISOString(), req.params.id]
-        });
+        if (payment_method) {
+            // Se tiver forma de pagamento, salva ela no banco
+            await db.execute({
+                sql: `UPDATE orders SET status = ?, status_updated_at = ?, payment_method = ? WHERE id = ?`,
+                args: [status, getHoraLocalISOString(), payment_method, req.params.id]
+            });
+        } else {
+            // Se não tiver (ex: apenas mudando status normal), faz como antes
+            await db.execute({
+                sql: `UPDATE orders SET status = ?, status_updated_at = ? WHERE id = ?`,
+                args: [status, getHoraLocalISOString(), req.params.id]
+            });
+        }
         res.json({ ok: true });
     } catch (err) { res.status(500).json({ ok: false }); }
 });
