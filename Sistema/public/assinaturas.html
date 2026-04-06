@@ -7,7 +7,6 @@
   <title>Upgrade de Plano - Digital Menu 🚀</title>
   
   <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;600;700&display=swap" rel="stylesheet">
-  
   <script src="https://sdk.mercadopago.com/js/v2"></script>
 
   <style>
@@ -57,7 +56,6 @@
     }
 
     .plan-card:hover { transform: translateY(-10px); border-color: var(--color-blue); }
-
     .plan-card.popular { border: 2px solid var(--color-blue); transform: scale(1.05); z-index: 2; }
 
     .badge {
@@ -82,27 +80,32 @@
     .btn-primary { background: var(--color-blue); color: white; }
     .btn-vip { background: linear-gradient(135deg, #6741d9, #e03131); color: white; }
 
-    /* BOX ESTILO SISTEMA */
     .box { background: var(--bg-card); padding: 25px; border-radius: 16px; border: 1px solid var(--border-color); }
-    
     input { background: #2b2b2b; border: 1px solid var(--border-color); color: white; padding: 12px; border-radius: 8px; outline: none; }
 
     @keyframes popIn { from { transform: scale(0.9); opacity: 0; } to { transform: scale(1); opacity: 1; } }
-  </style>
-<script async src="https://www.googletagmanager.com/gtag/js?id=G-2BTBZ5MK63"></script>
-<script>
-  window.dataLayer = window.dataLayer || [];
-  function gtag(){dataLayer.push(arguments);}
-  gtag('js', new Date());
 
-  gtag('config', 'G-2BTBZ5MK63');
-</script>  
+    /* Novo estilo para o banner de identificação */
+    .id-banner {
+      background: rgba(51, 154, 240, 0.1);
+      border: 1px dashed var(--color-blue);
+      color: var(--color-blue);
+      padding: 10px 20px;
+      border-radius: 30px;
+      font-size: 0.85rem;
+      margin-bottom: 20px;
+    }
+  </style>
 </head>
 <body>
 
   <header>
     <h1>Escolha seu Plano 🚀</h1>
     <p style="color: var(--text-secondary);">Desbloqueie o uso ilimitado e leve seu restaurante para o próximo nível.</p>
+    
+    <div id="identificacao-empresa" class="id-banner" style="display: none;">
+      🛒 Identificado Empresa ID: <strong id="display-id">...</strong>
+    </div>
   </header>
 
   <div class="plans-container">
@@ -145,9 +148,7 @@
       <div class="box" style="width: 340px; text-align: center; border: 1px solid var(--color-blue); animation: popIn 0.3s ease;">
           <h3 style="margin-top:0; color: var(--color-blue);">Pagamento via PIX 💠</h3>
           <p style="font-size: 0.85rem; color: var(--text-secondary); margin-bottom: 20px;">Digite seu CPF para gerar o QR Code:</p>
-          
           <input type="text" id="inputCPF" placeholder="000.000.000-00" maxlength="14" style="width: 100%; margin-bottom: 20px; text-align: center; font-size: 1.3rem; font-weight: bold; letter-spacing: 1px;">
-          
           <div style="display: flex; gap: 10px;">
               <button id="btnConfirmarCPF" class="btn-plan btn-primary" style="flex:1; padding: 12px;">Gerar PIX</button>
               <button onclick="fecharModalCPF()" class="btn-plan btn-outline" style="flex:1; padding: 12px;">Voltar</button>
@@ -159,16 +160,12 @@
     <div class="box" style="max-width: 400px; text-align: center;">
         <h3 style="margin-bottom: 5px;">QR Code Gerado! ✅</h3>
         <p style="color: var(--text-secondary); font-size: 0.9rem;">Abra o app do seu banco e pague via PIX.</p>
-        
         <div id="pix-valor-display" style="font-size: 2rem; font-weight: bold; color: var(--color-green); margin: 15px 0;">R$ 0,00</div>
-        
         <img id="qrcode-img" src="" style="width: 200px; background: white; padding: 10px; border-radius: 10px; margin: 0 auto 15px; display: block;">
-        
         <div style="margin-bottom: 15px;">
             <small>O pagamento será direcionado para: LUCAS FERREIRA...</small>
             <div id="pix-status" style="font-size: 0.9rem; color: var(--color-blue); margin-top:5px;">🕒 Verificando status...</div>
         </div>
-        
         <button class="btn-plan btn-primary" onclick="copiarCodigoPix()" style="margin-bottom: 10px;">📋 Copiar Código PIX</button>
         <button class="btn-plan btn-outline" onclick="fecharModalPix()">Fechar</button>
         <input type="text" id="pix-copia-cola" style="position: absolute; left: -9999px;">
@@ -180,9 +177,7 @@
         <div style="font-size: 5rem; margin-bottom: 20px;">🎉</div>
         <h2 style="color:#fff; margin-bottom:10px;">Pagamento Confirmado!</h2>
         <p style="color:#adb5bd; font-size:1.2rem;">Seu plano foi ativado com sucesso.</p>
-        <p style="color:#51cf66; font-weight:bold; margin-top:10px;">Obrigado por confiar no Digital Menu!</p>
-        
-        <button onclick="window.location.href='index.html'" style="margin-top:30px; background:#51cf66; color:#fff; border:none; padding:15px 40px; font-size:1.2rem; border-radius:8px; cursor:pointer; font-weight:bold; transition: 0.3s;">
+        <button onclick="window.location.href='index.html'" style="margin-top:30px; background:#51cf66; color:#fff; border:none; padding:15px 40px; font-size:1.2rem; border-radius:8px; cursor:pointer; font-weight:bold;">
             ACESSAR O SISTEMA 🚀
         </button>
     </div>
@@ -191,31 +186,34 @@
 <script type="module">
     import { api } from "./js/http.js";
 
-    // =======================================================
-    // ⚠️ ATENÇÃO: COLE SUA PUBLIC KEY AQUI DENTRO DAS ASPAS
-    // =======================================================
     const MP_PUBLIC_KEY = 'APP_USR-bb1f2aca-bc49-40e2-ae81-565c33ff8ef8'; 
-    // =======================================================
 
-    const user = JSON.parse(localStorage.getItem("user") || "{}");
+    // --- LÓGICA DE CAPTURA DE USUÁRIO (APP OU SITE) ---
+    const urlParams = new URLSearchParams(window.location.search);
+    const idDaURL = urlParams.get('company_id');
+    
+    // Tenta pegar do localStorage, se não existir cria objeto vazio
+    let user = JSON.parse(localStorage.getItem("user") || "{}");
+
+    // SE VIER DO APP (Pela URL): Prioriza o ID da URL
+    if (idDaURL) {
+        user.company_id = idDaURL;
+        document.getElementById('display-id').innerText = idDaURL;
+        document.getElementById('identificacao-empresa').style.display = 'block';
+    }
+
     let planoAtual = { dias: 0, valor: 0 };
     let intervaloVerificacao = null;
     let dataExpiracaoAtual = 0; 
     let deviceId = null;
 
-    // --- INICIALIZA MERCADO PAGO E GERA DEVICE ID ---
     try {
-        if (MP_PUBLIC_KEY === 'APP_USR-bb1f2aca-bc49-40e2-ae81-565c33ff8ef8') {
-             console.warn("⚠️ AVISO: Você ainda não configurou a Public Key no arquivo assinatura.html");
-        }
         const mp = new MercadoPago(MP_PUBLIC_KEY);
         deviceId = mp.getDeviceId();
-        console.log("Device ID gerado com sucesso:", deviceId);
     } catch (e) {
-        console.warn("Erro ao iniciar Mercado Pago (Verifique se colou a Public Key).", e);
+        console.warn("Erro ao iniciar Mercado Pago.", e);
     }
 
-    // 1. INICIALIZAÇÃO: Pega a data de expiração atual
     async function iniciarMonitoramento() {
         if (!user || !user.company_id) return;
         try {
@@ -229,7 +227,7 @@
 
     iniciarMonitoramento();
 
-    // --- FUNÇÕES DE MÁSCARA E MODAL CPF ---
+    // MÁSCARA CPF
     const inputCPF = document.getElementById('inputCPF');
     inputCPF.addEventListener('input', (e) => {
         let v = e.target.value.replace(/\D/g, '');
@@ -242,6 +240,10 @@
     });
 
     window.abrirModalCPF = (dias, valor) => {
+        if (!user.company_id) {
+            alert("Erro: ID da empresa não identificado. Faça login novamente.");
+            return;
+        }
         planoAtual = { dias, valor };
         document.getElementById('cpfModal').style.display = 'flex';
         inputCPF.value = "";
@@ -262,26 +264,23 @@
         gerarPagamentoReal(planoAtual.dias, planoAtual.valor, cpfRaw);
     };
 
-    // --- LÓGICA DE PAGAMENTO E MONITORAMENTO ---
     async function gerarPagamentoReal(dias, valor, cpf) {
         try {
             document.body.style.cursor = "wait";
-
             const data = await api("/api/pay/create", {
                 method: "POST",
                 body: JSON.stringify({
                     company_id: user.company_id,
-                    email: user.email,
-                    name: user.name,
+                    email: user.email || `empresa_${user.company_id}@sistemadigital.com.br`, // Fallback de email
+                    name: user.name || `Empresa ${user.company_id}`, // Fallback de nome
                     valor: valor,
                     dias: dias,
                     docNumber: cpf,
-                    deviceId: deviceId // ENVIANDO O DEVICE ID PARA O SERVIDOR
+                    deviceId: deviceId 
                 })
             });
 
             document.body.style.cursor = "default";
-
             if (!data.ok) throw new Error(data.error || "Erro na API");
 
             document.getElementById("pix-valor-display").textContent = `R$ ${valor.toFixed(2).replace('.', ',')}`;
@@ -290,7 +289,6 @@
             document.getElementById("modal-pix").style.display = "flex";
             
             ativarRadarPagamento();
-
         } catch (err) { 
             alert(err.message); 
             document.body.style.cursor = "default";
@@ -298,22 +296,16 @@
     }
 
     function ativarRadarPagamento() {
-        if (!user || !user.company_id) return;
-        
         if (intervaloVerificacao) clearInterval(intervaloVerificacao);
-
         const statusLabel = document.getElementById("pix-status");
         statusLabel.innerText = "⏳ Aguardando confirmação do banco...";
-        statusLabel.style.color = "var(--color-blue)";
-
+        
         intervaloVerificacao = setInterval(async () => {
             try {
                 const res = await fetch(`/api/companies/${user.company_id}/status`);
                 const data = await res.json();
-
                 if (data.ok) {
                     const novaData = data.expires_at ? new Date(data.expires_at).getTime() : 0;
-                    
                     if (novaData > dataExpiracaoAtual) {
                         clearInterval(intervaloVerificacao);
                         mostrarSucesso();
@@ -339,7 +331,6 @@
         document.getElementById("modal-pix").style.display = "none";
         if (intervaloVerificacao) clearInterval(intervaloVerificacao);
     };
-
 </script>
 </body>
 </html>
