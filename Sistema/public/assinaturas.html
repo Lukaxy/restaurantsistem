@@ -85,7 +85,6 @@
 
     @keyframes popIn { from { transform: scale(0.9); opacity: 0; } to { transform: scale(1); opacity: 1; } }
 
-    /* Novo estilo para o banner de identificação */
     .id-banner {
       background: rgba(51, 154, 240, 0.1);
       border: 1px dashed var(--color-blue);
@@ -188,18 +187,23 @@
 
     const MP_PUBLIC_KEY = 'APP_USR-bb1f2aca-bc49-40e2-ae81-565c33ff8ef8'; 
 
-    // --- LÓGICA DE CAPTURA DE USUÁRIO (APP OU SITE) ---
+    // --- CAPTURA DADOS DA URL (VINDOS DO APP) ---
     const urlParams = new URLSearchParams(window.location.search);
     const idDaURL = urlParams.get('company_id');
+    const emailDaURL = urlParams.get('email');
     
-    // Tenta pegar do localStorage, se não existir cria objeto vazio
     let user = JSON.parse(localStorage.getItem("user") || "{}");
 
-    // SE VIER DO APP (Pela URL): Prioriza o ID da URL
+    // PRIORIDADE TOTAL PARA OS DADOS QUE VEM DO APP VIA URL
     if (idDaURL) {
         user.company_id = idDaURL;
         document.getElementById('display-id').innerText = idDaURL;
         document.getElementById('identificacao-empresa').style.display = 'block';
+    }
+
+    if (emailDaURL) {
+        // decodeURIComponent limpa o e-mail (remove o %40 e volta para @)
+        user.email = decodeURIComponent(emailDaURL);
     }
 
     let planoAtual = { dias: 0, valor: 0 };
@@ -241,7 +245,7 @@
 
     window.abrirModalCPF = (dias, valor) => {
         if (!user.company_id) {
-            alert("Erro: ID da empresa não identificado. Faça login novamente.");
+            alert("Erro: Empresa não identificada. Por favor, acesse pelo App ou faça login.");
             return;
         }
         planoAtual = { dias, valor };
@@ -271,8 +275,8 @@
                 method: "POST",
                 body: JSON.stringify({
                     company_id: user.company_id,
-                    email: user.email || `empresa_${user.company_id}@sistemadigital.com.br`, // Fallback de email
-                    name: user.name || `Empresa ${user.company_id}`, // Fallback de nome
+                    email: user.email || `atendimento_id${user.company_id}@sistemadigital.com`, // Fallback
+                    name: user.name || `Admin Empresa ${user.company_id}`,
                     valor: valor,
                     dias: dias,
                     docNumber: cpf,
