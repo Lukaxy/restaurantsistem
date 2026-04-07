@@ -1,0 +1,374 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="icon" type="image/png" href="img/icone.png">
+    <title>Caixa - Digital Menu 💵</title>
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;600;700&display=swap" rel="stylesheet">
+    
+    <style>
+        :root {
+            --bg-main: #F7F9FC;
+            --bg-card: #FFFFFF;
+            --color-blue: #2B6CB0;
+            --color-green: #38A169;
+            --color-red: #E53E3E;
+            --text-primary: #1A202C;
+            --text-secondary: #718096;
+            --border-color: #E2E8F0;
+        }
+
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+
+        body {
+            font-family: 'Poppins', sans-serif;
+            background-color: var(--bg-main);
+            color: var(--text-primary);
+            display: flex;
+            flex-direction: column;
+            height: 100vh;
+            overflow: hidden;
+        }
+
+        /* HEADER */
+        header {
+            background-color: var(--color-blue);
+            color: white;
+            padding: 15px 30px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+        header h1 { font-size: 1.5rem; }
+        .btn-voltar { background: transparent; border: 1px solid white; color: white; padding: 8px 15px; border-radius: 6px; cursor: pointer; font-family: inherit; font-weight: bold; }
+        .btn-voltar:hover { background: rgba(255,255,255,0.1); }
+
+        /* LAYOUT PRINCIPAL */
+        .container {
+            display: flex;
+            flex: 1;
+            padding: 20px;
+            gap: 20px;
+            overflow: hidden;
+        }
+
+        /* COLUNA ESQUERDA: LISTA DE MESAS */
+        .col-mesas {
+            flex: 1;
+            background: var(--bg-card);
+            border-radius: 12px;
+            border: 1px solid var(--border-color);
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+            max-width: 400px;
+        }
+        .col-header { padding: 15px 20px; border-bottom: 1px solid var(--border-color); background: #F8FAFC; }
+        .col-header h2 { font-size: 1.2rem; color: var(--text-primary); }
+        
+        .mesas-list { flex: 1; overflow-y: auto; padding: 15px; }
+        
+        .card-mesa {
+            background: var(--bg-main);
+            border: 1px solid var(--border-color);
+            border-radius: 8px;
+            padding: 15px;
+            margin-bottom: 10px;
+            cursor: pointer;
+            transition: 0.2s;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        .card-mesa:hover { border-color: var(--color-blue); transform: translateY(-2px); }
+        .card-mesa.selecionada { border-color: var(--color-blue); border-width: 2px; background: #EBF8FF; }
+        .mesa-nome { font-weight: bold; font-size: 1.1rem; }
+        .mesa-total { color: var(--color-blue); font-weight: bold; }
+
+        /* COLUNA DIREITA: DETALHES E FECHAMENTO */
+        .col-detalhes {
+            flex: 2;
+            background: var(--bg-card);
+            border-radius: 12px;
+            border: 1px solid var(--border-color);
+            display: flex;
+            flex-direction: column;
+        }
+        
+        .detalhes-content { flex: 1; padding: 20px; overflow-y: auto; }
+        .item-row { display: flex; justify-content: space-between; padding: 10px 0; border-bottom: 1px dashed var(--border-color); }
+        .item-nome { color: var(--text-primary); }
+        .item-preco { font-weight: bold; color: var(--text-secondary); }
+
+        .estado-vazio { text-align: center; color: var(--text-secondary); margin-top: 50px; }
+
+        /* PAINEL DE COBRANÇA (RODAPÉ) */
+        .painel-cobranca {
+            padding: 20px;
+            background: #F8FAFC;
+            border-top: 1px solid var(--border-color);
+            border-bottom-left-radius: 12px;
+            border-bottom-right-radius: 12px;
+        }
+        
+        .total-box { display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px; }
+        .total-label { font-size: 1.2rem; font-weight: bold; color: var(--text-secondary); }
+        .total-valor { font-size: 2rem; font-weight: bold; color: var(--color-green); }
+
+        .acoes { display: flex; gap: 10px; }
+        select { flex: 1; padding: 12px; border-radius: 8px; border: 1px solid var(--border-color); font-family: inherit; font-size: 1rem; outline: none; }
+        
+        .btn { padding: 12px 20px; border-radius: 8px; font-weight: bold; border: none; cursor: pointer; font-family: inherit; font-size: 1rem; color: white; display: flex; align-items: center; justify-content: center; gap: 8px; transition: 0.2s; }
+        .btn-imprimir { background: #4A5568; flex: 1; }
+        .btn-imprimir:hover { background: #2D3748; }
+        .btn-fechar { background: var(--color-green); flex: 2; }
+        .btn-fechar:hover { background: #2F855A; }
+        .btn:disabled { opacity: 0.6; cursor: not-allowed; }
+
+        /* Loader */
+        .loader { border: 4px solid #f3f3f3; border-top: 4px solid var(--color-blue); border-radius: 50%; width: 30px; height: 30px; animation: spin 1s linear infinite; margin: 20px auto; }
+        @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
+    </style>
+</head>
+<body>
+
+    <header>
+        <h1>Caixa - Digital Menu 💵</h1>
+        <button class="btn-voltar" onclick="window.location.href='index.html'">Voltar ao Menu</button>
+    </header>
+
+    <div class="container">
+        <div class="col-mesas">
+            <div class="col-header">
+                <h2>Mesas Abertas</h2>
+            </div>
+            <div class="mesas-list" id="lista-mesas">
+                <div class="loader" id="loader-mesas"></div>
+                </div>
+        </div>
+
+        <div class="col-detalhes">
+            <div class="col-header">
+                <h2 id="titulo-detalhes">Selecione uma mesa</h2>
+            </div>
+            
+            <div class="detalhes-content" id="conteudo-detalhes">
+                <div class="estado-vazio">Nenhuma mesa selecionada.</div>
+            </div>
+
+            <div class="painel-cobranca" id="painel-cobranca" style="display: none;">
+                <div class="total-box">
+                    <span class="total-label">Total a Receber:</span>
+                    <span class="total-valor" id="valor-total">R$ 0,00</span>
+                </div>
+                
+                <div class="acoes">
+                    <select id="forma-pagamento">
+                        <option value="dinheiro">💵 Dinheiro</option>
+                        <option value="pix">💠 PIX</option>
+                        <option value="credito">💳 Cartão de Crédito</option>
+                        <option value="debito">💳 Cartão de Débito</option>
+                    </select>
+                    
+                    <button class="btn btn-imprimir" onclick="imprimirConta()">🖨️ Imprimir</button>
+                    <button class="btn btn-fechar" id="btn-finalizar" onclick="finalizarConta()">Baixar Conta</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+<script>
+    const user = JSON.parse(localStorage.getItem("user") || "null");
+    if (!user || !user.company_id) {
+        window.location.href = "login.html";
+    }
+
+    let mesas = [];
+    let mesaSelecionada = null;
+
+    // Carrega as mesas abertas a cada 10 segundos
+    async function carregarMesas() {
+        try {
+            const resposta = await fetch(`https://sistemadigitalmenu.com.br/api/orders?company_id=${user.company_id}`);
+            const dados = await resposta.json();
+            
+            if (dados.ok) {
+                // Filtra para mostrar apenas pedidos que não foram pagos ou cancelados
+                const abertas = dados.pedidos.filter(p => !['pago', 'finalizado', 'concluido', 'cancelado'].includes(p.status.toLowerCase()));
+                
+                // Agrupa por nome de mesa para o caixa
+                const gruposMesa = {};
+                abertas.forEach(pedido => {
+                    const nomeMesa = pedido.table_name || 'Avulso';
+                    if (!gruposMesa[nomeMesa]) {
+                        gruposMesa[nomeMesa] = { nome: nomeMesa, total: 0, ids: [], itens: [] };
+                    }
+                    gruposMesa[nomeMesa].total += Number(pedido.total);
+                    gruposMesa[nomeMesa].ids.push(pedido.id);
+                    gruposMesa[nomeMesa].itens.push(...pedido.items); // Junta os itens de todos os pedidos daquela mesa
+                });
+
+                mesas = Object.values(gruposMesa);
+                renderizarMesas();
+            }
+        } catch (error) {
+            console.error("Erro ao carregar mesas:", error);
+        }
+    }
+
+    function renderizarMesas() {
+        const lista = document.getElementById('lista-mesas');
+        document.getElementById('loader-mesas').style.display = 'none';
+        
+        if (mesas.length === 0) {
+            lista.innerHTML = '<div class="estado-vazio">Nenhuma mesa aberta no momento.</div>';
+            return;
+        }
+
+        lista.innerHTML = '';
+        mesas.forEach((mesa, index) => {
+            const card = document.createElement('div');
+            card.className = `card-mesa ${mesaSelecionada && mesaSelecionada.nome === mesa.nome ? 'selecionada' : ''}`;
+            card.onclick = () => selecionarMesa(mesa);
+            
+            card.innerHTML = `
+                <div class="mesa-nome">${mesa.nome}</div>
+                <div class="mesa-total">R$ ${mesa.total.toFixed(2).replace('.', ',')}</div>
+            `;
+            lista.appendChild(card);
+        });
+    }
+
+    function selecionarMesa(mesa) {
+        mesaSelecionada = mesa;
+        renderizarMesas(); // Atualiza a seleção visual
+
+        document.getElementById('titulo-detalhes').innerText = `Fechamento: ${mesa.nome}`;
+        const conteudo = document.getElementById('conteudo-detalhes');
+        
+        let htmlItens = '';
+        mesa.itens.forEach(item => {
+            htmlItens += `
+                <div class="item-row">
+                    <span class="item-nome">${item.qty}x ${item.name}</span>
+                    <span class="item-preco">R$ ${(item.price * item.qty).toFixed(2).replace('.', ',')}</span>
+                </div>
+            `;
+        });
+        
+        conteudo.innerHTML = htmlItens;
+        
+        document.getElementById('valor-total').innerText = `R$ ${mesa.total.toFixed(2).replace('.', ',')}`;
+        document.getElementById('painel-cobranca').style.display = 'block';
+    }
+
+    // ==========================================
+    // LÓGICA DE IMPRESSÃO VIA NAVEGADOR
+    // ==========================================
+    function imprimirConta() {
+        if (!mesaSelecionada) return;
+
+        let conteudo = `
+            <div style="font-family: monospace; width: 100%; max-width: 300px; margin: 0 auto; color: black;">
+                <h2 style="text-align: center; margin-bottom: 5px;">Digital Menu</h2>
+                <p style="text-align: center; font-size: 12px; margin-top: 0;">CONFERÊNCIA DE CONTA</p>
+                <hr style="border-top: 1px dashed black;">
+                <p style="font-size: 18px; font-weight: bold; margin: 5px 0;">MESA: ${mesaSelecionada.nome}</p>
+                <hr style="border-top: 1px dashed black;">
+                <table style="width: 100%; font-size: 14px;">
+        `;
+
+        mesaSelecionada.itens.forEach(item => {
+            conteudo += `
+                <tr>
+                    <td style="padding: 2px 0;">${item.qty}x ${item.name}</td>
+                    <td style="text-align: right; padding: 2px 0;">R$ ${(item.price * item.qty).toFixed(2)}</td>
+                </tr>
+            `;
+        });
+
+        conteudo += `
+                </table>
+                <hr style="border-top: 1px dashed black;">
+                <h3 style="text-align: right; font-size: 20px; margin: 10px 0;">TOTAL: R$ ${mesaSelecionada.total.toFixed(2)}</h3>
+                <hr style="border-top: 1px dashed black;">
+                <p style="text-align: center; margin-top: 20px; font-size: 12px;">Obrigado pela preferência!</p>
+                <p style="text-align: center; font-size: 10px;">Sistema Digital Menu</p>
+            </div>
+        `;
+
+        const janelaImpressao = window.open('', '', 'height=600,width=400');
+        janelaImpressao.document.write('<html><head><title>Imprimir Conta</title></head><body style="margin:0; padding: 10px;">');
+        janelaImpressao.document.write(conteudo);
+        janelaImpressao.document.write('</body></html>');
+        
+        janelaImpressao.document.close();
+        janelaImpressao.focus();
+        
+        // Timeout pequeno para garantir que o navegador renderize o HTML antes de chamar a impressora
+        setTimeout(() => {
+            janelaImpressao.print();
+            janelaImpressao.close();
+        }, 500);
+    }
+
+    // ==========================================
+    // FINALIZAR CONTA
+    // ==========================================
+    async function finalizarConta() {
+        if (!mesaSelecionada) return;
+
+        const metodoPagamento = document.getElementById('forma-pagamento').value;
+        const btn = document.getElementById('btn-finalizar');
+        
+        if(confirm(`Confirmar recebimento de R$ ${mesaSelecionada.total.toFixed(2)} via ${metodoPagamento.toUpperCase()}?`)) {
+            btn.disabled = true;
+            btn.innerText = "Processando...";
+
+            try {
+                // Como uma mesa pode ter vários pedidos separados (o cara pediu cerveja, depois pediu porção),
+                // nós marcamos todos os IDs daquela mesa como PAGO.
+                const promessas = mesaSelecionada.ids.map(idPedido => {
+                    return fetch(`https://sistemadigitalmenu.com.br/api/orders/${idPedido}/status`, {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({ 
+                            status: 'pago', 
+                            payment_method: metodoPagamento 
+                        })
+                    });
+                });
+
+                await Promise.all(promessas);
+                
+                alert('Conta baixada com sucesso! ✅');
+                
+                // Limpa a tela
+                mesaSelecionada = null;
+                document.getElementById('conteudo-detalhes').innerHTML = '<div class="estado-vazio">Nenhuma mesa selecionada.</div>';
+                document.getElementById('painel-cobranca').style.display = 'none';
+                document.getElementById('titulo-detalhes').innerText = 'Selecione uma mesa';
+                
+                // Recarrega as mesas atualizadas
+                carregarMesas();
+            } catch (error) {
+                alert('Erro ao baixar conta.');
+                console.error(error);
+            } finally {
+                btn.disabled = false;
+                btn.innerText = "Baixar Conta";
+            }
+        }
+    }
+
+    // Inicia o sistema
+    carregarMesas();
+    
+    // Atualiza a lista a cada 10 segundos caso venham novos pedidos do salão
+    setInterval(carregarMesas, 10000);
+
+</script>
+</body>
+</html>
