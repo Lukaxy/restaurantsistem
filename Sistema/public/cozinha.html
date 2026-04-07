@@ -4,121 +4,188 @@
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width,initial-scale=1" />
   <link rel="icon" type="image/png" href="img/icone.png">
-  <title>Painel da Cozinha 👨‍🍳</title>
-  <link rel="stylesheet" href="css/style.css" />
+  <title>Painel da Cozinha - Digital Menu 👨‍🍳</title>
+  <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;600;700&display=swap" rel="stylesheet">
   
-  <script src="js/auth.js"></script>
   <style>
-    /* MODAL CUSTOMIZADO */
-    .modal-overlay {
-      position: fixed;
-      top: 0; left: 0; width: 100%; height: 100%;
-      background: rgba(0, 0, 0, 0.7);
-      display: flex; align-items: center; justify-content: center;
-      z-index: 1000;
+    :root {
+        --bg-main: #F7F9FC;
+        --bg-card: #FFFFFF;
+        --color-blue: #2B6CB0;
+        --color-green: #38A169;
+        --color-red: #E53E3E;
+        --color-orange: #DD6B20; /* Cor de destaque para a Cozinha */
+        --color-amber: #D69E2E;
+        --text-primary: #1A202C;
+        --text-secondary: #718096;
+        --border-color: #E2E8F0;
     }
 
-    .modal-content {
-      background: #2b2f36;
-      padding: 25px;
-      border-radius: 15px;
-      width: 90%;
-      max-width: 400px;
-      text-align: center;
-      box-shadow: 0 10px 25px rgba(0,0,0,0.5);
-      border: 1px solid #3a3f44;
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+        font-family: 'Poppins', sans-serif;
+        background-color: var(--bg-main);
+        color: var(--text-primary);
+        display: flex;
+        flex-direction: column;
+        min-height: 100vh;
     }
 
-    .modal-content h3 { color: #fff; margin-bottom: 10px; }
-    .modal-content p { color: #adb5bd; margin-bottom: 25px; }
-
-    .modal-buttons { display: flex; gap: 15px; }
-
-    .btn-confirm, .btn-cancel-modal {
-      flex: 1; padding: 12px; border: none; border-radius: 8px;
-      font-weight: bold; cursor: pointer; transition: 0.3s;
+    /* HEADER & MENU */
+    header {
+        background-color: var(--color-blue);
+        color: white;
+        padding: 15px 30px;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        box-shadow: 0 2px 4px rgba(0,0,0,0.1);
     }
-
-    .btn-confirm { background: #fa5252; color: white; } /* Vermelho para cancelar/remover */
-    .btn-confirm.btn-blue { background: var(--color-blue); } /* Azul para avisos informativos */
-    .btn-cancel-modal { background: transparent; color: #fff; border: 1px solid #495057; }
-
-    .btn-confirm:hover { filter: brightness(1.2); }
-    .btn-cancel-modal:hover { background: #495057; }
-
-    /* ESTILO DO PAINEL */
-    .menu-dropdown {
-      display: none;
-      position: absolute;
-      background: #1a1d21;
-      border: 1px solid var(--border-color);
-      right: 30px;
-      top: 60px;
-      z-index: 100;
-    }
-    .menu-dropdown.show { display: block; }
-    .menu-dropdown div { padding: 10px 20px; cursor: pointer; border-bottom: 1px solid #333; }
+    header h1 { font-size: 1.5rem; }
     
-    .order-card { display: flex; flex-direction: column; height: auto; background: var(--bg-card); padding: 15px; margin-bottom: 15px; border-radius: 12px; border: 1px solid var(--border-color); }
-    .order-header { display: flex; justify-content: space-between; font-weight: bold; margin-bottom: 10px; color: var(--color-blue); }
-    .order-item { padding: 5px 0; border-bottom: 1px solid #3a3f44; color: var(--text-primary); }
-    .order-obs { color: #fcc419; font-size: 0.9em; margin-top: 2px; }
+    .header-actions { display: flex; align-items: center; gap: 15px; }
+    .btn-voltar { background: transparent; border: 1px solid white; color: white; padding: 8px 15px; border-radius: 6px; cursor: pointer; font-family: inherit; font-weight: bold; transition: 0.2s;}
+    .btn-voltar:hover { background: rgba(255,255,255,0.1); }
+
+    .menu-dropdown-container { position: relative; display: inline-block; }
+    .btn-dots { 
+        background: transparent; border: none; color: white; font-size: 1.5rem; 
+        letter-spacing: 2px; cursor: pointer; padding: 5px 10px; line-height: 1; transition: 0.2s; border-radius: 6px;
+    }
+    .btn-dots:hover { background: rgba(255,255,255,0.1); }
     
-    .button-group { display: flex; gap: 12px; margin-top: 20px; }
-    .btn-action { flex: 1; height: 45px; width: 100%; padding: 10px; border: none; border-radius: 8px; cursor: pointer; font-weight: bold; transition: 0.3s; box-shadow: 0 2px 4px rgba(0,0,0,0.2); }
+    .dropdown-content { 
+        display: none; position: absolute; right: 0; top: 45px; 
+        background-color: var(--bg-card); min-width: 220px; 
+        box-shadow: 0px 8px 20px rgba(0,0,0,0.15); z-index: 100; 
+        border-radius: 10px; overflow: hidden; border: 1px solid var(--border-color); 
+        animation: popIn 0.2s ease; 
+    }
+    .dropdown-content a { 
+        color: var(--text-primary); padding: 12px 16px; text-decoration: none; 
+        display: block; font-size: 0.95rem; font-weight: 600; transition: background 0.2s; 
+    }
+    .dropdown-content a:hover { background-color: var(--bg-main); color: var(--color-blue); }
+    .show-dropdown { display: block; }
+
+    /* LAYOUT PRINCIPAL */
+    main { padding: 20px; max-width: 800px; margin: 0 auto; width: 100%; }
+
+    /* CARTÕES DE PEDIDO */
+    .order-card { 
+        background: var(--bg-card); 
+        padding: 20px; 
+        margin-bottom: 20px; 
+        border-radius: 12px; 
+        border: 1px solid var(--border-color); 
+        box-shadow: 0 4px 6px rgba(0,0,0,0.02);
+        transition: 0.2s;
+    }
+    .order-header { 
+        display: flex; justify-content: space-between; align-items: center; 
+        font-weight: bold; margin-bottom: 10px; font-size: 1.2rem; color: var(--color-orange); 
+    }
+    .order-meta { font-size: 0.85rem; color: var(--text-secondary); margin-bottom: 15px; display: flex; justify-content: space-between; align-items: center;}
+    .bar-tag { color: var(--color-amber); font-weight: bold; background: #FEFCBF; padding: 4px 8px; border-radius: 6px; border: 1px solid #F6E05E;}
+
+    .order-item { 
+        padding: 10px 0; border-bottom: 1px dashed var(--border-color); 
+        color: var(--text-primary); font-size: 1.05rem; 
+    }
+    .order-item:last-child { border-bottom: none; }
+    .item-qty { font-weight: bold; color: var(--color-orange); margin-right: 8px; }
+    
+    .item-obs { color: var(--color-red); font-size: 0.85rem; margin-top: 4px; font-weight: 600;}
+    .order-obs-geral { background: #FFF5F5; color: #C53030; padding: 10px; margin-top: 15px; border-radius: 8px; font-size: 0.9rem; font-weight: bold; border: 1px solid #FED7D7; }
+    
+    /* BOTÕES DO CARTÃO */
+    .button-group { display: flex; gap: 10px; margin-top: 15px; }
+    .btn-action { 
+        flex: 1; padding: 12px; border: none; border-radius: 8px; 
+        cursor: pointer; font-weight: bold; transition: 0.2s; font-size: 1rem; color: white;
+    }
+    .btn-action:hover { opacity: 0.9; }
     .btn-action:active { transform: scale(0.98); }
     
-    .btn-accept { background: var(--color-blue); color: white; }
-    .btn-ready { background: var(--color-green); color: white; }
-    .btn-cancel { background: rgba(250, 82, 82, 0.2); color: #fa5252; border: 1px solid #fa5252; }
-    .btn-locked { background: #444 !important; color: #888 !important; cursor: not-allowed !important; }
-  </style>
-  <script async src="https://www.googletagmanager.com/gtag/js?id=G-2BTBZ5MK63"></script>
-<script>
-  window.dataLayer = window.dataLayer || [];
-  function gtag(){dataLayer.push(arguments);}
-  gtag('js', new Date());
+    .btn-accept { background: var(--color-orange); }
+    .btn-ready { background: var(--color-green); }
+    .btn-cancel { background: transparent; color: var(--color-red); border: 1px solid var(--color-red); }
+    .btn-cancel:hover { background: #FFF5F5; }
+    .btn-locked { background: #EDF2F7; color: var(--text-secondary); border: 1px solid var(--border-color); cursor: not-allowed; }
+    .btn-locked:hover { opacity: 1; }
 
-  gtag('config', 'G-2BTBZ5MK63');
-</script>
+    /* MODAL CUSTOMIZADO */
+    .modal-overlay {
+        position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+        background: rgba(0, 0, 0, 0.6); display: none; align-items: center; justify-content: center;
+        z-index: 9999; backdrop-filter: blur(4px);
+    }
+    .modal-box {
+        background: var(--bg-card); padding: 30px; border-radius: 16px; width: 90%; max-width: 420px;
+        box-shadow: 0 10px 25px rgba(0,0,0,0.2); text-align: center; animation: popIn 0.3s ease;
+    }
+    .modal-title { font-size: 1.4rem; color: var(--text-primary); margin-bottom: 15px; font-weight: bold; }
+    .modal-message { color: var(--text-secondary); margin-bottom: 25px; font-size: 1.05rem; line-height: 1.5; }
+    .modal-buttons { display: flex; gap: 12px; justify-content: center; }
+    .btn-modal { flex: 1; padding: 14px; border-radius: 8px; font-weight: bold; border: none; cursor: pointer; font-family: inherit; font-size: 1rem; transition: 0.2s; }
+    .btn-modal-cancel { background: #EDF2F7; color: #4A5568; }
+    .btn-modal-cancel:hover { background: #E2E8F0; }
+    .btn-modal-confirm { background: var(--color-blue); color: white; }
+    .btn-modal-confirm:hover { background: #235A91; }
+    .btn-modal-danger { background: var(--color-red); color: white; }
+    .btn-modal-danger:hover { background: #C53030; }
+
+    @keyframes popIn { 0% { transform: scale(0.9); opacity: 0; } 100% { transform: scale(1); opacity: 1; } }
+  </style>
+
+  <script src="js/auth.js"></script>
+
+  <script async src="https://www.googletagmanager.com/gtag/js?id=G-2BTBZ5MK63"></script>
+  <script>
+    window.dataLayer = window.dataLayer || [];
+    function gtag(){dataLayer.push(arguments);}
+    gtag('js', new Date());
+    gtag('config', 'G-2BTBZ5MK63');
+  </script>
 </head>
 
 <body>
 
 <header>
-  <div class="menu-wrapper">
-    <button class="menu-button" onclick="toggleMenu()">⋮</button>
-    <div id="menuDropdown" class="menu-dropdown">
-      <div onclick="location.href='index.html'">Cardapio 📙</div>
-      <div onclick="location.href='meus-pedidos.html'">Meus pedidos 🧾</div>
-      <div onclick="location.href='relatorio.html'">Relatório 📈</div>
-      <div onclick="window.location.href='bar.html'">Bar🍹</div>
-      <div onclick="location.href='cozinha.html'">Cozinha 👨‍🍳</div>
-      <div onclick="location.href='configuracoes.html'">Configurações ⚙️</div>
-      <div onclick="location.href='company-admin.html'">Painel da Empresa 🏢</div>
-      <div onclick="location.href='tutorial.html'">Tutoriais 📚</div>
-      <div onclick="location.href='support.html'">Suporte 🛠️</div>
-      <div onclick="logout()" style="color: var(--color-red);">Sair do Sistema 🚪</div>
+    <h1>Painel da Cozinha 👨‍🍳</h1>
+    
+    <div class="header-actions">
+        <button class="btn-voltar" onclick="window.location.href='index.html'">Voltar</button>
+        
+        <div class="menu-dropdown-container">
+            <button class="btn-dots" onclick="toggleMenu(event)">•••</button>
+            <div id="dropdown-menu" class="dropdown-content">
+                <a href="index.html">🏠 Início</a>
+                <a href="bar.html">🍸 Bar</a>
+                <a href="caixa.html">💵 Caixa</a>
+                <hr style="border: 0; border-top: 1px solid var(--border-color); margin: 5px 0;">
+                <a href="javascript:void(0)" onclick="deslogarSistema()" style="color: var(--color-red);">🚪 Sair</a>
+            </div>
+        </div>
     </div>
-  </div>
-  <div class="header-title">Painel da Cozinha 👨‍🍳</div>
 </header>
 
 <main>
   <div id="orders">
-     <p style="text-align:center; margin-top: 20px; color: #adb5bd;">Aguardando pedidos...</p>
+      <p style="text-align:center; margin-top: 50px; color: var(--text-secondary); font-size: 1.1rem;">Aguardando pedidos...</p>
   </div>
 </main>
 
-<div id="customModal" class="modal-overlay" style="display: none;">
-  <div class="modal-content">
-    <h3 id="modalTitle">Título</h3>
-    <p id="modalMessage">Mensagem do modal.</p>
-    <div class="modal-buttons">
-      <button id="modalConfirm" class="btn-confirm">Confirmar</button>
-      <button id="modalCancel" class="btn-cancel-modal" onclick="closeModal()">Cancelar</button>
+<div id="custom-modal" class="modal-overlay">
+    <div class="modal-box">
+        <h3 id="modal-title" class="modal-title">Atenção</h3>
+        <p id="modal-message" class="modal-message">Mensagem.</p>
+        <div class="modal-buttons">
+            <button id="modal-btn-cancel" class="btn-modal btn-modal-cancel">Cancelar</button>
+            <button id="modal-btn-confirm" class="btn-modal btn-modal-confirm">Confirmar</button>
+        </div>
     </div>
-  </div>
 </div>
 
 <script>
@@ -127,36 +194,72 @@ const user = JSON.parse(localStorage.getItem("user"));
 
 if (!user || !user.company_id) window.location.href = "login.html";
 
-setInterval(loadOrders, 5000);
-loadOrders();
-
-// FUNÇÕES DO MODAL
-function openModal(titulo, mensagem, callback, isAviso = false) {
-  const modal = document.getElementById("customModal");
-  const btnConfirm = document.getElementById("modalConfirm");
-  const btnCancel = document.getElementById("modalCancel");
-  
-  document.getElementById("modalTitle").innerText = titulo;
-  document.getElementById("modalMessage").innerText = mensagem;
-  
-  // Se for apenas um aviso (tipo "Aguarde o Bar"), esconde o botão cancelar
-  btnCancel.style.display = isAviso ? "none" : "block";
-  btnConfirm.innerText = isAviso ? "Entendido" : "Confirmar";
-  btnConfirm.className = isAviso ? "btn-confirm btn-blue" : "btn-confirm";
-
-  modal.style.display = "flex";
-
-  btnConfirm.onclick = function() {
-    if (callback) callback();
-    closeModal();
-  };
+// ==========================================
+// MENU DROPDOWN E LOGOUT
+// ==========================================
+function toggleMenu(event) {
+    event.stopPropagation();
+    document.getElementById("dropdown-menu").classList.toggle("show-dropdown");
 }
 
-function closeModal() {
-  document.getElementById("customModal").style.display = "none";
+window.onclick = function(event) {
+    if (!event.target.matches('.btn-dots')) {
+        const dropdowns = document.getElementsByClassName("dropdown-content");
+        for (let i = 0; i < dropdowns.length; i++) {
+            if (dropdowns[i].classList.contains('show-dropdown')) {
+                dropdowns[i].classList.remove('show-dropdown');
+            }
+        }
+    }
 }
 
-// CARREGAR PEDIDOS
+function deslogarSistema() {
+    mostrarModal("Sair do Sistema", "Tem certeza que deseja encerrar a sessão?", "confirm", () => {
+        localStorage.removeItem("user");
+        window.location.href = "login.html";
+    });
+}
+
+// ==========================================
+// FUNÇÃO DE MODAL CUSTOMIZADO
+// ==========================================
+function mostrarModal(titulo, mensagem, tipo = 'alert', callbackConfirm = null, isDanger = false) {
+    const modal = document.getElementById('custom-modal');
+    document.getElementById('modal-title').innerText = titulo;
+    document.getElementById('modal-message').innerText = mensagem;
+    
+    const btnCancel = document.getElementById('modal-btn-cancel');
+    const btnConfirm = document.getElementById('modal-btn-confirm');
+    
+    const novoBtnConfirm = btnConfirm.cloneNode(true);
+    btnConfirm.parentNode.replaceChild(novoBtnConfirm, btnConfirm);
+    
+    if (isDanger) {
+        novoBtnConfirm.className = "btn-modal btn-modal-danger";
+        novoBtnConfirm.innerText = "Sim, Cancelar";
+    } else {
+        novoBtnConfirm.className = "btn-modal btn-modal-confirm";
+        novoBtnConfirm.innerText = tipo === 'alert' ? "Entendido" : "Confirmar";
+    }
+
+    if (tipo === 'confirm') {
+        btnCancel.style.display = 'block';
+        btnCancel.onclick = () => { modal.style.display = 'none'; };
+    } else {
+        btnCancel.style.display = 'none';
+    }
+    
+    novoBtnConfirm.onclick = () => {
+        modal.style.display = 'none';
+        if (callbackConfirm) callbackConfirm();
+    };
+    
+    modal.style.display = 'flex';
+}
+
+// ==========================================
+// LÓGICA DE PEDIDOS DA COZINHA
+// ==========================================
 async function loadOrders() {
     try {
         const res = await fetch(`/api/orders?company_id=${user.company_id}`);
@@ -169,7 +272,7 @@ async function loadOrders() {
         });
 
         if(activeOrders.length === 0) {
-            ordersDiv.innerHTML = '<p style="text-align:center; margin-top: 50px; color: #adb5bd;">Cozinha livre! 👨‍🍳</p>';
+            ordersDiv.innerHTML = '<p style="text-align:center; margin-top: 50px; color: var(--text-secondary); font-size: 1.1rem;">Cozinha livre! Nenhuma comanda pendente. 🔥</p>';
             return;
         }
 
@@ -185,13 +288,14 @@ async function loadOrders() {
 
             const card = document.createElement("div");
             card.className = "order-card";
-            const statusColor = currentStatus === 'novo' ? '#e8590c' : '#51cf66';
-            card.style.borderLeft = `5px solid ${statusColor}`;
+            const statusColor = currentStatus === 'novo' ? 'var(--color-orange)' : 'var(--color-green)';
+            card.style.borderLeft = `6px solid ${statusColor}`;
 
             let itemsHtml = itemsToShow.map(item => `
                 <div class="order-item">
-                    <span style="font-weight:bold;">${item.qty || '1'}x</span> ${item.name}
-                    ${item.notes ? `<div class="order-obs">⚠️ ${item.notes}</div>` : ''}
+                    <span class="item-qty">${item.qty || '1'}x</span> 
+                    <span class="item-name">${item.name}</span>
+                    ${item.notes ? `<div class="item-obs">⚠️ ${item.notes}</div>` : ''}
                 </div>
             `).join("");
 
@@ -199,26 +303,29 @@ async function loadOrders() {
             let cancelBtn = `<button class="btn-action btn-cancel" onclick="cancelarPedido(${order.id})">Cancelar ❌</button>`;
             
             if (currentStatus === 'novo') {
-                primaryBtn = `<button class="btn-action btn-accept" onclick="processarEtapa(${order.id}, 'aceitar')">Aceitar 🔥</button>`;
+                primaryBtn = `<button class="btn-action btn-accept" onclick="processarEtapa(${order.id}, 'aceitar')">🔥 Aceitar</button>`;
             } else if (currentStatus === 'preparando') {
                 if (barPendente) {
-                    primaryBtn = `<button class="btn-action btn-locked" onclick="openModal('Aguarde 🍹', 'O Bar ainda não finalizou a parte dele. O pedido só pode ser concluído quando as bebidas estiverem prontas!', null, true)">Aguardando Bar</button>`;
+                    primaryBtn = `<button class="btn-action btn-locked" onclick="mostrarModal('Aguarde o Bar 🍹', 'As bebidas desta mesa ainda não estão prontas. Aguarde a finalização do bar para liberar o pedido completo.', 'alert')">Aguardando Bar...</button>`;
                 } else {
-                    primaryBtn = `<button class="btn-action btn-ready" onclick="processarEtapa(${order.id}, 'finalizar')">Pronto ✅</button>`;
+                    primaryBtn = `<button class="btn-action btn-ready" onclick="processarEtapa(${order.id}, 'finalizar')">✅ Pronto</button>`;
                 }
             }
 
             card.innerHTML = `
                 <div class="order-header">
-                    <span>${order.table_name || 'Balcão'}</span>
-                    <span>#${order.id}</span>
+                    <span>Mesa: ${order.table_name || 'Balcão'}</span>
+                    <span style="color: var(--text-secondary);">#${order.id}</span>
                 </div>
-                <div style="margin-bottom:10px; font-size:0.8rem; color:#888;">
-                    ⏰ ${new Date(order.created_at).toLocaleTimeString().substring(0,5)}
-                    ${barPendente ? '<span style="float:right; color:#fcc419; font-weight:bold;">⚠️ Aguarde o Bar</span>' : ''}
+                <div class="order-meta">
+                    <span>⏰ ${new Date(order.created_at).toLocaleTimeString().substring(0,5)}</span>
+                    ${barPendente ? '<span class="bar-tag">⚠️ Aguarde o Bar</span>' : ''}
                 </div>
-                ${itemsHtml}
-                ${order.notes ? `<div style="background:#333; padding:8px; margin-top:10px; border-radius:4px; color:#fcc419; font-size:0.9rem;">📝 ${order.notes}</div>` : ''}
+                
+                <div style="margin-top: 10px;">${itemsHtml}</div>
+                
+                ${order.notes ? `<div class="order-obs-geral">📝 Pedido: ${order.notes}</div>` : ''}
+                
                 <div class="button-group">${primaryBtn}${cancelBtn}</div>
             `;
             ordersDiv.appendChild(card);
@@ -234,19 +341,21 @@ async function processarEtapa(id, acao) {
     } catch (e) { console.error(e); }
 }
 
-async function cancelarPedido(id) {
-    openModal(
-        "Cancelar Pedido? ❌", 
-        "Tem certeza que deseja CANCELAR este pedido na cozinha? Essa ação não pode ser desfeita.", 
+function cancelarPedido(id) {
+    mostrarModal(
+        "Cancelar Pratos? ❌", 
+        "Tem certeza que deseja CANCELAR os pratos da cozinha deste pedido?", 
+        "confirm", 
         async () => {
             try {
                 await updateSector(id, 'cozinha', 'cancelado');
                 loadOrders();
             } catch (e) {
                 console.error(e);
-                openModal('Erro', 'Não foi possível cancelar o pedido.', null, true);
+                mostrarModal("Erro", "Não foi possível cancelar o pedido.", "alert");
             }
-        }
+        },
+        true // isDanger
     );
 }
 
@@ -258,8 +367,10 @@ async function updateSector(id, sector, status) {
     });
 }
 
-function toggleMenu() { document.getElementById("menuDropdown").classList.toggle("show"); }
-document.addEventListener("click", e => { if (!e.target.closest(".menu-wrapper")) document.getElementById("menuDropdown").classList.remove("show"); });
+// Inicia o auto-refresh de 5 segundos
+setInterval(loadOrders, 5000);
+loadOrders();
+
 </script>
 
 </body>
