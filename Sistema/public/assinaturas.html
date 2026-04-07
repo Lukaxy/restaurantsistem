@@ -10,16 +10,19 @@
   <script src="https://sdk.mercadopago.com/js/v2"></script>
 
   <style>
+    /* ================== DESIGN SYSTEM LIGHT PREMIUM ================== */
     :root {
-      --bg-main: #0d0d0d;
-      --bg-card: #1a1a1a;
-      --color-blue: #339af0;
-      --color-green: #51cf66;
-      --color-purple: #845ef7; 
-      --color-red: #ff6b6b;
-      --text-primary: #ffffff;
-      --text-secondary: #adb5bd;
-      --border-color: #2c2f33;
+        --bg-main: #F7F9FC;
+        --bg-card: #FFFFFF;
+        --bg-input: #EDF2F7;
+        --color-blue: #2B6CB0;
+        --color-green: #38A169;
+        --color-purple: #805AD5; 
+        --color-red: #E53E3E;
+        --text-primary: #1A202C;
+        --text-secondary: #718096;
+        --border-color: #E2E8F0;
+        --radius: 16px;
     }
 
     * { box-sizing: border-box; }
@@ -35,75 +38,135 @@
       min-height: 100vh;
     }
 
-    header { text-align: center; padding: 60px 20px 40px; }
+    /* HEADER SIMPLES DE NAVEGAÇÃO */
+    .top-nav {
+      width: 100%;
+      padding: 15px 30px;
+      display: flex;
+      justify-content: flex-start;
+    }
+    .btn-voltar {
+      background: transparent; border: 1px solid var(--border-color); color: var(--text-secondary);
+      padding: 8px 15px; border-radius: 8px; cursor: pointer; font-family: inherit; font-weight: 600; transition: 0.2s;
+    }
+    .btn-voltar:hover { background: var(--border-color); color: var(--text-primary); }
+
+    /* CABEÇALHO DA PÁGINA */
+    header { text-align: center; padding: 20px 20px 40px; }
 
     h1 {
-      font-size: 2.5rem; margin: 0 0 15px;
-      background: linear-gradient(90deg, #fff, var(--color-blue));
-      -webkit-background-clip: text; -webkit-text-fill-color: transparent;
+      font-size: 2.5rem; margin: 0 0 10px; color: var(--text-primary);
+      font-weight: 700;
     }
 
     .plans-container {
-      display: flex; flex-wrap: wrap; justify-content: center;
-      gap: 30px; padding: 20px; max-width: 1200px; width: 100%;
+      display: flex; flex-wrap: wrap; justify-content: center; align-items: stretch;
+      gap: 30px; padding: 20px; max-width: 1100px; width: 100%; margin-bottom: 50px;
     }
 
+    /* CARTÕES DE PLANO */
     .plan-card {
       background: var(--bg-card); border: 1px solid var(--border-color);
-      border-radius: 16px; padding: 40px 30px; width: 320px;
+      border-radius: var(--radius); padding: 40px 30px; width: 320px;
       text-align: center; position: relative; transition: all 0.3s ease;
       display: flex; flex-direction: column;
+      box-shadow: 0 10px 30px rgba(0,0,0,0.04);
     }
 
-    .plan-card:hover { transform: translateY(-10px); border-color: var(--color-blue); }
-    .plan-card.popular { border: 2px solid var(--color-blue); transform: scale(1.05); z-index: 2; }
+    .plan-card:hover { transform: translateY(-8px); box-shadow: 0 20px 40px rgba(0,0,0,0.08); }
+    
+    /* Destaque para o Mais Vendido */
+    .plan-card.popular { 
+      border: 2px solid var(--color-blue); 
+      transform: scale(1.05); 
+      z-index: 2; 
+      box-shadow: 0 15px 35px rgba(43, 108, 176, 0.15);
+    }
+    .plan-card.popular:hover { transform: scale(1.05) translateY(-5px); }
 
     .badge {
-      position: absolute; top: -15px; left: 50%; transform: translateX(-50%);
-      background: var(--color-blue); color: white; padding: 8px 20px;
-      border-radius: 20px; font-size: 0.85rem; font-weight: 700; text-transform: uppercase;
+      position: absolute; top: -16px; left: 50%; transform: translateX(-50%);
+      background: var(--color-blue); color: white; padding: 6px 20px;
+      border-radius: 30px; font-size: 0.85rem; font-weight: 700; text-transform: uppercase;
+      box-shadow: 0 4px 10px rgba(43, 108, 176, 0.3);
+      white-space: nowrap;
     }
 
-    .price { font-size: 3rem; font-weight: 700; margin: 20px 0; color: white; }
-    .price small { font-size: 1rem; color: var(--text-secondary); font-weight: 400; }
+    .plan-name { font-size: 1.4rem; color: var(--text-secondary); margin-bottom: 5px; font-weight: 600; }
+    .plan-card.popular .plan-name { color: var(--color-blue); }
 
-    ul.features { list-style: none; padding: 20px 0 0; margin: 0 0 30px; flex-grow: 1; text-align: left; border-top: 1px solid var(--border-color); }
-    ul.features li { margin-bottom: 15px; color: #ccc; display: flex; align-items: center; font-size: 0.95rem; }
+    .price { font-size: 3rem; font-weight: 700; margin: 15px 0 25px; color: var(--text-primary); }
+    .price small { font-size: 1rem; color: var(--text-secondary); font-weight: 500; }
+
+    ul.features { list-style: none; padding: 25px 0 0; margin: 0 0 30px; flex-grow: 1; text-align: left; border-top: 1px solid var(--border-color); }
+    ul.features li { margin-bottom: 15px; color: var(--text-primary); display: flex; align-items: center; font-size: 0.95rem; font-weight: 500;}
     ul.features li::before {
       content: "✔"; display: inline-flex; justify-content: center; align-items: center;
-      min-width: 24px; height: 24px; background: rgba(81, 207, 102, 0.1);
-      color: var(--color-green); border-radius: 50%; margin-right: 12px; font-size: 12px;
+      min-width: 24px; height: 24px; background: #F0FFF4;
+      color: var(--color-green); border-radius: 50%; margin-right: 12px; font-size: 12px; font-weight: bold;
     }
 
-    .btn-plan { display: block; width: 100%; padding: 16px; border-radius: 8px; font-weight: 600; cursor: pointer; transition: 0.3s; border: none; }
-    .btn-outline { border: 1px solid var(--border-color); color: white; background: transparent; }
-    .btn-primary { background: var(--color-blue); color: white; }
-    .btn-vip { background: linear-gradient(135deg, #6741d9, #e03131); color: white; }
+    /* BOTÕES DOS PLANOS */
+    .btn-plan { display: block; width: 100%; padding: 16px; border-radius: 8px; font-weight: bold; font-size: 1.05rem; cursor: pointer; transition: 0.3s; border: none; font-family: inherit;}
+    .btn-outline { border: 2px solid var(--color-blue); color: var(--color-blue); background: transparent; }
+    .btn-outline:hover { background: #EBF8FF; }
+    .btn-primary { background: var(--color-blue); color: white; box-shadow: 0 4px 12px rgba(43, 108, 176, 0.3); }
+    .btn-primary:hover { background: #235A91; transform: translateY(-2px); }
+    .btn-vip { background: var(--color-purple); color: white; }
+    .btn-vip:hover { opacity: 0.9; }
 
-    .box { background: var(--bg-card); padding: 25px; border-radius: 16px; border: 1px solid var(--border-color); }
-    input { background: #2b2b2b; border: 1px solid var(--border-color); color: white; padding: 12px; border-radius: 8px; outline: none; }
+    .box { background: var(--bg-card); padding: 30px; border-radius: 16px; border: 1px solid var(--border-color); box-shadow: 0 10px 30px rgba(0,0,0,0.1); }
+    
+    input { 
+      background: var(--bg-input); border: 1px solid var(--border-color); color: var(--text-primary); 
+      padding: 15px; border-radius: 8px; outline: none; font-family: inherit; transition: 0.2s;
+    }
+    input:focus { border-color: var(--color-blue); background: #FFF; box-shadow: 0 0 0 3px rgba(43, 108, 176, 0.1); }
 
     @keyframes popIn { from { transform: scale(0.9); opacity: 0; } to { transform: scale(1); opacity: 1; } }
 
     .id-banner {
-      background: rgba(51, 154, 240, 0.1);
+      background: #EBF8FF;
       border: 1px dashed var(--color-blue);
       color: var(--color-blue);
       padding: 10px 20px;
       border-radius: 30px;
-      font-size: 0.85rem;
+      font-size: 0.9rem;
       margin-bottom: 20px;
+      display: inline-block;
+      font-weight: 600;
     }
+
+    /* MODAIS (Fundo translúcido elegante) */
+    .modal-backdrop {
+        display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+        background: rgba(0, 0, 0, 0.5); z-index: 10000; justify-content: center; align-items: center; backdrop-filter: blur(5px);
+    }
+
   </style>
+
+  <script async src="https://www.googletagmanager.com/gtag/js?id=G-2BTBZ5MK63"></script>
+  <script>
+    window.dataLayer = window.dataLayer || [];
+    function gtag(){dataLayer.push(arguments);}
+    gtag('js', new Date());
+    gtag('config', 'G-2BTBZ5MK63');
+  </script>
 </head>
 <body>
 
+  <div class="top-nav">
+      <button class="btn-voltar" onclick="history.back()">← Voltar</button>
+  </div>
+
   <header>
     <h1>Escolha seu Plano 🚀</h1>
-    <p style="color: var(--text-secondary);">Desbloqueie o uso ilimitado e leve seu restaurante para o próximo nível.</p>
+    <p style="color: var(--text-secondary); font-size: 1.1rem; max-width: 600px; margin: 0 auto;">Desbloqueie o uso ilimitado e leve a gestão do seu restaurante para o próximo nível.</p>
     
-    <div id="identificacao-empresa" class="id-banner" style="display: none;">
-      🛒 Identificado Empresa ID: <strong id="display-id">...</strong>
+    <div style="margin-top: 20px;">
+        <div id="identificacao-empresa" class="id-banner" style="display: none;">
+        🏢 Empresa Identificada: <strong id="display-id">...</strong>
+        </div>
     </div>
   </header>
 
@@ -124,9 +187,9 @@
       <h3 class="plan-name">Anual</h3>
       <div class="price">R$ 800 <small style="font-size: 0.4em">/ano</small></div>
       <ul class="features">
-        <li><strong>1 mês GRÁTIS (Economia R$ 100)</strong></li>
-        <li>Prioridade no Suporte</li>
-        <li>Backup Diário dos Dados</li>
+        <li style="color: var(--color-green); font-weight: bold;">1 mês GRÁTIS (Economia R$ 100)</li>
+        <li>Prioridade VIP no Suporte</li>
+        <li>Backup Diário de Dados</li>
       </ul>
       <button class="btn-plan btn-primary" onclick="abrirModalCPF(365, 800.00)">Quero Economizar</button>
     </div>
@@ -137,50 +200,68 @@
       <ul class="features">
         <li>Selo "Parceiro Digital"</li>
         <li>Acesso a novidades Beta</li>
-        <li>Contato direto Desenvolvedor</li>
+        <li>Contato direto com Desenvolvedor</li>
       </ul>
       <button class="btn-plan btn-vip" onclick="abrirModalCPF(180, 199.90)">Comprar Semestral</button>
     </div>
   </div>
 
-  <div id="cpfModal" style="display:none; position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.85); z-index:10000; justify-content:center; align-items:center; backdrop-filter:blur(5px);">
-      <div class="box" style="width: 340px; text-align: center; border: 1px solid var(--color-blue); animation: popIn 0.3s ease;">
-          <h3 style="margin-top:0; color: var(--color-blue);">Pagamento via PIX 💠</h3>
-          <p style="font-size: 0.85rem; color: var(--text-secondary); margin-bottom: 20px;">Digite seu CPF para gerar o QR Code:</p>
-          <input type="text" id="inputCPF" placeholder="000.000.000-00" maxlength="14" style="width: 100%; margin-bottom: 20px; text-align: center; font-size: 1.3rem; font-weight: bold; letter-spacing: 1px;">
+  <div id="cpfModal" class="modal-backdrop">
+      <div class="box" style="width: 360px; text-align: center; border-top: 4px solid var(--color-blue); animation: popIn 0.3s ease;">
+          <h3 style="margin-top:0; color: var(--text-primary); font-size: 1.4rem;">Pagamento via PIX 💠</h3>
+          <p style="font-size: 0.95rem; color: var(--text-secondary); margin-bottom: 25px;">Por questões de segurança e emissão de nota, precisamos do seu CPF/CNPJ.</p>
+          
+          <input type="text" id="inputCPF" placeholder="000.000.000-00" maxlength="14" style="width: 100%; margin-bottom: 25px; text-align: center; font-size: 1.3rem; font-weight: bold; letter-spacing: 2px;">
+          
           <div style="display: flex; gap: 10px;">
-              <button id="btnConfirmarCPF" class="btn-plan btn-primary" style="flex:1; padding: 12px;">Gerar PIX</button>
-              <button onclick="fecharModalCPF()" class="btn-plan btn-outline" style="flex:1; padding: 12px;">Voltar</button>
+              <button onclick="fecharModalCPF()" class="btn-plan btn-outline" style="flex:1; padding: 14px;">Cancelar</button>
+              <button id="btnConfirmarCPF" class="btn-plan btn-primary" style="flex:1; padding: 14px;">Gerar PIX</button>
           </div>
       </div>
   </div>
 
-  <div id="modal-pix" style="display:none; position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.9); z-index:11000; justify-content:center; align-items:center;">
-    <div class="box" style="max-width: 400px; text-align: center;">
-        <h3 style="margin-bottom: 5px;">QR Code Gerado! ✅</h3>
-        <p style="color: var(--text-secondary); font-size: 0.9rem;">Abra o app do seu banco e pague via PIX.</p>
-        <div id="pix-valor-display" style="font-size: 2rem; font-weight: bold; color: var(--color-green); margin: 15px 0;">R$ 0,00</div>
-        <img id="qrcode-img" src="" style="width: 200px; background: white; padding: 10px; border-radius: 10px; margin: 0 auto 15px; display: block;">
-        <div style="margin-bottom: 15px;">
-            <small>O pagamento será direcionado para: LUCAS FERREIRA...</small>
-            <div id="pix-status" style="font-size: 0.9rem; color: var(--color-blue); margin-top:5px;">🕒 Verificando status...</div>
+  <div id="modal-pix" class="modal-backdrop" style="background:rgba(0,0,0,0.7);">
+    <div class="box" style="width: 90%; max-width: 420px; text-align: center; border-top: 4px solid var(--color-green);">
+        <h3 style="margin-bottom: 5px; color: var(--text-primary);">QR Code Gerado! ✅</h3>
+        <p style="color: var(--text-secondary); font-size: 0.95rem;">Abra o app do seu banco e pague via PIX.</p>
+        
+        <div id="pix-valor-display" style="font-size: 2.2rem; font-weight: 800; color: var(--color-green); margin: 15px 0;">R$ 0,00</div>
+        
+        <div style="background: #F7F9FC; padding: 15px; border-radius: 12px; display: inline-block; margin-bottom: 20px; border: 1px solid var(--border-color);">
+            <img id="qrcode-img" src="" style="width: 200px; display: block; border-radius: 8px;">
         </div>
-        <button class="btn-plan btn-primary" onclick="copiarCodigoPix()" style="margin-bottom: 10px;">📋 Copiar Código PIX</button>
+        
+        <div style="margin-bottom: 25px; background: #EBF8FF; padding: 15px; border-radius: 8px;">
+            <small style="color: #2B6CB0; font-weight: 600; display: block; margin-bottom: 5px;">Beneficiário: LUCAS FERREIRA</small>
+            <div id="pix-status" style="font-size: 0.9rem; color: var(--color-blue); font-weight: bold; display: flex; align-items: center; justify-content: center; gap: 8px;">
+                <span style="display: inline-block; width: 12px; height: 12px; border-radius: 50%; border: 2px solid var(--color-blue); border-top-color: transparent; animation: spin 1s linear infinite;"></span>
+                Verificando pagamento...
+            </div>
+        </div>
+        
+        <button class="btn-plan btn-primary" onclick="copiarCodigoPix()" style="margin-bottom: 12px;">📋 Copiar Código PIX</button>
         <button class="btn-plan btn-outline" onclick="fecharModalPix()">Fechar</button>
+        
         <input type="text" id="pix-copia-cola" style="position: absolute; left: -9999px;">
     </div>
   </div>
 
-  <div id="modalSucesso" style="display:none; position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.95); z-index:12000; align-items:center; justify-content:center; flex-direction:column;">
-    <div style="background:#1a1d21; padding:40px; border-radius:20px; text-align:center; border: 2px solid #51cf66; box-shadow: 0 0 50px rgba(81, 207, 102, 0.4); animation: popIn 0.5s ease;">
-        <div style="font-size: 5rem; margin-bottom: 20px;">🎉</div>
-        <h2 style="color:#fff; margin-bottom:10px;">Pagamento Confirmado!</h2>
-        <p style="color:#adb5bd; font-size:1.2rem;">Seu plano foi ativado com sucesso.</p>
-        <button onclick="window.location.href='index.html'" style="margin-top:30px; background:#51cf66; color:#fff; border:none; padding:15px 40px; font-size:1.2rem; border-radius:8px; cursor:pointer; font-weight:bold;">
+  <div id="modalSucesso" class="modal-backdrop" style="background:rgba(255,255,255,0.95); z-index:12000;">
+    <div style="background:var(--bg-card); padding:50px; border-radius:24px; text-align:center; box-shadow: 0 20px 50px rgba(56, 161, 105, 0.2); animation: popIn 0.5s cubic-bezier(0.175, 0.885, 0.32, 1.275); max-width: 450px; width: 90%;">
+        <div style="width: 100px; height: 100px; background: var(--color-green); border-radius: 50%; display: flex; align-items: center; justify-content: center; margin: 0 auto 25px; color: white; font-size: 3rem; box-shadow: 0 10px 20px rgba(56,161,105,0.3);">
+            ✓
+        </div>
+        <h2 style="color:var(--text-primary); margin-bottom:15px; font-size: 2rem;">Pagamento Confirmado!</h2>
+        <p style="color:var(--text-secondary); font-size:1.1rem; line-height: 1.5; margin-bottom: 30px;">Muito obrigado pela confiança! Seu plano foi ativado e seu restaurante já está operando com força total.</p>
+        <button onclick="window.location.href='index.html'" class="btn-plan btn-primary" style="font-size:1.15rem; padding: 18px;">
             ACESSAR O SISTEMA 🚀
         </button>
     </div>
   </div>
+
+  <style>
+      @keyframes spin { to { transform: rotate(360deg); } }
+  </style>
 
 <script type="module">
     import { api } from "./js/http.js";
@@ -198,11 +279,10 @@
     if (idDaURL) {
         user.company_id = idDaURL;
         document.getElementById('display-id').innerText = idDaURL;
-        document.getElementById('identificacao-empresa').style.display = 'block';
+        document.getElementById('identificacao-empresa').style.display = 'inline-block';
     }
 
     if (emailDaURL) {
-        // decodeURIComponent limpa o e-mail (remove o %40 e volta para @)
         user.email = decodeURIComponent(emailDaURL);
     }
 
@@ -231,7 +311,7 @@
 
     iniciarMonitoramento();
 
-    // MÁSCARA CPF
+    // MÁSCARA CPF/CNPJ
     const inputCPF = document.getElementById('inputCPF');
     inputCPF.addEventListener('input', (e) => {
         let v = e.target.value.replace(/\D/g, '');
@@ -239,19 +319,25 @@
             v = v.replace(/(\d{3})(\d)/, '$1.$2');
             v = v.replace(/(\d{3})(\d)/, '$1.$2');
             v = v.replace(/(\d{3})(\d{1,2})$/, '$1-$2');
+        } else {
+            // Máscara de CNPJ se passar de 11 números
+            v = v.replace(/^(\d{2})(\d)/, '$1.$2');
+            v = v.replace(/^(\d{2})\.(\d{3})(\d)/, '$1.$2.$3');
+            v = v.replace(/\.(\d{3})(\d)/, '.$1/$2');
+            v = v.replace(/(\d{4})(\d)/, '$1-$2');
         }
         e.target.value = v;
     });
 
     window.abrirModalCPF = (dias, valor) => {
         if (!user.company_id) {
-            alert("Erro: Empresa não identificada. Por favor, acesse pelo App ou faça login.");
+            alert("Erro: Empresa não identificada. Por favor, acesse pelo seu painel ou faça login.");
             return;
         }
         planoAtual = { dias, valor };
         document.getElementById('cpfModal').style.display = 'flex';
         inputCPF.value = "";
-        inputCPF.focus();
+        setTimeout(() => inputCPF.focus(), 100);
     };
 
     window.fecharModalCPF = () => {
@@ -260,8 +346,8 @@
 
     document.getElementById('btnConfirmarCPF').onclick = async () => {
         const cpfRaw = inputCPF.value.replace(/\D/g, '');
-        if (cpfRaw.length !== 11) {
-            alert("CPF Inválido! Digite os 11 números.");
+        if (cpfRaw.length !== 11 && cpfRaw.length !== 14) {
+            alert("CPF ou CNPJ Inválido! Digite corretamente.");
             return;
         }
         fecharModalCPF();
@@ -275,7 +361,7 @@
                 method: "POST",
                 body: JSON.stringify({
                     company_id: user.company_id,
-                    email: user.email || `atendimento_id${user.company_id}@sistemadigital.com`, // Fallback
+                    email: user.email || `atendimento_id${user.company_id}@sistemadigital.com`,
                     name: user.name || `Admin Empresa ${user.company_id}`,
                     valor: valor,
                     dias: dias,
@@ -285,7 +371,7 @@
             });
 
             document.body.style.cursor = "default";
-            if (!data.ok) throw new Error(data.error || "Erro na API");
+            if (!data.ok) throw new Error(data.error || "Erro ao conectar com o banco. Tente novamente.");
 
             document.getElementById("pix-valor-display").textContent = `R$ ${valor.toFixed(2).replace('.', ',')}`;
             document.getElementById("qrcode-img").src = `data:image/png;base64,${data.qr_code_base64}`;
@@ -302,7 +388,7 @@
     function ativarRadarPagamento() {
         if (intervaloVerificacao) clearInterval(intervaloVerificacao);
         const statusLabel = document.getElementById("pix-status");
-        statusLabel.innerText = "⏳ Aguardando confirmação do banco...";
+        statusLabel.innerHTML = '<span style="display: inline-block; width: 14px; height: 14px; border-radius: 50%; border: 2px solid var(--color-blue); border-top-color: transparent; animation: spin 1s linear infinite; margin-right: 8px;"></span> Aguardando confirmação do banco...';
         
         intervaloVerificacao = setInterval(async () => {
             try {
@@ -322,13 +408,14 @@
     function mostrarSucesso() {
         document.getElementById("modal-pix").style.display = "none";
         document.getElementById("modalSucesso").style.display = "flex";
+        // Confete visual nativo (opcional) jogando a tela pro alto astral
     }
 
     window.copiarCodigoPix = () => {
         const copyText = document.getElementById("pix-copia-cola");
         copyText.select();
         document.execCommand("copy");
-        alert("Código PIX copiado! ✅");
+        alert("Código PIX copiado com sucesso! Abra o app do seu banco e cole.");
     };
 
     window.fecharModalPix = () => {
