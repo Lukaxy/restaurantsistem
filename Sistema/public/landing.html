@@ -4,344 +4,353 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <link rel="icon" type="image/png" href="img/icone.png">
-    <title>Digital Menu | Evolua seu Restaurante</title>
-    <link rel="stylesheet" href="css/landing.css">
+    <title>Digital Menu | O Sistema do Seu Restaurante 🚀</title>
+    
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;600;700;800&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
-    <script async src="https://www.googletagmanager.com/gtag/js?id=G-2BTBZ5MK63"></script>
-<script>
-  window.dataLayer = window.dataLayer || [];
-  function gtag(){dataLayer.push(arguments);}
-  gtag('js', new Date());
+    
+    <style>
+        /* ================== DESIGN SYSTEM LIGHT PREMIUM ================== */
+        :root {
+            --bg-main: #F7F9FC;
+            --bg-white: #FFFFFF;
+            --color-blue: #2B6CB0;
+            --color-blue-light: #EBF8FF;
+            --color-green: #38A169;
+            --color-orange: #DD6B20;
+            --text-dark: #1A202C;
+            --text-muted: #718096;
+            --border-color: #E2E8F0;
+            --shadow-sm: 0 4px 6px rgba(0,0,0,0.05);
+            --shadow-md: 0 10px 20px rgba(0,0,0,0.08);
+            --shadow-lg: 0 20px 40px rgba(43,108,176,0.15);
+            --radius: 16px;
+        }
 
-  gtag('config', 'G-2BTBZ5MK63');
-</script>
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+
+        body {
+            font-family: 'Poppins', sans-serif;
+            background-color: var(--bg-main);
+            color: var(--text-dark);
+            line-height: 1.6;
+            overflow-x: hidden;
+            scroll-behavior: smooth;
+        }
+
+        /* ================== NAVBAR ================== */
+        .navbar {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 20px 5%;
+            background: rgba(255, 255, 255, 0.95);
+            backdrop-filter: blur(10px);
+            position: fixed;
+            top: 0; left: 0; right: 0;
+            z-index: 1000;
+            box-shadow: var(--shadow-sm);
+        }
+
+        .logo { font-size: 1.5rem; font-weight: 800; color: var(--text-dark); }
+        .logo span { color: var(--color-blue); }
+
+        .nav-links { display: flex; align-items: center; gap: 25px; }
+        .nav-links a { text-decoration: none; color: var(--text-muted); font-weight: 600; transition: 0.3s; }
+        .nav-links a:hover { color: var(--color-blue); }
+        
+        .btn-login { color: var(--color-blue) !important; }
+        .btn-cta { 
+            background: var(--color-green); color: white !important; 
+            padding: 10px 20px; border-radius: 30px; font-weight: 700;
+            box-shadow: 0 4px 10px rgba(56, 161, 105, 0.3); transition: 0.3s;
+        }
+        .btn-cta:hover { transform: translateY(-2px); box-shadow: 0 6px 15px rgba(56, 161, 105, 0.4); }
+
+        /* ================== HERO SECTION ================== */
+        .hero {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 150px 5% 100px;
+            background: linear-gradient(135deg, var(--color-blue-light) 0%, #FFFFFF 100%);
+            min-height: 100vh;
+        }
+
+        .hero-content { max-width: 600px; }
+        .hero-content h1 { font-size: 3.5rem; line-height: 1.1; margin-bottom: 20px; color: var(--text-dark); font-weight: 800;}
+        .hero-content h1 span { color: var(--color-blue); }
+        .hero-content p { font-size: 1.2rem; color: var(--text-muted); margin-bottom: 35px; }
+
+        .hero-btns { display: flex; gap: 15px; }
+        .btn-primary { 
+            background: var(--color-blue); color: white; padding: 15px 30px; 
+            border-radius: 8px; font-weight: bold; font-size: 1.1rem; text-decoration: none;
+            box-shadow: var(--shadow-lg); transition: 0.3s;
+        }
+        .btn-primary:hover { transform: translateY(-3px); background: #235A91; }
+        
+        .btn-secondary {
+            background: white; color: #25D366; padding: 15px 30px; 
+            border-radius: 8px; font-weight: bold; font-size: 1.1rem; text-decoration: none;
+            border: 2px solid #25D366; transition: 0.3s; display: flex; align-items: center; gap: 8px;
+        }
+        .btn-secondary:hover { background: #F0FFF4; }
+
+        .hero-image { position: relative; max-width: 500px; width: 100%; text-align: center; }
+        .mockup-circle { 
+            position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%);
+            width: 450px; height: 450px; background: var(--color-blue-light); 
+            border-radius: 50%; z-index: 1;
+        }
+        .floating-img { position: relative; z-index: 2; width: 100%; animation: float 6s ease-in-out infinite; border-radius: 20px; box-shadow: var(--shadow-lg);}
+
+        @keyframes float { 0% { transform: translateY(0px); } 50% { transform: translateY(-15px); } 100% { transform: translateY(0px); } }
+
+        /* ================== FUNCIONALIDADES ================== */
+        .features { display: flex; justify-content: center; gap: 30px; padding: 80px 5%; background: var(--bg-main); flex-wrap: wrap; }
+        .feature-card {
+            background: var(--bg-white); padding: 40px 30px; border-radius: var(--radius);
+            text-align: center; max-width: 350px; flex: 1; min-width: 280px;
+            box-shadow: var(--shadow-sm); border: 1px solid var(--border-color); transition: 0.3s;
+        }
+        .feature-card:hover { transform: translateY(-10px); box-shadow: var(--shadow-md); border-color: var(--color-blue);}
+        .feature-card i { font-size: 3rem; color: var(--color-blue); margin-bottom: 20px; background: var(--color-blue-light); width: 80px; height: 80px; line-height: 80px; border-radius: 50%; }
+        .feature-card h3 { font-size: 1.3rem; margin-bottom: 10px; color: var(--text-dark); }
+        .feature-card p { color: var(--text-muted); font-size: 0.95rem; }
+
+        /* ================== PROVAS SOCIAIS ================== */
+        .depoimentos { padding: 80px 5%; text-align: center; background: var(--bg-white); }
+        .section-title { font-size: 2.5rem; font-weight: 800; color: var(--text-dark); margin-bottom: 15px; }
+        .section-subtitle { color: var(--text-muted); font-size: 1.1rem; margin-bottom: 50px; }
+        
+        .depoimentos-container { display: flex; flex-wrap: wrap; justify-content: center; gap: 30px; max-width: 1200px; margin: 0 auto; }
+        .depoimento-card {
+            background: var(--bg-main); border-radius: 20px; padding: 15px; max-width: 320px;
+            box-shadow: var(--shadow-sm); border: 1px solid var(--border-color);
+            transition: 0.3s ease; cursor: pointer;
+        }
+        .depoimento-card:hover { transform: translateY(-8px) scale(1.02); box-shadow: var(--shadow-md); border-color: var(--color-blue);}
+        .depoimento-card img { width: 100%; border-radius: 12px; display: block; }
+
+        /* ================== FORMULÁRIO DE CADASTRO ================== */
+        .registration { padding: 80px 5%; display: flex; justify-content: center; background: linear-gradient(135deg, var(--color-blue) 0%, #1A365D 100%); }
+        .reg-box {
+            background: var(--bg-white); padding: 50px 40px; border-radius: 24px;
+            max-width: 500px; width: 100%; box-shadow: 0 25px 50px rgba(0,0,0,0.2); text-align: center;
+        }
+        .reg-box h2 { color: var(--text-dark); font-size: 1.8rem; margin-bottom: 10px; }
+        .reg-box p { color: var(--color-green); font-weight: bold; margin-bottom: 30px; background: #F0FFF4; padding: 8px; border-radius: 8px;}
+        
+        .reg-form { display: flex; flex-direction: column; gap: 15px; }
+        .reg-form input {
+            padding: 15px; border: 1px solid var(--border-color); border-radius: 8px;
+            font-family: inherit; font-size: 1rem; color: var(--text-dark); background: var(--bg-main); transition: 0.2s;
+        }
+        .reg-form input:focus { outline: none; border-color: var(--color-blue); background: var(--bg-white); box-shadow: 0 0 0 3px var(--color-blue-light); }
+        .btn-submit {
+            background: var(--color-green); color: white; padding: 16px; border-radius: 8px;
+            font-size: 1.1rem; font-weight: bold; border: none; cursor: pointer; transition: 0.3s; margin-top: 10px;
+        }
+        .btn-submit:hover { background: #276749; transform: translateY(-2px); box-shadow: 0 10px 20px rgba(56, 161, 105, 0.3); }
+        .btn-submit:disabled { background: var(--text-muted); cursor: not-allowed; transform: none; box-shadow: none;}
+
+        /* ================== EXTRA SCREENS ================== */
+        .extra-screens { padding: 80px 5%; text-align: center; background: var(--bg-white); }
+        .screens-container { display: flex; justify-content: center; gap: 20px; flex-wrap: wrap; margin-top: 40px; }
+        .floating-img-small { width: 300px; border-radius: 16px; box-shadow: var(--shadow-md); border: 1px solid var(--border-color); transition: 0.3s; }
+        .floating-img-small:hover { transform: scale(1.05); box-shadow: var(--shadow-lg); }
+
+        /* ================== FAQ ================== */
+        .faq-section { padding: 80px 5%; max-width: 800px; margin: 0 auto; background: var(--bg-main); }
+        details {
+            background: var(--bg-white); padding: 20px; margin-bottom: 15px; border-radius: 12px;
+            cursor: pointer; border: 1px solid var(--border-color); box-shadow: var(--shadow-sm); transition: 0.3s;
+        }
+        details[open] { border-color: var(--color-blue); box-shadow: var(--shadow-md); }
+        summary { font-weight: 700; color: var(--text-dark); outline: none; font-size: 1.1rem; list-style: none; display: flex; justify-content: space-between; align-items: center;}
+        summary::-webkit-details-marker { display: none; }
+        summary::after { content: '+'; color: var(--color-blue); font-size: 1.5rem; font-weight: normal; }
+        details[open] summary::after { content: '−'; }
+        details p { margin-top: 15px; color: var(--text-muted); line-height: 1.6; border-top: 1px solid var(--border-color); padding-top: 15px; }
+
+        /* ================== FOOTER ================== */
+        .footer { text-align: center; padding: 30px; background: var(--text-dark); color: white; }
+
+        /* LIGHTBOX */
+        .lightbox {
+            display: none; position: fixed; z-index: 9999; top: 0; left: 0; width: 100%; height: 100%;
+            background: rgba(0, 0, 0, 0.85); backdrop-filter: blur(5px); justify-content: center; align-items: center;
+        }
+        .lightbox.ativo { display: flex; }
+        .lightbox img { max-width: 90%; max-height: 90%; border-radius: 15px; animation: zoomIn 0.3s ease; }
+        .fechar-lightbox { position: absolute; top: 20px; right: 40px; color: white; font-size: 50px; cursor: pointer; transition: 0.3s; }
+        .fechar-lightbox:hover { color: var(--color-blue); }
+        @keyframes zoomIn { from { transform: scale(0.8); opacity: 0; } to { transform: scale(1); opacity: 1; } }
+
+        /* RESPONSIVO */
+        @media (max-width: 900px) {
+            .hero { flex-direction: column; text-align: center; padding-top: 120px; }
+            .hero-btns { justify-content: center; flex-direction: column; }
+            .mockup-circle { width: 300px; height: 300px; }
+            .nav-links { display: none; /* Em mobile, foca no botão principal ou crie menu hamburguer */ }
+        }
+    </style>
 </head>
 <body>
 
     <nav class="navbar">
-        <div class="logo">🚀 Digital<span>Menu</span></div>
+        <div class="logo">Digital<span>Menu</span> 🚀</div>
         <div class="nav-links">
             <a href="support.html">Suporte</a>
-            <a href="#duvidas?">Dúvidas?</a>
             <a href="#funcionalidades">Funcionalidades</a>
+            <a href="#duvidas">Dúvidas?</a>
             <a href="login.html" class="btn-login">Entrar</a>
-            <a href="#cadastro" class="btn-cta">Testar 7 Grátis</a>
+            <a href="#cadastro" class="btn-cta">Começar Grátis</a>
         </div>
     </nav>
 
     <header class="hero">
         <div class="hero-content">
             <h1>Sua cozinha em <span>outro nível.</span></h1>
-            <p>Abandone o papel e caneta. Organize seus pedidos, otimize sua cozinha e venda muito mais com a comanda digital.</p>
+            <p>Abandone o papel e a caneta. Organize seus pedidos, otimize sua cozinha, atenda mais rápido e veja seu faturamento crescer com a comanda digital inteligente.</p>
             <div class="hero-btns">
-                <a href="#cadastro" class="btn-primary">Começar 7 dias grátis</a>
-                <a href="https://wa.me/67992545735" target="_blank" class="btn-secondary">
-                    <i class="fab fa-whatsapp"></i> Fale Conosco
+                <a href="#cadastro" class="btn-primary">Testar Sistema 7 Dias Grátis</a>
+                <a href="https://wa.me/5567992545735" target="_blank" class="btn-secondary">
+                    <i class="fab fa-whatsapp"></i> Falar com Especialista
                 </a>
             </div>
         </div>
         <div class="hero-image">
             <div class="mockup-circle"></div>
-            <img src="img/tela1.png" alt="Painel do Digital Menu" class="floating-img">
+            <img src="img/tela1.png" alt="Painel do Digital Menu" class="floating-img" onerror="this.style.display='none'">
         </div>
     </header>
 
     <section id="funcionalidades" class="features">
         <div class="feature-card">
             <i class="fas fa-qrcode"></i>
-            <h3>Menu Qr Code</h3>
-            <p>Menu Qr Code atualizado para o cliente!</p>
+            <h3>Cardápio QR Code</h3>
+            <p>O cliente lê o código na mesa e acessa seu cardápio instantaneamente, sempre atualizado e sem baixar apps.</p>
         </div>
         <div class="feature-card">
             <i class="fas fa-utensils"></i>
-            <h3>Painel de Cozinha</h3>
-            <p>Pedidos organizados por tempo de chegada e status de preparo.</p>
+            <h3>Painel de Cozinha (KDS)</h3>
+            <p>Os pedidos chegam na cozinha em 5 segundos, organizados por ordem de chegada e com alertas de status.</p>
         </div>
         <div class="feature-card">
             <i class="fas fa-chart-line"></i>
-            <h3>Gestão Completa</h3>
-            <p>Relatórios de vendas e controle total da sua empresa.</p>
+            <h3>Gestão e Caixa</h3>
+            <p>Acompanhe suas mesas, feche contas rapidamente e tenha relatórios de vendas na palma da mão.</p>
         </div>
     </section>
 
     <section id="provas-sociais" class="depoimentos">
-    <h2>O que os donos de restaurante dizem 🗣️</h2>
-    
-    <div class="depoimentos-container">
-        <div class="depoimento-card" onclick="abrirLightbox('img/prova1.jpg')">
-            <img src="img/prova1.jpg" alt="Print de Depoimento 1">
-        </div>
+        <h2 class="section-title">O que os donos de restaurante dizem 🗣️</h2>
+        <p class="section-subtitle">Junte-se aos estabelecimentos que já modernizaram seu atendimento.</p>
         
-        <div class="depoimento-card" onclick="abrirLightbox('img/prova2.jpg')">
-            <img src="img/prova2.jpg" alt="Print de Depoimento 2">
-        </div>
-        
-        <div class="depoimento-card" onclick="abrirLightbox('img/prova3.jpg')">
-            <img src="img/prova3.jpg" alt="Print de Depoimento 3">
-        </div>
-    </div>
-</section>
-
-<div id="meuLightbox" class="lightbox" onclick="fecharLightbox(event)">
-    <span class="fechar-lightbox">&times;</span>
-    <img id="imgLightbox" src="" alt="Print Ampliado">
-</div>
-
-    <section id="cadastro" class="registration">
-        <div class="box">
-            <h2>Crie sua conta em menos de 30 segundos 🚀</h2>
-            <p>Não pedimos cartão de crédito para o teste.</p>
+        <div class="depoimentos-container">
+            <div class="depoimento-card" onclick="abrirLightbox('img/prova1.jpg')">
+                <img src="img/prova1.jpg" alt="Depoimento 1" onerror="this.src='https://via.placeholder.com/320x500?text=Depoimento+1'">
+            </div>
             
-            <form id="formRegister" onsubmit="registrarEmpresa(event)">
-                <input type="text" id="regNomeEmpresa" placeholder="Nome do seu Restaurante" required>
-                <input type="email" id="regEmail" placeholder="Seu melhor e-mail" required>
-                <input type="whatsapp" id="regWhatsapp" placeholder="Seu Whatsapp" required>
-                <input type="password" id="regSenha" placeholder="Crie uma senha" required>
-                <button type="submit" class="btn-primary">Criar Meu Sistema Agora</button>
-            </form>
-            <p id="msg" style="margin-top:15px;"></p>
+            <div class="depoimento-card" onclick="abrirLightbox('img/prova2.jpg')">
+                <img src="img/prova2.jpg" alt="Depoimento 2" onerror="this.src='https://via.placeholder.com/320x500?text=Depoimento+2'">
+            </div>
+            
+            <div class="depoimento-card" onclick="abrirLightbox('img/prova3.jpg')">
+                <img src="img/prova3.jpg" alt="Depoimento 3" onerror="this.src='https://via.placeholder.com/320x500?text=Depoimento+3'">
+            </div>
         </div>
     </section>
 
-<section class="extra-screens">
-    <h2>Seu sistema completo na palma da mão</h2>
-    <div class="screens-container">
-        <img src="img/tela2.png" alt="Funcionalidade 2" class="floating-img-small">
-        <img src="img/tela3.png" alt="Funcionalidade 3" class="floating-img-small">
-        <img src="img/tela4.png" alt="Funcionalidade 4" class="floating-img-small">
+    <div id="meuLightbox" class="lightbox" onclick="fecharLightbox(event)">
+        <span class="fechar-lightbox">&times;</span>
+        <img id="imgLightbox" src="" alt="Print Ampliado">
     </div>
-</section>
 
-    
-<section id="duvidas?" class="faq-section">
-    <h2>Dúvidas Frequentes</h2>
-    
-    <details>
-        <summary>O teste é grátis mesmo?</summary>
-        <p>Sim! Você tem 7 dias de acesso total sem precisar cadastrar nenhum meio de pagamento agora.</p>
-    </details>
+    <section id="cadastro" class="registration">
+        <div class="reg-box">
+            <h2>Crie sua conta em 30 segundos ⏱️</h2>
+            <p>✅ Não pedimos cartão de crédito para o teste.</p>
+            
+            <form id="formRegister" class="reg-form" onsubmit="registrarEmpresa(event)">
+                <input type="text" id="regNomeEmpresa" placeholder="Nome do seu Restaurante" required autocomplete="organization">
+                <input type="email" id="regEmail" placeholder="Seu melhor e-mail" required autocomplete="email">
+                <input type="tel" id="regWhatsapp" placeholder="Seu WhatsApp com DDD" required autocomplete="tel">
+                <input type="password" id="regSenha" placeholder="Crie uma senha de acesso" required autocomplete="new-password">
+                <button type="submit" class="btn-submit" id="btn-submit">Criar Meu Sistema Agora 🚀</button>
+            </form>
+            <p id="msg" style="margin-top:15px; font-weight: bold; font-size: 0.95rem;"></p>
+            
+            <div style="margin-top: 20px; font-size: 0.9rem; color: var(--text-muted);">
+                Já possui uma conta? <a href="login.html" style="color: var(--color-blue); font-weight: bold;">Fazer Login</a>
+            </div>
+        </div>
+    </section>
 
-    <details>
-        <summary>Como faço para adicionar um colaborador?</summary>
-        <p>Basta acessar a opção EMPRESA nos 3 pontinhos, adicionar um nome e senha e pronto!</p>
-    </details>
+    <section class="extra-screens">
+        <h2 class="section-title">Seu sistema na palma da mão 📱</h2>
+        <p class="section-subtitle">Interface desenhada para a correria do dia a dia.</p>
+        <div class="screens-container">
+            <img src="img/tela2.png" alt="Tela 2" class="floating-img-small" onerror="this.style.display='none'">
+            <img src="img/tela3.png" alt="Tela 3" class="floating-img-small" onerror="this.style.display='none'">
+            <img src="img/tela4.png" alt="Tela 4" class="floating-img-small" onerror="this.style.display='none'">
+        </div>
+    </section>
 
-    <details>
-        <summary>Como funciona o fluxo de pedidos?</summary>
-        <p>Para o uso do sistema é necessario no minimo dois celulares, um com o garçom que fará o pedido<br>
-        e um na cozinha, o pedido feito pelo garçom apita na cozinha em menos de 5 segundos!</p>
-    </details>
+    <section id="duvidas" class="faq-section">
+        <h2 class="section-title" style="text-align: center;">Dúvidas Frequentes 💡</h2>
+        
+        <details>
+            <summary>O teste é grátis mesmo?</summary>
+            <p>Sim! Você tem 7 dias de acesso total para cadastrar seus pratos e testar na sua operação real, sem precisar cadastrar nenhum meio de pagamento.</p>
+        </details>
 
-    <details>
-        <summary>Como funciona o MENU QR CODE?</summary>
-        <p>Na tela de configuração se tem a opção de gerar o Qr Code<br>
-        podendo assim imprimir o Qr Code e deixar na mesa para o cliente acessar<br>
-        o cardapio que é atualizado em tempo real! É recomendado que tenha cardapio<br>
-        fisico para poder atender clientes sem acesso a celular...</p>
-    </details>
+        <details>
+            <summary>Como faço para adicionar um garçom ou cozinheiro?</summary>
+            <p>Basta acessar a aba <strong>Painel da Empresa</strong> no menu principal. Lá você cria acessos individuais para Atendentes e para a Cozinha.</p>
+        </details>
 
-    <details>
-        <summary>É um cardapio para o cliente?</summary>
-        <p>Não, o sistema é uma comanda online para o uso dos colaboradores.</p>
-    </details>
+        <details>
+            <summary>O que eu preciso para começar a usar?</summary>
+            <p>Para o fluxo perfeito, recomendamos no mínimo dois dispositivos (podem ser celulares comuns ou tablets). Um fica com o garçom no salão e o outro fica aberto na tela da Cozinha. O pedido feito no salão apita na cozinha em segundos!</p>
+        </details>
 
-    <details>
-        <summary>Como adicionar os pratos no sistema?</summary>
-        <p>Basta acessar a opção CONFIGURAÇÃO nos 3 pontinhos, adicionar o nome do prato, valor e pronto!</p>
-    </details>
+        <details>
+            <summary>Como funciona o Cardápio QR CODE?</summary>
+            <p>Na tela de Configurações, você tem a opção "Gerar QR Code". Basta imprimir e colar nas mesas. O cliente aponta a câmera e vê o seu cardápio com os preços sempre atualizados. Recomendamos ter também cardápios físicos para clientes sem celular.</p>
+        </details>
 
-    <details>
-        <summary>Como funciona a tela MEUS PEDIDOS?</summary>
-        <p>A tela serve para o garçom acompanhar o pedido realizado para a cozinha<br>
-        quando a cozinha terminar o pedido aparecerá nessa tela para que o garçom<br>
-        possa ir até a cozinha para retirar o prato sem perda de tempo.</p>
-    </details>
-</section>
+        <details>
+            <summary>O cliente consegue fazer o pedido sozinho pelo QR Code?</summary>
+            <p>Neste momento, o Digital Menu funciona como um <strong>Cardápio de Visualização</strong> para o cliente e uma <strong>Comanda Digital</strong> para o garçom. O garçom continua sendo a estrela do atendimento para lançar o pedido na mesa.</p>
+        </details>
+    </section>
 
-<style>
-    html {
-        scroll-behavior: smooth;
-    }
-    
-    .faq-section { 
-        padding: 50px 20px; 
-        max-width: 800px; 
-        margin: 0 auto; 
-        font-family: sans-serif;
-        /* O fundo da seção pode ser transparente ou do mesmo tom escuro do site */
-    }
-    
-    .faq-section h2 { 
-        text-align: center; 
-        margin-bottom: 30px; 
-        color: #ffffff; /* Título em branco para o tema escuro */
-    }
-    
-    details { 
-        background: #2d2d2d; /* Fundo cinza escuro para os cards do FAQ */
-        padding: 15px; 
-        margin-bottom: 15px; 
-        border-radius: 10px; 
-        cursor: pointer; 
-        border: 1px solid #3d3d3d; /* Borda um pouco mais clara para definição */
-        box-shadow: 0 2px 5px rgba(0,0,0,0.2); /* Sombra mais forte para o tema escuro */
-        transition: border-color 0.3s ease;
-    }
-    
-    /* Quando o item estiver aberto, a borda fica azul vibrante */
-    details[open] {
-        border-color: #009ee3; /* Azul vibrante do botão "Começar 5 dias grátis" */
-    }
-
-    summary { 
-        font-weight: bold; 
-        list-style: none; 
-        color: #ffffff; /* Pergunta em branco para máximo contraste */
-        outline: none;
-    }
-    
-    summary:hover {
-        color: #009ee3; /* Um toque sutil de azul ao passar o mouse */
-    }
-
-    summary::-webkit-details-marker { display: none; } 
-
-    /* A resposta em um cinza claro para boa leitura no fundo escuro */
-    p { 
-        margin-top: 10px; 
-        color: #cccccc; /* Cinza claro para a resposta */
-        line-height: 1.6;
-        border-top: 1px solid #3d3d3d;
-        padding-top: 10px;
-    }
-/*prova*/
-/* --- ESTILOS DE DEPOIMENTOS (PRINTS INTEIROS ESTILO WHATSAPP) --- */
-.depoimentos {
-    padding: 80px 20px;
-    text-align: center;
-    background: transparent;
-}
-
-.depoimentos h2 {
-    font-size: 2.5rem;
-    font-weight: 700;
-    color: #fff;
-    margin-bottom: 50px;
-    position: relative;
-}
-
-/* Linha colorida debaixo do título com a cor do seu sistema */
-.depoimentos h2::after {
-    content: "";
-    display: block;
-    width: 80px;
-    height: 4px;
-    background: linear-gradient(90deg, #009ee3, #00c4ff);
-    margin: 15px auto 0;
-    border-radius: 3px;
-}
-
-.depoimentos-container {
-    display: flex;
-    flex-wrap: wrap;
-    justify-content: center;
-    gap: 30px;
-    max-width: 1100px;
-    margin: 0 auto;
-}
-
-.depoimento-card {
-    background: #1e1e1e; /* Fundo escuro combinando com o resto do site */
-    border-radius: 20px;
-    padding: 12px;
-    max-width: 320px; /* Largura ideal para simular uma tela de celular */
-    box-shadow: 0 0 25px rgba(0, 158, 227, 0.15); /* Sombra azulada */
-    border: 1px solid rgba(0, 158, 227, 0.3);
-    transition: transform 0.3s ease, box-shadow 0.3s ease;
-    cursor: pointer; /* Muda o mouse para a "mãozinha" indicando que dá pra clicar */
-}
-
-.depoimento-card:hover {
-    transform: translateY(-8px) scale(1.03);
-    box-shadow: 0 0 35px rgba(0, 158, 227, 0.4); /* Brilho aumenta no hover */
-}
-
-.depoimento-card img {
-    width: 100%;
-    border-radius: 15px;
-    display: block;
-    transition: transform 0.3s ease, filter 0.3s ease;
-}
-
-.depoimento-card:hover img {
-    filter: brightness(1.1); /* Dá uma clareada na imagem quando passa o mouse */
-}
-
-/* --- LIGHTBOX (TELA CHEIA QUANDO CLICA NA FOTO) --- */
-.lightbox {
-    display: none; 
-    position: fixed;
-    z-index: 9999;
-    top: 0; left: 0;
-    width: 100%; height: 100%;
-    background: rgba(0, 0, 0, 0.85); /* Fundo preto transparente */
-    backdrop-filter: blur(5px); /* Efeito de desfoque no fundo */
-    justify-content: center;
-    align-items: center;
-}
-
-.lightbox.ativo {
-    display: flex; /* Classe que o JavaScript vai adicionar para mostrar a foto */
-}
-
-.lightbox img {
-    max-width: 90%;
-    max-height: 90%;
-    border-radius: 15px;
-    box-shadow: 0 0 30px rgba(0, 158, 227, 0.5); /* Sombra azul na foto gigante */
-    animation: zoomIn 0.3s ease;
-}
-
-.fechar-lightbox {
-    position: absolute;
-    top: 20px;
-    right: 40px;
-    color: white;
-    font-size: 50px;
-    font-weight: bold;
-    cursor: pointer;
-    transition: color 0.3s;
-}
-
-.fechar-lightbox:hover {
-    color: #009ee3;
-}
-
-@keyframes zoomIn {
-    from { transform: scale(0.8); opacity: 0; }
-    to { transform: scale(1); opacity: 1; }
-}
-</style>
-    
     <footer class="footer">
         <p>&copy; 2026 Digital Menu - O tempero tecnológico que faltava no seu negócio. 😉</p>
     </footer>
 
     <script>
+        // ==========================================
+        // REGISTRO DE NOVA EMPRESA
+        // ==========================================
         async function registrarEmpresa(e) {
             e.preventDefault();
             const msg = document.getElementById('msg');
-            const btn = e.target.querySelector('button');
+            const btn = document.getElementById('btn-submit');
             
             const payload = {
-                name: document.getElementById('regNomeEmpresa').value,
-                email: document.getElementById('regEmail').value,
-                whatsapp: document.getElementById('regWhatsapp').value,
-                senha: document.getElementById('regSenha').value
+                name: document.getElementById('regNomeEmpresa').value.trim(),
+                email: document.getElementById('regEmail').value.trim(),
+                whatsapp: document.getElementById('regWhatsapp').value.trim(),
+                senha: document.getElementById('regSenha').value.trim()
             };
 
             btn.disabled = true;
-            btn.innerText = "Criando seu império...";
+            const textOriginal = btn.innerHTML;
+            btn.innerHTML = "⏳ Criando seu império...";
 
             try {
                 const res = await fetch('/api/register-company', {
@@ -351,44 +360,54 @@
                 });
 
                 const data = await res.json();
-                if(!res.ok) throw new Error(data.error);
+                if(!res.ok) throw new Error(data.error || "Erro ao criar conta.");
 
                 msg.style.color = "var(--color-green)";
-                msg.innerHTML = "Conta criada! Redirecionando... ✅";
+                msg.innerHTML = "Conta criada com sucesso! Preparando seu painel... ✅";
+                
+                btn.innerHTML = "Sucesso! 🎉";
+                btn.style.background = "var(--color-blue)";
                 
                 // Salva o login automático e manda pro dashboard
-                localStorage.setItem('user', JSON.stringify(data.user)); 
-                setTimeout(() => window.location.href = 'login.html', 1500);
+                if (data.user) {
+                    localStorage.setItem('user', JSON.stringify(data.user)); 
+                    setTimeout(() => window.location.href = 'index.html', 1500);
+                } else {
+                    setTimeout(() => window.location.href = 'login.html', 1500);
+                }
 
             } catch (err) {
                 msg.style.color = "var(--color-red)";
-                msg.innerText = err.message;
+                msg.innerText = "❌ " + err.message;
+                
                 btn.disabled = false;
-                btn.innerText = "Criar Meu Sistema Agora";
+                btn.innerHTML = textOriginal;
+                
+                // Animação de erro
+                btn.style.transform = "translateX(-5px)";
+                setTimeout(() => btn.style.transform = "translateX(5px)", 100);
+                setTimeout(() => btn.style.transform = "translateX(0)", 200);
+            }
+        }
+
+        // ==========================================
+        // LIGHTBOX DE DEPOIMENTOS
+        // ==========================================
+        function abrirLightbox(src) {
+            const lightbox = document.getElementById('meuLightbox');
+            const imgLightbox = document.getElementById('imgLightbox');
+            
+            imgLightbox.src = src;
+            lightbox.classList.add('ativo');
+        }
+
+        function fecharLightbox(event) {
+            const lightbox = document.getElementById('meuLightbox');
+            // Só fecha se clicar no fundo preto ou no 'X'
+            if (event.target === lightbox || event.target.className === 'fechar-lightbox') {
+                lightbox.classList.remove('ativo');
             }
         }
     </script>
-
-    <script>
-    // Abre a imagem em tela cheia
-    function abrirLightbox(src) {
-        const lightbox = document.getElementById('meuLightbox');
-        const imgLightbox = document.getElementById('imgLightbox');
-        
-        imgLightbox.src = src; // Pega o caminho da imagem clicada
-        lightbox.classList.add('ativo'); // Mostra a tela preta
-    }
-
-    // Fecha a tela cheia
-    function fecharLightbox(event) {
-        const lightbox = document.getElementById('meuLightbox');
-        const imgLightbox = document.getElementById('imgLightbox');
-        
-        // Só fecha se clicar no fundo preto ou no 'X', não fecha se clicar na foto em si
-        if (event.target === lightbox || event.target.className === 'fechar-lightbox') {
-            lightbox.classList.remove('ativo');
-        }
-    }
-</script>
 </body>
 </html>
