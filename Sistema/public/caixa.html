@@ -6,6 +6,7 @@
     <link rel="icon" type="image/png" href="img/icone.png">
     <title>Caixa - Digital Menu 💵</title>
     <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;600;700&display=swap" rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/npm/qz-tray@2.2.3/qz-tray.js"></script>
     
     <style>
         :root {
@@ -560,5 +561,49 @@
     setInterval(carregarMesas, 5000);
 
 </script>
+    
+    <script>
+        // Assim que a página carrega, ele tenta conectar com o programa do PC
+        qz.websocket.connect().then(function() {
+            console.log("Conectado ao QZ Tray com sucesso!");
+            
+            // Só pra você ver as impressoras instaladas no console (F12)
+            return qz.printers.find();
+        }).then(function(impressoras) {
+            console.log("Impressoras no seu PC:", impressoras);
+        }).catch(function(err) {
+            console.error("Erro ao conectar no QZ Tray:", err);
+        });
+
+        // A função que o botão chama
+        function imprimirNaCozinha() {
+            // ATENÇÃO: Troque "Nome Da Sua Impressora" pelo nome EXATO que
+            // está lá no Painel de Controle do Windows! (Ex: "EPSON TM-T20")
+            const nomeImpressora = "Nome Da Sua Impressora"; 
+            
+            const config = qz.configs.create(nomeImpressora);
+            
+            // O desenho do seu cupom
+            const cupomHTML = `
+                <h2 style="font-family: monospace;">PEDIDO TESTE</h2>
+                <hr>
+                <p style="font-family: monospace; font-size: 18px;">1x Hambúrguer Artesanal</p>
+            `;
+
+            const data = [{
+                type: 'pixel',
+                format: 'html',
+                flavor: 'plain',
+                data: cupomHTML
+            }];
+
+            // Manda imprimir!
+            qz.print(config, data).then(function() {
+                alert("Enviado para a impressora!");
+            }).catch(function(err) {
+                alert("Erro ao imprimir: " + err);
+            });
+        }
+    </script>
 </body>
 </html>
