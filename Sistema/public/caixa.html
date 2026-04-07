@@ -6,6 +6,7 @@
     <link rel="icon" type="image/png" href="img/icone.png">
     <title>Caixa - Digital Menu 💵</title>
     <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;600;700&display=swap" rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/npm/qz-tray@2.2.3/qz-tray.js"></script>
     
     <style>
         :root {
@@ -24,6 +25,7 @@
         body { font-family: 'Poppins', sans-serif; background-color: var(--bg-main); color: var(--text-primary); display: flex; flex-direction: column; height: 100vh; overflow: hidden; }
 
         header { background-color: var(--color-blue); color: white; padding: 15px 30px; display: flex; justify-content: space-between; align-items: center; box-shadow: 0 2px 4px rgba(0,0,0,0.1); }
+        header h1 { font-size: 1.5rem; }
         
         .container { display: flex; flex: 1; padding: 20px; gap: 20px; overflow: hidden; }
 
@@ -47,7 +49,7 @@
         }
         .card-mesa.pronta { border-left-color: var(--color-green); background: #f0fff4; }
         .card-mesa.pendente { border-left-color: var(--color-orange); background: #fffaf0; }
-        .card-mesa.selecionada { border-color: var(--color-blue); border-width: 2px; box-shadow: 0 0 10px rgba(43, 108, 176, 0.2); }
+        .card-mesa.selecionada { border-color: var(--color-blue); border-width: 2px; background: #EBF8FF; }
 
         .mesa-status-tag { font-size: 0.7rem; font-weight: bold; padding: 2px 8px; border-radius: 4px; margin-top: 4px; display: inline-block; }
         .tag-preparando { background: #feebc8; color: #7b341e; }
@@ -59,12 +61,14 @@
         .item-row { display: flex; justify-content: space-between; padding: 10px 0; border-bottom: 1px dashed var(--border-color); }
 
         .painel-cobranca { padding: 20px; background: #F8FAFC; border-top: 1px solid var(--border-color); border-bottom-left-radius: 12px; border-bottom-right-radius: 12px; }
+        .total-box { display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px; }
         .total-valor { font-size: 2rem; font-weight: bold; color: var(--color-green); }
 
         .acoes { display: flex; gap: 10px; }
         select { flex: 1; padding: 12px; border-radius: 8px; border: 1px solid var(--border-color); font-size: 1rem; cursor: pointer; }
         
         .btn { padding: 12px 20px; border-radius: 8px; font-weight: bold; border: none; cursor: pointer; font-size: 1rem; color: white; display: flex; align-items: center; justify-content: center; gap: 8px; transition: 0.2s; }
+        .btn-imprimir { background: #4A5568; flex: 1; }
         .btn-fechar { background: var(--color-green); flex: 2; }
         .btn-fechar:disabled { background: #a0aec0; cursor: not-allowed; }
 
@@ -78,7 +82,7 @@
 
     <header>
         <h1>Caixa - Digital Menu 💵</h1>
-        <button style="background:transparent; border:1px solid white; color:white; padding:8px; border-radius:5px; cursor:pointer;" onclick="window.location.href='configuracoes.html'">Painel Admin</button>
+        <button class="btn" style="background:rgba(255,255,255,0.2); border:1px solid white;" onclick="window.location.href='configuracoes.html'">Configurações</button>
     </header>
 
     <div class="container">
@@ -90,16 +94,15 @@
         <div class="col-detalhes">
             <div class="col-header"><h2 id="titulo-detalhes">Selecione uma mesa</h2></div>
             <div class="detalhes-content" id="conteudo-detalhes">
-                <div class="estado-vazio" style="text-align:center; margin-top:50px; color:#aaa;">Clique em uma mesa para ver os itens.</div>
+                <div class="estado-vazio" style="text-align:center; margin-top:50px; color:#aaa;">Selecione uma mesa para ver os itens.</div>
             </div>
             
             <div class="painel-cobranca" id="painel-cobranca" style="display: none;">
-                <div id="aviso-pendente" style="display:none; background:#FFF5F5; color:#C53030; padding:12px; border-radius:8px; margin-bottom:15px; border:1px solid #FEB2B2; font-size:0.9rem; font-weight:bold;">
-                    ⚠️ Cozinha ou Bar ainda em preparo. Finalize a produção para liberar o pagamento.
+                <div id="aviso-pendente" style="display:none; background:#fff5f5; color:#c53030; padding:10px; border-radius:8px; margin-bottom:15px; border:1px solid #feb2b2; font-size:0.85rem;">
+                    ⚠️ Aguarde a Cozinha/Bar dar "Pronto" para baixar esta conta.
                 </div>
-
-                <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:15px;">
-                    <span style="font-weight:bold; color:#718096;">Total da Comanda:</span>
+                <div class="total-box">
+                    <span style="font-weight:bold; color:#718096;">Total a Receber:</span>
                     <span class="total-valor" id="valor-total">R$ 0,00</span>
                 </div>
                 <div class="acoes">
@@ -108,6 +111,7 @@
                         <option value="pix">💠 PIX</option>
                         <option value="cartao">💳 Cartão</option>
                     </select>
+                    <button class="btn btn-imprimir" onclick="imprimirConta()">🖨️ Imprimir</button>
                     <button class="btn btn-fechar" id="btn-finalizar" onclick="finalizarConta()">Baixar Conta</button>
                 </div>
             </div>
@@ -120,7 +124,7 @@
             <p id="modal-message" style="margin-bottom:20px; color:#666;"></p>
             <div style="display:flex; gap:10px;">
                 <button id="btn-cancel" class="btn-modal" style="background:#eee;">Cancelar</button>
-                <button id="btn-confirm" class="btn-modal" style="background:var(--color-blue); color:white;">OK</button>
+                <button id="btn-confirm" class="btn-modal" style="background:var(--color-blue); color:white;">Confirmar</button>
             </div>
         </div>
     </div>
@@ -132,40 +136,35 @@
 
     async function carregarMesas() {
         try {
-            const res = await fetch(`/api/orders?company_id=${user.company_id}`);
+            const res = await fetch(`https://sistemadigitalmenu.com.br/api/orders?company_id=${user.company_id}`);
             const data = await res.json();
             if (!data.ok) return;
 
+            // Filtra o que não está pago
             const abertas = data.pedidos.filter(p => !['pago', 'finalizado', 'cancelado'].includes(p.status));
+            
             const grupos = {};
-
             abertas.forEach(p => {
                 const nome = p.table_name || 'Avulso';
                 if (!grupos[nome]) {
-                    grupos[nome] = { nome, total: 0, ids: [], itens: [], pendente: false };
+                    grupos[nome] = { nome, total: 0, ids: [], itens: [], pendente: false, dataAbertura: p.created_at };
                 }
                 
-                // LÓGICA CORRIGIDA: Só considera pendente se o setor REALMENTE existir no pedido
-                const itens = p.items || [];
-                const temBar = itens.some(i => i.destination === 'bar');
-                const temCozinha = itens.some(i => i.destination !== 'bar');
-
-                const barNaoPronto = temBar && p.status_bar !== 'pronto';
-                const cozinhaNaoPronto = temCozinha && p.status_cozinha !== 'pronto';
-
-                if (barNaoPronto || cozinhaNaoPronto) {
+                // Lógica de Trava: Se o setor existe e não está pronto, a mesa fica pendente
+                const temBar = p.items.some(i => i.destination === 'bar');
+                const temCozinha = p.items.some(i => i.destination !== 'bar');
+                if ((temBar && p.status_bar !== 'pronto') || (temCozinha && p.status_cozinha !== 'pronto')) {
                     grupos[nome].pendente = true;
                 }
 
                 grupos[nome].total += p.total;
                 grupos[nome].ids.push(p.id);
-                grupos[nome].itens.push(...itens);
+                grupos[nome].itens.push(...p.items);
             });
 
             mesas = Object.values(grupos);
             renderizarLista();
-            
-            // Atualiza os detalhes se a mesa ainda estiver aberta
+
             if (mesaSelecionada) {
                 const atual = mesas.find(m => m.nome === mesaSelecionada.nome);
                 if (atual) atualizarDetalhes(atual); else fecharPainel();
@@ -176,7 +175,7 @@
     function renderizarLista() {
         const lista = document.getElementById('lista-mesas');
         lista.innerHTML = mesas.map(m => `
-            <div class="card-mesa ${mesaSelecionada?.nome === m.nome ? 'selecionada' : ''} ${m.pendente ? 'pendente' : 'pronta'}" onclick="cliqueMesa('${m.nome}')">
+            <div class="card-mesa ${mesaSelecionada?.nome === m.nome ? 'selecionada' : ''} ${m.pendente ? 'pendente' : 'pronta'}" onclick="selecionarMesa('${m.nome}')">
                 <div>
                     <div class="mesa-nome">${m.nome}</div>
                     <span class="mesa-status-tag ${m.pendente ? 'tag-preparando' : 'tag-pronto'}">
@@ -188,7 +187,7 @@
         `).join("");
     }
 
-    function cliqueMesa(nome) {
+    function selecionarMesa(nome) {
         const mesa = mesas.find(m => m.nome === nome);
         mesaSelecionada = mesa;
         renderizarLista();
@@ -207,14 +206,12 @@
         document.getElementById('valor-total').innerText = `R$ ${mesa.total.toFixed(2).replace('.', ',')}`;
         document.getElementById('painel-cobranca').style.display = 'block';
 
-        // Trava do botão mas PERMITE ver os itens
         const aviso = document.getElementById('aviso-pendente');
         const btn = document.getElementById('btn-finalizar');
         
         if (mesa.pendente) {
             aviso.style.display = 'block';
             btn.disabled = true;
-            btn.title = "Aguarde a cozinha/bar finalizar";
         } else {
             aviso.style.display = 'none';
             btn.disabled = false;
@@ -225,7 +222,30 @@
         mesaSelecionada = null;
         document.getElementById('painel-cobranca').style.display = 'none';
         document.getElementById('titulo-detalhes').innerText = "Selecione uma mesa";
-        document.getElementById('conteudo-detalhes').innerHTML = '<div class="estado-vazio">Clique em uma mesa para ver os itens.</div>';
+        document.getElementById('conteudo-detalhes').innerHTML = '<div class="estado-vazio">Selecione uma mesa para ver os itens.</div>';
+    }
+
+    // FUNÇÃO DE IMPRESSÃO RESTAURADA
+    function imprimirConta() {
+        if (!mesaSelecionada) return;
+        const win = window.open('', '', 'height=600,width=400');
+        win.document.write(`
+            <html>
+            <body style="font-family:monospace; padding:20px;">
+                <h2 style="text-align:center;">${user.name.toUpperCase()}</h2>
+                <hr>
+                <p><b>MESA: ${mesaSelecionada.nome}</b></p>
+                <p>Data: ${new Date().toLocaleDateString()}</p>
+                <hr>
+                ${mesaSelecionada.itens.map(i => `<div>${i.qty}x ${i.name} - R$ ${(i.price * i.qty).toFixed(2)}</div>`).join("")}
+                <hr>
+                <h3 style="text-align:right;">TOTAL: R$ ${mesaSelecionada.total.toFixed(2)}</h3>
+                <p style="text-align:center; margin-top:30px;">Digital Menu - Conferência de Conta</p>
+            </body>
+            </html>
+        `);
+        win.document.close();
+        setTimeout(() => { win.print(); win.close(); }, 500);
     }
 
     async function finalizarConta() {
@@ -239,7 +259,7 @@
             modal.style.display = 'none';
             try {
                 await Promise.all(mesaSelecionada.ids.map(id => 
-                    fetch(`/api/orders/${id}/status`, {
+                    fetch(`https://sistemadigitalmenu.com.br/api/orders/${id}/status`, {
                         method: 'POST',
                         headers: { 'Content-Type': 'application/json' },
                         body: JSON.stringify({ status: 'pago' })
@@ -247,14 +267,14 @@
                 ));
                 carregarMesas();
                 fecharPainel();
-            } catch (e) { alert("Erro ao fechar"); }
+            } catch (e) { console.error(e); }
         };
-        
         document.getElementById('btn-cancel').onclick = () => modal.style.display = 'none';
     }
 
+    // Busca automática a cada 3 segundos
     carregarMesas();
-    setInterval(carregarMesas, 4000);
+    setInterval(carregarMesas, 3000);
 </script>
 </body>
 </html>
