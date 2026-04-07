@@ -1,197 +1,349 @@
-
 <!DOCTYPE html>
 <html lang="pt-br">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <link rel="icon" type="image/png" href="img/icone.png">
-  <title>Suporte - Digital Menu 🛠️</title>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="icon" type="image/png" href="img/icone.png">
+    <title>Suporte - Digital Menu 🛠️</title>
   
-  <style>
-    :root {
-      --bg-main: #0d0d0d;
-      --bg-box: #1a1a1a;
-      --color-blue: #339af0;
-      --color-green: #51cf66;
-      --color-red: #ff6b6b;
-      --color-amber: #fcc419;
-      --text-primary: #ffffff;
-      --text-secondary: #adb5bd;
-      --border-color: #2c2f33;
-      --radius: 12px;
-    }
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;600;700&display=swap" rel="stylesheet">
+  
+    <style>
+        :root {
+            --bg-main: #F7F9FC;
+            --bg-card: #FFFFFF;
+            --bg-input: #EDF2F7;
+            --color-blue: #2B6CB0;
+            --color-green: #38A169;
+            --color-red: #E53E3E;
+            --color-amber: #D69E2E;
+            --text-primary: #1A202C;
+            --text-secondary: #718096;
+            --border-color: #E2E8F0;
+        }
 
-    body {
-      font-family: "Poppins", sans-serif;
-      background: var(--bg-main);
-      color: var(--text-primary);
-      margin: 0; padding: 0;
-    }
+        * { box-sizing: border-box; margin: 0; padding: 0; }
 
-    header {
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      background: #1e1e1e;
-      padding: 15px 20px;
-      border-bottom: 2px solid var(--color-blue);
-    }
+        body {
+            font-family: 'Poppins', sans-serif;
+            background-color: var(--bg-main);
+            color: var(--text-primary);
+            display: flex;
+            flex-direction: column;
+            min-height: 100vh;
+        }
 
-    main { padding: 20px; max-width: 800px; margin: 0 auto; }
+        /* ==================================
+           HEADER & MENU
+        ================================== */
+        header {
+            background-color: var(--color-blue);
+            color: white;
+            padding: 15px 30px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+            position: sticky; top: 0; z-index: 1000;
+        }
+        header h1 { font-size: 1.5rem; }
+        
+        .header-actions { display: flex; align-items: center; gap: 15px; }
+        .btn-voltar { background: transparent; border: 1px solid white; color: white; padding: 8px 15px; border-radius: 6px; cursor: pointer; font-family: inherit; font-weight: bold; transition: 0.2s;}
+        .btn-voltar:hover { background: rgba(255,255,255,0.1); }
 
-    .box {
-      background: var(--bg-box);
-      padding: 25px;
-      border-radius: var(--radius);
-      border: 1px solid var(--border-color);
-      margin-bottom: 20px;
-    }
+        .menu-dropdown-container { position: relative; display: inline-block; }
+        .btn-dots { 
+            background: transparent; border: none; color: white; font-size: 1.5rem; 
+            letter-spacing: 2px; cursor: pointer; padding: 5px 10px; line-height: 1; transition: 0.2s; border-radius: 6px;
+        }
+        .btn-dots:hover { background: rgba(255,255,255,0.1); }
+        
+        .dropdown-content { 
+            display: none; position: absolute; right: 0; top: 45px; 
+            background-color: var(--bg-card); min-width: 220px; 
+            box-shadow: 0px 8px 20px rgba(0,0,0,0.15); z-index: 100; 
+            border-radius: 10px; overflow: hidden; border: 1px solid var(--border-color); 
+            animation: popIn 0.2s ease; 
+        }
+        .dropdown-content a { 
+            color: var(--text-primary); padding: 12px 16px; text-decoration: none; 
+            display: block; font-size: 0.95rem; font-weight: 600; transition: background 0.2s; 
+        }
+        .dropdown-content a:hover { background-color: var(--bg-main); color: var(--color-blue); }
+        .show-dropdown { display: block; }
 
-    /* Mensagem de Cuidado */
-    .care-banner {
-      background: rgba(51, 154, 240, 0.1);
-      border-left: 5px solid var(--color-blue);
-      padding: 20px;
-      border-radius: 8px;
-      margin-bottom: 25px;
-    }
-    .care-banner h3 { margin-top: 0; color: var(--color-blue); }
-    .care-banner p { margin: 0; color: var(--text-secondary); line-height: 1.6; }
+        /* ==================================
+           CONTEÚDO PRINCIPAL
+        ================================== */
+        main { padding: 30px 20px; max-width: 800px; margin: 0 auto; width: 100%; }
 
-    /* Botões de Contato Direto */
-    .contact-grid { display: flex; gap: 15px; margin-bottom: 30px; flex-wrap: wrap; }
-    .contact-card {
-      flex: 1;
-      min-width: 200px;
-      padding: 20px;
-      border-radius: var(--radius);
-      text-align: center;
-      text-decoration: none;
-      font-weight: bold;
-      transition: 0.3s;
-      border: 1px solid var(--border-color);
-    }
-    .contact-card.whatsapp { background: rgba(81, 207, 102, 0.1); color: var(--color-green); border-color: var(--color-green); }
-    .contact-card.instagram { background: rgba(255, 107, 107, 0.1); color: var(--color-red); border-color: var(--color-red); }
-    .contact-card:hover { transform: translateY(-3px); }
+        .box {
+            background: var(--bg-card);
+            padding: 30px;
+            border-radius: 12px;
+            border: 1px solid var(--border-color);
+            margin-bottom: 25px;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.02);
+        }
 
-    /* Formulários */
-    .form-group { margin-bottom: 15px; }
-    label { display: block; margin-bottom: 8px; color: var(--text-secondary); font-size: 0.9rem; }
-    input, textarea {
-      width: 100%; padding: 12px; box-sizing: border-box;
-      border-radius: 8px; border: 1px solid var(--border-color);
-      background: #2b2b2b; color: white; font-family: inherit;
-    }
-    textarea { resize: vertical; min-height: 100px; }
-    
-    .btn {
-      border: none; padding: 15px 20px; width: 100%;
-      border-radius: 8px; cursor: pointer;
-      font-weight: bold; color: white; transition: 0.3s; font-size: 1rem;
-    }
-    .btn.blue { background: var(--color-blue); }
-    .btn.amber { background: var(--color-amber); color: #000; }
-    .btn:hover { opacity: 0.9; }
+        /* Mensagem de Cuidado */
+        .care-banner {
+            background: #EBF8FF;
+            border-left: 5px solid var(--color-blue);
+            padding: 20px 25px;
+            border-radius: 8px;
+            margin-bottom: 30px;
+        }
+        .care-banner h3 { margin-top: 0; color: #2B6CB0; margin-bottom: 10px; font-size: 1.3rem;}
+        .care-banner p { margin: 0; color: #2D3748; line-height: 1.6; font-size: 0.95rem;}
 
-    hr { border: 0; border-top: 1px solid var(--border-color); margin: 30px 0; }
-  </style>
+        /* Botões de Contato Direto */
+        .contact-grid { display: flex; gap: 15px; margin-bottom: 30px; flex-wrap: wrap; }
+        .contact-card {
+            flex: 1; min-width: 200px; padding: 20px; border-radius: 12px;
+            text-align: center; text-decoration: none; font-weight: bold; font-size: 1.1rem;
+            transition: 0.3s; border: 1px solid transparent; box-shadow: 0 2px 5px rgba(0,0,0,0.03);
+        }
+        .contact-card.whatsapp { background: #F0FFF4; color: var(--color-green); border-color: #9AE6B4; }
+        .contact-card.instagram { background: #FFF5F5; color: var(--color-red); border-color: #FEB2B2; }
+        .contact-card:hover { transform: translateY(-3px); box-shadow: 0 6px 12px rgba(0,0,0,0.05); }
 
-  <script>
-    const DESTINO_EMAIL = "lucasferreira123459966@gmail.com";
+        /* Formulários */
+        .form-group { margin-bottom: 20px; }
+        label { display: block; margin-bottom: 8px; color: var(--text-primary); font-size: 0.95rem; font-weight: 600; }
+        
+        input, textarea {
+            width: 100%; padding: 14px 15px; box-sizing: border-box;
+            border-radius: 8px; border: 1px solid var(--border-color);
+            background: var(--bg-input); color: var(--text-primary); font-family: inherit; font-size: 1rem;
+            outline: none; transition: 0.2s;
+        }
+        input:focus, textarea:focus { border-color: var(--color-blue); background: #FFF; box-shadow: 0 0 0 3px rgba(43,108,176,0.1); }
+        textarea { resize: vertical; min-height: 120px; }
+        
+        .btn {
+            border: none; padding: 16px 20px; width: 100%; border-radius: 8px; cursor: pointer;
+            font-weight: bold; color: white; transition: 0.2s; font-size: 1.05rem; display: block; text-align: center; font-family: inherit;
+        }
+        .btn.blue { background: var(--color-blue); }
+        .btn.amber { background: var(--color-amber); color: #FFF; }
+        .btn:hover { opacity: 0.9; transform: translateY(-1px); }
+        .btn:active { transform: translateY(0); }
 
-    function enviarSuporte() {
-      const nome = document.getElementById("sup-nome").value.trim();
-      const msg = document.getElementById("sup-msg").value.trim();
+        hr { border: 0; border-top: 1px dashed var(--border-color); margin: 30px 0; }
 
-      if (!nome || !msg) {
-        alert("Por favor, preencha seu nome e a mensagem. ⚠️");
-        return;
-      }
+        /* ==================================
+           MODAL CUSTOMIZADO
+        ================================== */
+        .modal-overlay {
+            position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+            background: rgba(0, 0, 0, 0.6); display: none; align-items: center; justify-content: center;
+            z-index: 9999; backdrop-filter: blur(4px);
+        }
+        .modal-box {
+            background: var(--bg-card); padding: 30px; border-radius: 16px; width: 90%; max-width: 420px;
+            box-shadow: 0 10px 25px rgba(0,0,0,0.2); text-align: center; animation: popIn 0.3s ease;
+        }
+        .modal-title { font-size: 1.4rem; color: var(--text-primary); margin-bottom: 15px; font-weight: bold; }
+        .modal-message { color: var(--text-secondary); margin-bottom: 25px; font-size: 1.05rem; line-height: 1.5; }
+        .modal-buttons { display: flex; gap: 12px; justify-content: center; }
+        .btn-modal { flex: 1; padding: 14px; border-radius: 8px; font-weight: bold; border: none; cursor: pointer; font-family: inherit; font-size: 1rem; transition: 0.2s; }
+        .btn-modal-cancel { background: #EDF2F7; color: #4A5568; }
+        .btn-modal-cancel:hover { background: #E2E8F0; }
+        .btn-modal-confirm { background: var(--color-blue); color: white; }
+        .btn-modal-confirm:hover { background: #235A91; }
 
-      const assunto = encodeURIComponent(`Suporte Digital Menu - ${nome}`);
-      const corpo = encodeURIComponent(`Nome do Cliente: ${nome}\n\nMensagem/Problema:\n${msg}`);
-      
-      // Abre o app de e-mail do cliente
-      window.location.href = `mailto:${DESTINO_EMAIL}?subject=${assunto}&body=${corpo}`;
-      
-      document.getElementById("sup-msg").value = "";
-    }
+        @keyframes popIn { 0% { transform: scale(0.9); opacity: 0; } 100% { transform: scale(1); opacity: 1; } }
+    </style>
 
-    function enviarFeedback() {
-      const msg = document.getElementById("feed-msg").value.trim();
-
-      if (!msg) {
-        alert("Escreva algo no feedback antes de enviar. ⚠️");
-        return;
-      }
-
-      const assunto = encodeURIComponent(`Feedback - Digital Menu`);
-      const corpo = encodeURIComponent(`Novo Feedback recebido:\n\n${msg}`);
-      
-      // Abre o app de e-mail do cliente
-      window.location.href = `mailto:${DESTINO_EMAIL}?subject=${assunto}&body=${corpo}`;
-      
-      document.getElementById("feed-msg").value = "";
-      alert("Obrigado pelo seu feedback! 🚀");
-    }
-  </script>
+    <script async src="https://www.googletagmanager.com/gtag/js?id=G-2BTBZ5MK63"></script>
+    <script>
+        window.dataLayer = window.dataLayer || [];
+        function gtag(){dataLayer.push(arguments);}
+        gtag('js', new Date());
+        gtag('config', 'G-2BTBZ5MK63');
+    </script>
 </head>
 <body>
 
-  <header>
-    <div style="font-size: 1.2rem; font-weight: bold;">Central de Ajuda 🛠️</div>
-    <button class="btn" style="background: transparent; border: 1px solid var(--border-color); width: auto; padding: 8px 15px;" onclick="history.back()">Voltar</button>
-  </header>
+    <header>
+        <h1>Central de Ajuda 🛠️</h1>
+        
+        <div class="header-actions">
+            <button class="btn-voltar" onclick="history.back()">Voltar</button>
+            
+            <div class="menu-dropdown-container">
+                <button class="btn-dots" onclick="toggleMenu(event)">•••</button>
+                <div id="dropdown-menu" class="dropdown-content">
+                    <a href="index.html">🏠 Início</a>
+                    <a href="caixa.html">💵 Caixa</a>
+                    <a href="relatorio.html">📊 Relatórios</a>
+                    <a href="configuracoes.html">⚙️ Configurações</a>
+                    <a href="company-admin.html">🏢 Painel da Empresa</a>
+                    <a href="tutorial.html">📚 Tutoriais</a>
+                    <hr style="border: 0; border-top: 1px solid var(--border-color); margin: 5px 0;">
+                    <a href="javascript:void(0)" onclick="deslogarSistema()" style="color: var(--color-red);">🚪 Sair</a>
+                </div>
+            </div>
+        </div>
+    </header>
 
-  <main>
-    
-    <div class="care-banner">
-      <h3>Nós prezamos por você! 🤝</h3>
-      <p>No <strong>Digital Menu</strong>, o sucesso do seu negócio é a nossa prioridade. Sabemos que imprevistos acontecem, mas garantimos que <strong>qualquer problema será resolvido com agilidade</strong>. Estamos aqui para ajudar você a vender mais e melhor. Conte com a gente!</p>
+    <main>
+        <div class="care-banner">
+            <h3>Nós prezamos por você! 🤝</h3>
+            <p>No <strong>Digital Menu</strong>, o sucesso do seu negócio é a nossa prioridade. Sabemos que imprevistos acontecem na correria do restaurante, mas garantimos que qualquer problema será resolvido com agilidade. Estamos aqui para ajudar você a vender mais e melhor.</p>
+        </div>
+
+        <h4 style="margin-bottom: 15px; color: var(--text-primary); font-size: 1.1rem;">Atendimento Rápido</h4>
+        <div class="contact-grid">
+            <a href="https://wa.me/+5567992545735" target="_blank" class="contact-card whatsapp">
+                WhatsApp 📱
+            </a>
+            <a href="https://instagram.com/digitalmenu.com.br" target="_blank" class="contact-card instagram">
+                Instagram 📸
+            </a>
+        </div>
+
+        <div class="box" style="border-top: 4px solid var(--color-blue);">
+            <h3 style="color: var(--color-blue); margin-top: 0; margin-bottom: 10px;">Reportar um Problema 🚨</h3>
+            <p style="color: var(--text-secondary); font-size: 0.95rem; margin-bottom: 20px;">Descreva o que aconteceu. Nossa equipe técnica vai analisar e te retornar o mais rápido possível.</p>
+            
+            <div class="form-group">
+                <label>Seu Nome / Nome do Restaurante</label>
+                <input type="text" id="sup-nome" placeholder="Ex: Hamburgueria do Zé">
+            </div>
+            
+            <div class="form-group">
+                <label>Qual é o problema?</label>
+                <textarea id="sup-msg" placeholder="Detalhe o erro ou dúvida aqui..."></textarea>
+            </div>
+            
+            <button class="btn blue" onclick="enviarSuporte()">Enviar para o Suporte ✉️</button>
+        </div>
+
+        <hr>
+
+        <div class="box" style="border-top: 4px solid var(--color-amber);">
+            <h3 style="color: var(--color-amber); margin-top: 0; margin-bottom: 10px;">Deixe seu Feedback 💡</h3>
+            <p style="color: var(--text-secondary); font-size: 0.95rem; margin-bottom: 20px;">Tem alguma ideia de melhoria? Algo que você amou ou que sentiu falta no Digital Menu? Conta pra gente!</p>
+            
+            <div class="form-group">
+                <textarea id="feed-msg" placeholder="Sua opinião é fundamental para evoluirmos a plataforma..."></textarea>
+            </div>
+            
+            <button class="btn amber" onclick="enviarFeedback()">Enviar Sugestão 🌟</button>
+        </div>
+        
+    </main>
+
+    <div id="custom-modal" class="modal-overlay">
+        <div class="modal-box">
+            <h3 id="modal-title" class="modal-title">Atenção</h3>
+            <p id="modal-message" class="modal-message">Mensagem.</p>
+            <div class="modal-buttons">
+                <button id="modal-btn-cancel" class="btn-modal btn-modal-cancel">Cancelar</button>
+                <button id="modal-btn-confirm" class="btn-modal btn-modal-confirm">Confirmar</button>
+            </div>
+        </div>
     </div>
 
-    <h4 style="margin-bottom: 10px;">Atendimento Rápido</h4>
-    <div class="contact-grid">
-      <a href="https://wa.me/+5567992545735" target="_blank" class="contact-card whatsapp">
-        WhatsApp 📱
-      </a>
-      <a href="https://instagram.com/digitalmenu.com.br" target="_blank" class="contact-card instagram">
-        Instagram 📸
-      </a>
-    </div>
+    <script>
+        const DESTINO_EMAIL = "lucasferreira123459966@gmail.com";
 
-    <div class="box">
-      <h3 style="color: var(--color-blue); margin-top: 0;">Reportar um Problema 🚨</h3>
-      <p style="color: var(--text-secondary); font-size: 0.9rem; margin-bottom: 20px;">Descreva o que aconteceu. Nossa equipe técnica vai analisar e te retornar o mais rápido possível.</p>
-      
-      <div class="form-group">
-        <label>Seu Nome / Nome do Restaurante</label>
-        <input type="text" id="sup-nome" placeholder="Ex: Pizzaria do Zé">
-      </div>
-      
-      <div class="form-group">
-        <label>Qual é o problema?</label>
-        <textarea id="sup-msg" placeholder="Detalhe o erro ou dúvida aqui..."></textarea>
-      </div>
-      
-      <button class="btn blue" onclick="enviarSuporte()">Enviar para o Suporte ✉️</button>
-    </div>
+        // ==========================================
+        // MENU DROPDOWN & LOGOUT
+        // ==========================================
+        function toggleMenu(event) {
+            if(event) event.stopPropagation();
+            document.getElementById("dropdown-menu").classList.toggle("show-dropdown");
+        }
 
-    <hr>
+        window.onclick = function(event) {
+            if (!event.target.matches('.btn-dots')) {
+                const dropdowns = document.getElementsByClassName("dropdown-content");
+                for (let i = 0; i < dropdowns.length; i++) {
+                    if (dropdowns[i].classList.contains('show-dropdown')) {
+                        dropdowns[i].classList.remove('show-dropdown');
+                    }
+                }
+            }
+        }
 
-    <div class="box">
-      <h3 style="color: var(--color-amber); margin-top: 0;">Deixe seu Feedback 💡</h3>
-      <p style="color: var(--text-secondary); font-size: 0.9rem; margin-bottom: 20px;">Tem alguma ideia de melhoria? Algo que você amou ou que sentiu falta no Digital Menu? Conta pra gente!</p>
-      
-      <div class="form-group">
-        <textarea id="feed-msg" placeholder="Sua opinião é fundamental para evoluirmos..."></textarea>
-      </div>
-      
-      <button class="btn amber" onclick="enviarFeedback()">Enviar Feedback 🌟</button>
-    </div>
-    
-  </main>
+        function deslogarSistema() {
+            mostrarModal("Sair do Sistema", "Tem certeza que deseja encerrar a sessão?", "confirm", () => {
+                localStorage.removeItem("user");
+                window.location.href = "login.html";
+            });
+        }
 
+        // ==========================================
+        // FUNÇÃO DE MODAL CUSTOMIZADO
+        // ==========================================
+        function mostrarModal(titulo, mensagem, tipo = 'alert', callbackConfirm = null) {
+            const modal = document.getElementById('custom-modal');
+            document.getElementById('modal-title').innerText = titulo;
+            document.getElementById('modal-message').innerText = mensagem;
+            
+            const btnCancel = document.getElementById('modal-btn-cancel');
+            const btnConfirm = document.getElementById('modal-btn-confirm');
+            
+            const novoBtnConfirm = btnConfirm.cloneNode(true);
+            btnConfirm.parentNode.replaceChild(novoBtnConfirm, btnConfirm);
+            
+            if (tipo === 'confirm') {
+                btnCancel.style.display = 'block';
+                btnCancel.onclick = () => { modal.style.display = 'none'; };
+            } else {
+                btnCancel.style.display = 'none';
+            }
+            
+            novoBtnConfirm.onclick = () => {
+                modal.style.display = 'none';
+                if (callbackConfirm) callbackConfirm();
+            };
+            
+            modal.style.display = 'flex';
+        }
+
+        // ==========================================
+        // LÓGICA DE ENVIO (EMAILS)
+        // ==========================================
+        function enviarSuporte() {
+            const nome = document.getElementById("sup-nome").value.trim();
+            const msg = document.getElementById("sup-msg").value.trim();
+
+            if (!nome || !msg) {
+                mostrarModal("Campos Incompletos ⚠️", "Por favor, preencha o seu nome/restaurante e a mensagem para podermos te ajudar.", "alert");
+                return;
+            }
+
+            const assunto = encodeURIComponent(`Suporte Digital Menu - ${nome}`);
+            const corpo = encodeURIComponent(`Nome do Cliente: ${nome}\n\nMensagem/Problema:\n${msg}`);
+            
+            // Abre o app de e-mail do cliente
+            window.location.href = `mailto:${DESTINO_EMAIL}?subject=${assunto}&body=${corpo}`;
+            
+            document.getElementById("sup-msg").value = "";
+        }
+
+        function enviarFeedback() {
+            const msg = document.getElementById("feed-msg").value.trim();
+
+            if (!msg) {
+                mostrarModal("Feedback Vazio ⚠️", "Escreva algo no campo de feedback antes de enviar. Queremos muito te ouvir!", "alert");
+                return;
+            }
+
+            const assunto = encodeURIComponent(`Feedback - Digital Menu`);
+            const corpo = encodeURIComponent(`Novo Feedback recebido:\n\n${msg}`);
+            
+            // Abre o app de e-mail do cliente
+            window.location.href = `mailto:${DESTINO_EMAIL}?subject=${assunto}&body=${corpo}`;
+            
+            document.getElementById("feed-msg").value = "";
+            mostrarModal("Muito Obrigado! 🚀", "Seu feedback foi direcionado para o aplicativo de e-mail. Agradecemos por ajudar a melhorar o Digital Menu!", "alert");
+        }
+    </script>
 </body>
 </html>
