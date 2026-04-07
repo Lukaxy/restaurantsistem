@@ -1,137 +1,347 @@
 <!DOCTYPE html>
 <html lang="pt-br">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width,initial-scale=1.0" />
-  <link rel="icon" type="image/png" href="img/icone.png">
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width,initial-scale=1.0" />
+    <link rel="icon" type="image/png" href="img/icone.png">
+    <title>Configurações - Digital Menu ⚙️</title>
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;600;700&display=swap" rel="stylesheet">
   
-  <title>Configurações - Cardápio ⚙️</title>
-  
-  <link rel="stylesheet" href="css/style.css" />
+    <style>
+        :root {
+            --bg-main: #F7F9FC;
+            --bg-card: #FFFFFF;
+            --bg-input: #EDF2F7;
+            --color-blue: #2B6CB0;
+            --color-green: #38A169;
+            --color-red: #E53E3E;
+            --color-orange: #DD6B20;
+            --text-primary: #1A202C;
+            --text-secondary: #718096;
+            --border-color: #E2E8F0;
+        }
 
-  <style>
-    /* CSS DO TOGGLE SWITCH */
-    .switch { position: relative; display: inline-block; width: 40px; height: 22px; }
-    .switch input { opacity: 0; width: 0; height: 0; }
-    .slider { position: absolute; cursor: pointer; top: 0; left: 0; right: 0; bottom: 0; background-color: var(--bg-input); transition: .4s; border-radius: 34px; border: 1px solid var(--border-color); }
-    .slider:before { position: absolute; content: ""; height: 14px; width: 14px; left: 4px; bottom: 3px; background-color: white; transition: .4s; border-radius: 50%; }
-    input:checked + .slider { background-color: var(--color-green); border-color: var(--color-green); }
-    input:checked + .slider:before { transform: translateX(18px); }
+        * { box-sizing: border-box; margin: 0; padding: 0; }
 
-    /* ESTILO DO QR CODE */
-    #qr-container { text-align: center; padding: 20px; background: var(--bg-input); border-radius: var(--radius); margin-top: 15px; border: 1px dashed var(--color-blue); }
-    
-    .menu-dropdown { display: none; position: absolute; background: #1a1d21; border: 1px solid var(--border-color); right: 30px; top: 60px; z-index: 100; }
-    .menu-dropdown.show { display: block; }
-    .menu-dropdown div { padding: 10px 20px; cursor: pointer; border-bottom: 1px solid #333; }
-  </style>
-  <script async src="https://www.googletagmanager.com/gtag/js?id=G-2BTBZ5MK63"></script>
-<script>
-  window.dataLayer = window.dataLayer || [];
-  function gtag(){dataLayer.push(arguments);}
-  gtag('js', new Date());
+        body {
+            font-family: 'Poppins', sans-serif;
+            background-color: var(--bg-main);
+            color: var(--text-primary);
+            display: flex;
+            flex-direction: column;
+            min-height: 100vh;
+        }
 
-  gtag('config', 'G-2BTBZ5MK63');
-</script>
+        /* HEADER & MENU */
+        header {
+            background-color: var(--color-blue);
+            color: white;
+            padding: 15px 30px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+        header h1 { font-size: 1.5rem; }
+        
+        .header-actions { display: flex; align-items: center; gap: 15px; }
+        .btn-voltar { background: transparent; border: 1px solid white; color: white; padding: 8px 15px; border-radius: 6px; cursor: pointer; font-family: inherit; font-weight: bold; transition: 0.2s;}
+        .btn-voltar:hover { background: rgba(255,255,255,0.1); }
+
+        .menu-dropdown-container { position: relative; display: inline-block; }
+        .btn-dots { 
+            background: transparent; border: none; color: white; font-size: 1.5rem; 
+            letter-spacing: 2px; cursor: pointer; padding: 5px 10px; line-height: 1; transition: 0.2s; border-radius: 6px;
+        }
+        .btn-dots:hover { background: rgba(255,255,255,0.1); }
+        
+        .dropdown-content { 
+            display: none; position: absolute; right: 0; top: 45px; 
+            background-color: var(--bg-card); min-width: 220px; 
+            box-shadow: 0px 8px 20px rgba(0,0,0,0.15); z-index: 100; 
+            border-radius: 10px; overflow: hidden; border: 1px solid var(--border-color); 
+            animation: popIn 0.2s ease; 
+        }
+        .dropdown-content a { 
+            color: var(--text-primary); padding: 12px 16px; text-decoration: none; 
+            display: block; font-size: 0.95rem; font-weight: 600; transition: background 0.2s; 
+        }
+        .dropdown-content a:hover { background-color: var(--bg-main); color: var(--color-blue); }
+        .show-dropdown { display: block; }
+
+        /* LAYOUT PRINCIPAL */
+        main { padding: 30px; max-width: 900px; margin: 0 auto; width: 100%; }
+
+        .box {
+            background: var(--bg-card);
+            padding: 25px;
+            border-radius: 12px;
+            margin-bottom: 25px;
+            border: 1px solid var(--border-color);
+            box-shadow: 0 2px 5px rgba(0,0,0,0.02);
+        }
+
+        .box h3 { margin-bottom: 20px; font-size: 1.2rem; }
+
+        /* FORMULÁRIOS */
+        .form-row { display: flex; gap: 15px; margin-bottom: 15px; flex-wrap: wrap; }
+        input, select, textarea {
+            background: var(--bg-input); border: 1px solid var(--border-color);
+            color: var(--text-primary); padding: 12px 15px; border-radius: 8px;
+            font-family: inherit; font-size: 0.95rem; outline: none; width: 100%; transition: 0.2s;
+        }
+        input:focus, select:focus, textarea:focus { border-color: var(--color-blue); background: #FFF; }
+        textarea { resize: vertical; min-height: 80px; margin-bottom: 15px; }
+
+        .btn {
+            padding: 14px 20px; border-radius: 8px; font-weight: bold; border: none; cursor: pointer; 
+            font-family: inherit; font-size: 1rem; color: white; display: flex; align-items: center; 
+            justify-content: center; gap: 8px; transition: 0.2s; background: var(--color-blue); width: 100%;
+        }
+        .btn:hover { opacity: 0.9; }
+        .btn.success { background: var(--color-green); }
+
+        /* LOGO & QR CODE */
+        #logoPreview { width: 70px; height: 70px; border-radius: 50%; object-fit: cover; border: 2px solid var(--color-blue); background: var(--bg-input); }
+        #qr-container { text-align: center; padding: 30px 20px; background: var(--bg-input); border-radius: 12px; border: 2px dashed var(--color-blue); display: flex; flex-direction: column; align-items: center; }
+        #qrcode-display img { border-radius: 8px; border: 5px solid white; box-shadow: 0 4px 10px rgba(0,0,0,0.1); margin: 0 auto; }
+
+        /* LISTA DE PRODUTOS */
+        #productList { display: flex; flex-direction: column; gap: 15px; }
+        .product-item {
+            display: flex; justify-content: space-between; align-items: center;
+            background: var(--bg-main); padding: 15px 20px; border-radius: 8px; border: 1px solid var(--border-color);
+        }
+        .product-info h4 { color: var(--text-primary); margin-bottom: 5px; }
+        .product-info p { color: var(--text-secondary); font-size: 0.9rem; }
+        .product-price { font-weight: bold; color: var(--color-green); font-size: 1.1rem; }
+
+        /* MODAL CUSTOMIZADO */
+        .modal-overlay {
+            position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+            background: rgba(0, 0, 0, 0.6); display: none; align-items: center; justify-content: center;
+            z-index: 9999; backdrop-filter: blur(4px);
+        }
+        .modal-box {
+            background: var(--bg-card); padding: 30px; border-radius: 16px; width: 90%; max-width: 420px;
+            box-shadow: 0 10px 25px rgba(0,0,0,0.2); text-align: center; animation: popIn 0.3s ease;
+        }
+        .modal-title { font-size: 1.4rem; color: var(--text-primary); margin-bottom: 15px; font-weight: bold; }
+        .modal-message { color: var(--text-secondary); margin-bottom: 25px; font-size: 1.05rem; line-height: 1.5; }
+        .modal-buttons { display: flex; gap: 12px; justify-content: center; }
+        .btn-modal { flex: 1; padding: 14px; border-radius: 8px; font-weight: bold; border: none; cursor: pointer; font-family: inherit; font-size: 1rem; transition: 0.2s; }
+        .btn-modal-cancel { background: #EDF2F7; color: #4A5568; }
+        .btn-modal-cancel:hover { background: #E2E8F0; }
+        .btn-modal-confirm { background: var(--color-blue); color: white; }
+        .btn-modal-confirm:hover { background: #235A91; }
+
+        @keyframes popIn { 0% { transform: scale(0.9); opacity: 0; } 100% { transform: scale(1); opacity: 1; } }
+        @media (max-width: 768px) { .form-row { flex-direction: column; } .form-row input { width: 100%; } }
+    </style>
+
+    <script async src="https://www.googletagmanager.com/gtag/js?id=G-2BTBZ5MK63"></script>
+    <script>
+        window.dataLayer = window.dataLayer || [];
+        function gtag(){dataLayer.push(arguments);}
+        gtag('js', new Date());
+        gtag('config', 'G-2BTBZ5MK63');
+    </script>
 </head>
 
 <body>
 
 <header>
-  <div class="menu-wrapper">
-    <button class="menu-button" onclick="toggleMenu()">⋮</button>
-    <div id="menuDropdown" class="menu-dropdown">
-      <div onclick="location.href='index.html'">Cardapio 📙</div>
-      <div onclick="location.href='meus-pedidos.html'">Meus pedidos 🧾</div>
-      <div onclick="location.href='relatorio.html'">Relatório 📈</div>
-      <div onclick="window.location.href='bar.html'">Bar🍹</div>
-      <div onclick="location.href='cozinha.html'">Cozinha 👨‍🍳</div>
-      <div onclick="location.href='configuracoes.html'">Configurações ⚙️</div>
-      <div onclick="location.href='company-admin.html'">Painel da Empresa 🏢</div>
-      <div onclick="location.href='tutorial.html'">Tutoriais 📚</div>
-      <div onclick="location.href='support.html'">Suporte 🛠️</div>
-      <div onclick="logout()" style="color: var(--color-red);">Sair do Sistema 🚪</div>
+    <h1>Configurações ⚙️</h1>
+    
+    <div class="header-actions">
+        <button class="btn-voltar" onclick="window.location.href='index.html'">Voltar</button>
+        
+        <div class="menu-dropdown-container">
+            <button class="btn-dots" onclick="toggleMenu(event)">•••</button>
+            <div id="dropdown-menu" class="dropdown-content">
+                <a href="index.html">🏠 Início</a>
+                <a href="caixa.html">💵 Caixa</a>
+                <a href="relatorio.html">📊 Relatórios</a>
+                <a href="company-admin.html">🏢 Painel da Empresa</a>
+                <hr style="border: 0; border-top: 1px solid var(--border-color); margin: 5px 0;">
+                <a href="javascript:void(0)" onclick="deslogarSistema()" style="color: var(--color-red);">🚪 Sair</a>
+            </div>
+        </div>
     </div>
-  </div>
-  <div class="header-title">Configurações do Cardápio ⚙️</div>
 </header>
 
 <main>
-    <div class="box">
-        <h3 style="color: var(--color-amber); margin-bottom: 20px;">➕ Adicionar Novo Prato</h3>
+    <div class="box" style="border-top: 4px solid var(--color-green);">
+        <h3 style="color: var(--text-primary);">➕ Adicionar Novo Prato</h3>
         <div class="form-row">
-            <input type="text" id="newName" placeholder="Nome do Prato" style="flex: 3;">
+            <input type="text" id="newName" placeholder="Nome do Prato (ex: Hambúrguer Clássico)" style="flex: 3;">
             <input type="number" id="newPrice" placeholder="R$ 0,00" step="0.01" style="flex: 1;">
-            <input type="text" id="newCategory" placeholder="Categoria (ex: Bebidas)" style="flex: 1;">
+            <input type="text" id="newCategory" placeholder="Categoria (ex: Lanches)" style="flex: 1;">
         </div>
-        <textarea id="newDescription" placeholder="Descrição do produto..." rows="3"></textarea>
-        <select id="newDestination" style="flex: 1; padding: 10px; border-radius: 8px; border: 1px solid var(--border-color); background: var(--bg-input); color: white;">
-            <option value="cozinha">🍳 Cozinha</option>
-            <option value="bar">🍸 Bar / Copa</option>
-        </select>
-        <div style="margin-top: 10px;">
-            <button onclick="addProduct()" class="btn success" style="width: 100%;">💾 Salvar Produto</button>
+        <textarea id="newDescription" placeholder="Descrição do produto (ingredientes, tamanho...)" rows="3"></textarea>
+        
+        <div class="form-row">
+            <select id="newDestination" style="flex: 1;">
+                <option value="cozinha">🍳 Imprimir na Cozinha</option>
+                <option value="bar">🍸 Imprimir no Bar / Copa</option>
+            </select>
         </div>
+        
+        <button onclick="addProduct()" class="btn success">💾 Salvar Produto</button>
     </div>
 
-    <div class="box" style="border-left: 4px solid #e8590c;">
-        <h3 style="color: #e9ecef; margin-bottom: 10px;">📸 Logo do Restaurante</h3>
+    <div class="box" style="border-top: 4px solid var(--color-orange);">
+        <h3 style="color: var(--text-primary);">📸 Logo do Restaurante</h3>
+        <p style="color: var(--text-secondary); font-size: 0.9rem; margin-bottom: 15px;">Aparecerá no cabeçalho do cardápio digital do cliente.</p>
         <form id="formLogo" enctype="multipart/form-data" style="display: flex; flex-direction: column; gap: 15px;">
             <input type="hidden" id="uploadCompanyId" name="companyId">
             <div style="display: flex; align-items: center; gap: 15px;">
-                <img id="logoPreview" src="" alt="Sem Logo" style="width: 60px; height: 60px; border-radius: 50%; object-fit: cover; border: 2px solid var(--border-color); display: none; background: #fff;">
-                <input type="file" name="logo" id="logoInput" accept="image/*" required style="background: var(--bg-input); color: white; border: 1px solid var(--border-color); padding: 10px; border-radius: 8px; width: 100%;">
+                <img id="logoPreview" src="" alt="Prévia" style="display: none;">
+                <input type="file" name="logo" id="logoInput" accept="image/*" required>
             </div>
-            <button type="submit" class="btn" id="btnUpload" style="background-color: var(--color-blue); width: 100%;">💾 Salvar Nova Logo</button>
+            <button type="submit" class="btn" id="btnUpload">📤 Enviar Logo</button>
         </form>
     </div>
 
-    <div class="box" style="margin-bottom: 25px; border-left: 4px solid var(--color-blue);">
-        <h3 style="color: var(--color-blue); margin-bottom: 10px;">🔗 Seu Cardápio Digital</h3>
+    <div class="box" style="border-top: 4px solid var(--color-blue);">
+        <h3 style="color: var(--text-primary); text-align: center;">🔗 Seu Cardápio Digital</h3>
+        <p style="color: var(--text-secondary); font-size: 0.9rem; text-align: center; margin-bottom: 15px;">Imprima este código e coloque nas mesas para os clientes acessarem.</p>
         <div id="qr-container">
-           <div id="qrcode-display"><p style="color: var(--text-secondary); font-size: 0.8rem;">Clique no botão para gerar</p></div>
-           <button onclick="gerarQRCode()" class="btn" style="margin-top: 10px; background: var(--bg-card); border: 1px solid var(--color-blue);">🖨️ Gerar QR Code</button>
+            <div id="qrcode-display"><p style="color: var(--text-secondary); margin-bottom: 15px;">Clique abaixo para gerar seu código exclusivo.</p></div>
+            <button onclick="gerarQRCode()" class="btn" style="width: auto; padding: 10px 30px; margin-top: 15px;">🖨️ Gerar QR Code</button>
         </div>
     </div>
 
-    <div class="box" style="margin-top: 25px;">
-        <h3 style="margin-bottom: 20px;">Pratos Cadastrados 📋</h3>
-        <div id="productList"><p style="text-align: center; color: var(--text-secondary);">Carregando...</p></div>
+    <div class="box">
+        <h3>Pratos Cadastrados 📋</h3>
+        <div id="productList"><p style="text-align: center; color: var(--text-secondary);">Carregando produtos...</p></div>
     </div>
 </main>
 
+<div id="custom-modal" class="modal-overlay">
+    <div class="modal-box">
+        <h3 id="modal-title" class="modal-title">Atenção</h3>
+        <p id="modal-message" class="modal-message">Mensagem.</p>
+        <div class="modal-buttons">
+            <button id="modal-btn-cancel" class="btn-modal btn-modal-cancel">Cancelar</button>
+            <button id="modal-btn-confirm" class="btn-modal btn-modal-confirm">Confirmar</button>
+        </div>
+    </div>
+</div>
+
 <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
+
 <script src="js/auth.js"></script>
 <script src="js/configuracoes.js" type="module"></script>
 
 <script>
-  // Funções de UI
-  function toggleMenu() { document.getElementById('menuDropdown').classList.toggle('show'); }
-  document.addEventListener('click', e => { if (!e.target.closest('.menu-wrapper')) document.getElementById('menuDropdown').classList.remove('show'); });
+    // ==========================================
+    // MENU DROPDOWN
+    // ==========================================
+    function toggleMenu(event) {
+        event.stopPropagation();
+        document.getElementById("dropdown-menu").classList.toggle("show-dropdown");
+    }
 
-  function showToast(mensagem, tipo = 'sucesso') {
-      let container = document.getElementById('toast-container');
-      if (!container) {
-          container = document.createElement('div');
-          container.id = 'toast-container';
-          container.style.cssText = "position:fixed; top:20px; right:20px; z-index:10000;";
-          document.body.appendChild(container);
-      }
-      const toast = document.createElement('div');
-      toast.style.cssText = `background: #1a1a1a; color: white; padding: 15px 25px; border-radius: 10px; border-left: 4px solid ${tipo === 'sucesso' ? '#51cf66' : '#ff6b6b'}; box-shadow: 0 10px 30px rgba(0,0,0,0.5); margin-bottom: 10px; display: flex; align-items: center; gap: 10px; font-family: sans-serif;`;
-      toast.innerHTML = `<span>${tipo === 'sucesso' ? '✅' : '❌'}</span> <span>${mensagem}</span>`;
-      container.appendChild(toast);
-      setTimeout(() => toast.remove(), 3000);
-  }
+    window.onclick = function(event) {
+        if (!event.target.matches('.btn-dots')) {
+            const dropdowns = document.getElementsByClassName("dropdown-content");
+            for (let i = 0; i < dropdowns.length; i++) {
+                if (dropdowns[i].classList.contains('show-dropdown')) {
+                    dropdowns[i].classList.remove('show-dropdown');
+                }
+            }
+        }
+    }
 
-  // Gerador de QR Code
-  function gerarQRCode() {
-    const user = JSON.parse(localStorage.getItem("user"));
-    const display = document.getElementById('qrcode-display');
-    display.innerHTML = "";
-    new QRCode(display, { text: `${window.location.origin}/menu.html?id=${user.company_id}`, width: 150, height: 150, colorDark: "#ffffff", colorLight: "#2c3035", correctLevel: QRCode.CorrectLevel.H });
-    showToast("QR Code gerado!");
-  }
+    // ==========================================
+    // MODAL CUSTOMIZADO E LOGOUT
+    // ==========================================
+    function mostrarModal(titulo, mensagem, tipo = 'alert', callbackConfirm = null) {
+        const modal = document.getElementById('custom-modal');
+        document.getElementById('modal-title').innerText = titulo;
+        document.getElementById('modal-message').innerText = mensagem;
+        
+        const btnCancel = document.getElementById('modal-btn-cancel');
+        const btnConfirm = document.getElementById('modal-btn-confirm');
+        
+        const novoBtnConfirm = btnConfirm.cloneNode(true);
+        btnConfirm.parentNode.replaceChild(novoBtnConfirm, btnConfirm);
+        
+        if (tipo === 'confirm') {
+            btnCancel.style.display = 'block';
+            btnCancel.onclick = () => { modal.style.display = 'none'; };
+        } else {
+            btnCancel.style.display = 'none';
+        }
+        
+        novoBtnConfirm.onclick = () => {
+            modal.style.display = 'none';
+            if (callbackConfirm) callbackConfirm();
+        };
+        
+        modal.style.display = 'flex';
+    }
+
+    function deslogarSistema() {
+        mostrarModal("Sair do Sistema", "Tem certeza que deseja encerrar a sessão?", "confirm", () => {
+            localStorage.removeItem("user");
+            window.location.href = "login.html";
+        });
+    }
+
+    // Substitui o toast nativo para usar o modal, para manter o padrão visual
+    function showToast(mensagem, tipo = 'sucesso') {
+        const titulo = tipo === 'sucesso' ? "Sucesso! ✅" : "Ops! ❌";
+        mostrarModal(titulo, mensagem, "alert");
+    }
+
+    // ==========================================
+    // FUNÇÕES DE UI (QR CODE E LOGO PREVIEW)
+    // ==========================================
+    function gerarQRCode() {
+        const user = JSON.parse(localStorage.getItem("user"));
+        if (!user || !user.company_id) {
+            mostrarModal("Erro", "Empresa não identificada. Faça login novamente.", "alert");
+            return;
+        }
+
+        const display = document.getElementById('qrcode-display');
+        display.innerHTML = "";
+        
+        // Gera o QR Code escuro sobre fundo claro do novo layout
+        new QRCode(display, { 
+            text: `${window.location.origin}/menu.html?id=${user.company_id}`, 
+            width: 180, 
+            height: 180, 
+            colorDark: "#1A202C", 
+            colorLight: "#ffffff", 
+            correctLevel: QRCode.CorrectLevel.H 
+        });
+        
+        mostrarModal("Pronto!", "Seu QR Code foi gerado. Você já pode salvar a imagem ou imprimi-la.", "alert");
+    }
+
+    // Preview da imagem da logo antes de enviar
+    document.getElementById('logoInput').addEventListener('change', function(e) {
+        if (e.target.files && e.target.files[0]) {
+            const reader = new FileReader();
+            reader.onload = function(e) {
+                const img = document.getElementById('logoPreview');
+                img.src = e.target.result;
+                img.style.display = 'block';
+            }
+            reader.readAsDataURL(e.target.files[0]);
+        }
+    });
+
+    // Pega o ID da empresa e coloca no campo invisível do form de logo
+    document.addEventListener("DOMContentLoaded", () => {
+        const user = JSON.parse(localStorage.getItem("user"));
+        if(user && user.company_id) {
+            document.getElementById('uploadCompanyId').value = user.company_id;
+        }
+    });
 </script>
 </body>
 </html>
