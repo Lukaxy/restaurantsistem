@@ -1,163 +1,334 @@
 <!DOCTYPE html>
 <html lang="pt-br">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <link rel="icon" type="image/png" href="img/icone.png">
-  <title>Painel da Empresa 🏢</title>
-  
-  <link rel="stylesheet" href="css/style.css">
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="icon" type="image/png" href="img/icone.png">
+    <title>Painel da Empresa - Digital Menu 🏢</title>
+    
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;600;700&display=swap" rel="stylesheet">
+    
+    <style>
+        :root {
+            --bg-main: #F7F9FC;
+            --bg-card: #FFFFFF;
+            --bg-input: #EDF2F7;
+            --color-blue: #2B6CB0;
+            --color-green: #38A169;
+            --color-red: #E53E3E;
+            --color-amber: #D69E2E;
+            --color-purple: #805AD5;
+            --text-primary: #1A202C;
+            --text-secondary: #718096;
+            --border-color: #E2E8F0;
+            --radius: 12px;
+        }
 
-  <style>
-    .menu-dropdown {
-      display: none;
-      position: absolute;
-      background: #1a1d21;
-      border: 1px solid var(--border-color);
-      left: 15px;
-      top: 50px;
-      z-index: 1100;
-      min-width: 200px;
-      border-radius: var(--radius);
-      box-shadow: var(--shadow);
-    }
-    .menu-dropdown.show { display: block; }
-    .menu-dropdown div { padding: 12px 20px; cursor: pointer; border-bottom: 1px solid #333; font-size: 0.9rem; }
-    .menu-dropdown div:hover { background: var(--bg-card); }
+        * { box-sizing: border-box; margin: 0; padding: 0; }
 
-    .status-plan-card {
-      background: var(--bg-card);
-      border: 1px solid var(--border-color);
-      border-radius: var(--radius);
-      padding: 15px 20px;
-      display: flex;
-      align-items: center;
-      gap: 15px;
-      margin-bottom: 25px;
-      border-left: 5px solid var(--color-blue);
-    }
-    .status-icon { font-size: 1.8rem; }
-    .status-label { font-size: 0.8rem; color: var(--text-secondary); margin: 0; }
-    .status-timer { margin-left: auto; text-align: center; border-left: 1px solid var(--border-color); padding-left: 15px; }
-    .status-timer span { display: block; font-size: 1.4rem; font-weight: bold; color: var(--color-blue); }
-  </style>
+        body {
+            font-family: 'Poppins', sans-serif;
+            background-color: var(--bg-main);
+            color: var(--text-primary);
+            display: flex;
+            flex-direction: column;
+            min-height: 100vh;
+        }
 
-  <script type="module">
+        /* HEADER & MENU */
+        header {
+            background-color: var(--color-blue);
+            color: white;
+            padding: 15px 30px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+        header h1 { font-size: 1.5rem; }
+        
+        .header-actions { display: flex; align-items: center; gap: 15px; }
+        .btn-voltar { background: transparent; border: 1px solid white; color: white; padding: 8px 15px; border-radius: 6px; cursor: pointer; font-family: inherit; font-weight: bold; transition: 0.2s;}
+        .btn-voltar:hover { background: rgba(255,255,255,0.1); }
+        .btn-assinatura { background: var(--color-purple); border: none; color: white; padding: 8px 15px; border-radius: 6px; cursor: pointer; font-family: inherit; font-weight: bold; transition: 0.2s;}
+        .btn-assinatura:hover { opacity: 0.9; }
+
+        .menu-dropdown-container { position: relative; display: inline-block; }
+        .btn-dots { 
+            background: transparent; border: none; color: white; font-size: 1.5rem; 
+            letter-spacing: 2px; cursor: pointer; padding: 5px 10px; line-height: 1; transition: 0.2s; border-radius: 6px;
+        }
+        .btn-dots:hover { background: rgba(255,255,255,0.1); }
+        
+        .dropdown-content { 
+            display: none; position: absolute; right: 0; top: 45px; 
+            background-color: var(--bg-card); min-width: 220px; 
+            box-shadow: 0px 8px 20px rgba(0,0,0,0.15); z-index: 100; 
+            border-radius: 10px; overflow: hidden; border: 1px solid var(--border-color); 
+            animation: popIn 0.2s ease; 
+        }
+        .dropdown-content a { 
+            color: var(--text-primary); padding: 12px 16px; text-decoration: none; 
+            display: block; font-size: 0.95rem; font-weight: 600; transition: background 0.2s; 
+        }
+        .dropdown-content a:hover { background-color: var(--bg-main); color: var(--color-blue); }
+        .show-dropdown { display: block; }
+
+        /* LAYOUT PRINCIPAL */
+        main { padding: 30px; max-width: 900px; margin: 0 auto; width: 100%; }
+
+        .box {
+            background: var(--bg-card);
+            padding: 25px;
+            border-radius: var(--radius);
+            margin-bottom: 25px;
+            border: 1px solid var(--border-color);
+            box-shadow: 0 2px 5px rgba(0,0,0,0.02);
+        }
+
+        .box h3 { margin-bottom: 20px; font-size: 1.2rem; text-align: center; color: var(--color-blue); }
+
+        /* CARD DO PLANO */
+        .status-plan-card {
+            background: var(--bg-card);
+            border: 1px solid var(--border-color);
+            border-radius: var(--radius);
+            padding: 20px 25px;
+            display: flex;
+            align-items: center;
+            gap: 20px;
+            margin-bottom: 25px;
+            border-left: 6px solid var(--color-blue);
+            box-shadow: 0 2px 5px rgba(0,0,0,0.02);
+        }
+        .status-icon { font-size: 2.5rem; }
+        .status-details { flex: 1; }
+        .status-label { font-size: 0.9rem; font-weight: bold; color: var(--text-secondary); text-transform: uppercase; letter-spacing: 1px; margin-bottom: 5px; }
+        .status-plan-card h4 { margin: 0; font-size: 1.3rem; color: var(--text-primary); }
+        .status-timer { text-align: center; border-left: 1px dashed var(--border-color); padding-left: 20px; }
+        .status-timer span { display: block; font-size: 2rem; font-weight: 900; color: var(--color-blue); line-height: 1; }
+        .status-timer small { color: var(--text-secondary); font-size: 0.8rem; font-weight: bold; text-transform: uppercase; }
+
+        /* FORMULÁRIOS */
+        .form-row { display: flex; flex-direction: column; gap: 15px; margin-bottom: 20px; }
+        input, select {
+            background: var(--bg-input); border: 1px solid var(--border-color);
+            color: var(--text-primary); padding: 14px 15px; border-radius: 8px;
+            font-family: inherit; font-size: 0.95rem; outline: none; width: 100%; transition: 0.2s;
+        }
+        input:focus, select:focus { border-color: var(--color-blue); background: #FFF; }
+
+        .btn {
+            padding: 14px 20px; border-radius: 8px; font-weight: bold; border: none; cursor: pointer; 
+            font-family: inherit; font-size: 1rem; color: white; display: flex; align-items: center; 
+            justify-content: center; gap: 8px; transition: 0.2s; background: var(--color-blue); width: 100%;
+        }
+        .btn:hover { opacity: 0.9; }
+        .btn.success { background: var(--color-green); }
+        .btn.danger { background: var(--color-red); padding: 8px 12px; width: auto; font-size: 0.9rem;}
+
+        /* LISTA DE USUÁRIOS */
+        .user-item {
+            display: flex; justify-content: space-between; align-items: center;
+            background: var(--bg-main); padding: 15px 20px; border-radius: 8px; border: 1px solid var(--border-color);
+            margin-bottom: 10px;
+        }
+        .user-item:last-child { margin-bottom: 0; }
+        .user-info strong { font-size: 1.1rem; color: var(--text-primary); display: block; }
+        .user-info small { color: var(--text-secondary); font-size: 0.9rem; }
+        .role-badge {
+            font-size: 0.75rem; background: #E2E8F0; padding: 3px 8px; border-radius: 4px; 
+            color: var(--text-primary); margin-left: 8px; font-weight: bold; text-transform: uppercase;
+        }
+
+        /* MODAL CUSTOMIZADO */
+        .modal-overlay {
+            position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+            background: rgba(0, 0, 0, 0.6); display: none; align-items: center; justify-content: center;
+            z-index: 9999; backdrop-filter: blur(4px);
+        }
+        .modal-box {
+            background: var(--bg-card); padding: 30px; border-radius: 16px; width: 90%; max-width: 420px;
+            box-shadow: 0 10px 25px rgba(0,0,0,0.2); text-align: center; animation: popIn 0.3s ease;
+        }
+        .modal-title { font-size: 1.4rem; color: var(--text-primary); margin-bottom: 15px; font-weight: bold; }
+        .modal-message { color: var(--text-secondary); margin-bottom: 25px; font-size: 1.05rem; line-height: 1.5; }
+        .modal-buttons { display: flex; gap: 12px; justify-content: center; }
+        .btn-modal { flex: 1; padding: 14px; border-radius: 8px; font-weight: bold; border: none; cursor: pointer; font-family: inherit; font-size: 1rem; transition: 0.2s; }
+        .btn-modal-cancel { background: #EDF2F7; color: #4A5568; }
+        .btn-modal-cancel:hover { background: #E2E8F0; }
+        .btn-modal-confirm { background: var(--color-blue); color: white; }
+        .btn-modal-confirm:hover { background: #235A91; }
+        .btn-modal-danger { background: var(--color-red); color: white; }
+        .btn-modal-danger:hover { background: #C53030; }
+
+        @keyframes popIn { 0% { transform: scale(0.9); opacity: 0; } 100% { transform: scale(1); opacity: 1; } }
+    </style>
+
+    <script async src="https://www.googletagmanager.com/gtag/js?id=G-2BTBZ5MK63"></script>
+    <script>
+        window.dataLayer = window.dataLayer || [];
+        function gtag(){dataLayer.push(arguments);}
+        gtag('js', new Date());
+        gtag('config', 'G-2BTBZ5MK63');
+    </script>
+</head>
+
+<body>
+
+<header>
+    <h1>Gestão da Empresa 🏢</h1>
+    
+    <div class="header-actions">
+        <button id="btn-assinatura" class="btn-assinatura" style="display: none;" onclick="window.location.href='assinaturas.html'">Assinatura 💎</button>
+        <button class="btn-voltar" onclick="window.location.href='index.html'">Voltar</button>
+        
+        <div class="menu-dropdown-container">
+            <button class="btn-dots" onclick="toggleMenu(event)">•••</button>
+            <div id="dropdown-menu" class="dropdown-content">
+                <a href="index.html">🏠 Início</a>
+                <a href="caixa.html">💵 Caixa</a>
+                <a href="relatorio.html">📊 Relatórios</a>
+                <a href="configuracoes.html">⚙️ Configurações</a>
+                <hr style="border: 0; border-top: 1px solid var(--border-color); margin: 5px 0;">
+                <a href="javascript:void(0)" onclick="deslogarSistema()" style="color: var(--color-red);">🚪 Sair</a>
+            </div>
+        </div>
+    </div>
+</header>
+
+<main>
+    <div class="status-plan-card" id="plano-card">
+        <div class="status-icon" id="plano-emoji">💎</div>
+        <div class="status-details">
+            <p class="status-label">Status da Assinatura</p>
+            <h4 id="plano-nome">Carregando...</h4>
+        </div>
+        <div class="status-timer">
+            <span id="plano-dias">--</span>
+            <small>dias restantes</small>
+        </div>
+    </div>
+
+    <div class="box">
+        <h3>➕ Cadastrar Funcionário</h3>
+        <div class="form-row">
+            <input id="name" placeholder="Nome Completo (ex: João Silva)">
+            <select id="role">
+                <option value="atendente">Atendente 🙋‍♂️</option>
+                <option value="cozinha">Cozinha 👨‍🍳</option>
+                <option value="admin">Admin / Caixa 🔑</option>
+            </select>
+            <input id="email" placeholder="E-mail de acesso" type="email" autocomplete="off">
+            <input id="senha" placeholder="Senha de acesso" type="password" autocomplete="new-password">
+        </div>
+        <button class="btn success" onclick="addUser()">Cadastrar na Equipe</button>
+    </div>
+
+    <div class="box">
+        <h3 style="color: var(--text-primary);">Equipe Atual 👥</h3>
+        <div id="users-list"><p style="text-align:center; color: var(--text-secondary);">Buscando equipe...</p></div>
+    </div>
+</main>
+
+<div id="custom-modal" class="modal-overlay">
+    <div class="modal-box">
+        <h3 id="modal-title" class="modal-title">Atenção</h3>
+        <p id="modal-message" class="modal-message">Mensagem.</p>
+        <div class="modal-buttons">
+            <button id="modal-btn-cancel" class="btn-modal btn-modal-cancel">Cancelar</button>
+            <button id="modal-btn-confirm" class="btn-modal btn-modal-confirm">Confirmar</button>
+        </div>
+    </div>
+</div>
+
+<script type="module">
     import { api } from "./js/http.js";
 
-    // --- FUNÇÕES DE INTERFACE (TOAST) ---
-    function showToast(mensagem, tipo = 'sucesso') {
-        let container = document.getElementById('toast-container');
-        if (!container) {
-            container = document.createElement('div');
-            container.id = 'toast-container';
-            container.style.cssText = "position:fixed; top:20px; right:20px; z-index:10000;";
-            document.body.appendChild(container);
-        }
-        const toast = document.createElement('div');
-        toast.style.cssText = `
-            background: #1a1a1a; color: white; padding: 15px 25px; border-radius: 10px; 
-            border-left: 4px solid ${tipo === 'sucesso' ? '#51cf66' : '#ff6b6b'};
-            box-shadow: 0 10px 30px rgba(0,0,0,0.5); margin-bottom: 10px;
-            display: flex; align-items: center; gap: 10px; font-family: 'Poppins', sans-serif;
-            animation: slideIn 0.5s ease forwards;
-        `;
-        toast.innerHTML = `<span>${tipo === 'sucesso' ? '✅' : '❌'}</span> <span>${mensagem}</span>`;
-        container.appendChild(toast);
-        setTimeout(() => {
-            toast.style.animation = "fadeOut 0.5s ease forwards";
-            setTimeout(() => toast.remove(), 500);
-        }, 3000);
+    // ==========================================
+    // MENU DROPDOWN
+    // ==========================================
+    window.toggleMenu = (event) => {
+        event.stopPropagation();
+        document.getElementById("dropdown-menu").classList.toggle("show-dropdown");
     }
 
-    // Injeção de animações
-    const animStyle = document.createElement('style');
-    animStyle.innerHTML = `
-        @keyframes slideIn { from { transform: translateX(100%); opacity: 0; } to { transform: translateX(0); opacity: 1; } }
-        @keyframes fadeOut { from { opacity: 1; } to { opacity: 0; transform: translateY(-20px); } }
-    `;
-    document.head.appendChild(animStyle);
+    window.onclick = function(event) {
+        if (!event.target.matches('.btn-dots')) {
+            const dropdowns = document.getElementsByClassName("dropdown-content");
+            for (let i = 0; i < dropdowns.length; i++) {
+                if (dropdowns[i].classList.contains('show-dropdown')) {
+                    dropdowns[i].classList.remove('show-dropdown');
+                }
+            }
+        }
+    }
 
-    // --- SEGURANÇA INICIAL ---
+    // ==========================================
+    // MODAL CUSTOMIZADO E LOGOUT
+    // ==========================================
+    window.mostrarModal = function(titulo, mensagem, tipo = 'alert', callbackConfirm = null, isDanger = false) {
+        const modal = document.getElementById('custom-modal');
+        document.getElementById('modal-title').innerText = titulo;
+        document.getElementById('modal-message').innerText = mensagem;
+        
+        const btnCancel = document.getElementById('modal-btn-cancel');
+        const btnConfirm = document.getElementById('modal-btn-confirm');
+        
+        const novoBtnConfirm = btnConfirm.cloneNode(true);
+        btnConfirm.parentNode.replaceChild(novoBtnConfirm, btnConfirm);
+        
+        // Estiliza o botão de confirmar se for uma ação perigosa (ex: Excluir)
+        if (isDanger) {
+            novoBtnConfirm.className = "btn-modal btn-modal-danger";
+            novoBtnConfirm.innerText = "Remover";
+        } else {
+            novoBtnConfirm.className = "btn-modal btn-modal-confirm";
+            novoBtnConfirm.innerText = "OK";
+        }
+
+        if (tipo === 'confirm') {
+            btnCancel.style.display = 'block';
+            btnCancel.onclick = () => { modal.style.display = 'none'; };
+        } else {
+            btnCancel.style.display = 'none';
+        }
+        
+        novoBtnConfirm.onclick = () => {
+            modal.style.display = 'none';
+            if (callbackConfirm) callbackConfirm();
+        };
+        
+        modal.style.display = 'flex';
+    }
+
+    window.deslogarSistema = function() {
+        window.mostrarModal("Sair do Sistema", "Tem certeza que deseja encerrar a sessão?", "confirm", () => {
+            localStorage.clear();
+            window.location.href = "login.html";
+        });
+    }
+
+    window.showToast = function(mensagem, tipo = 'sucesso') {
+        const titulo = tipo === 'sucesso' ? "Sucesso! ✅" : "Aviso! ⚠️";
+        window.mostrarModal(titulo, mensagem, "alert");
+    }
+
+    // ==========================================
+    // SEGURANÇA E DADOS
+    // ==========================================
     const user = JSON.parse(localStorage.getItem("user") || "{}");
     
-    // Verifica acesso e bloqueia intrusos com Toast
     if (!user || !user.role || user.role !== "admin") {
         document.addEventListener("DOMContentLoaded", () => {
-            showToast("🚫 Acesso negado! Área restrita ao Chef. Voltando...", "erro");
-            setTimeout(() => {
+            window.mostrarModal("Acesso Negado 🚫", "Área restrita aos administradores.", "alert", () => {
                 window.location.href = "index.html";
-            }, 2500);
+            });
         });
-        // Interrompe o carregamento do restante do script para segurança
         throw new Error("Acesso não autorizado.");
     }
 
-    let idUsuarioParaExcluir = null;
-
-    // --- LISTAR USUÁRIOS ---
-    async function carregarUsuarios() {
-        const list = document.getElementById("users-list");
-        if(!list) return;
-        list.innerHTML = "<p style='text-align:center;'>Buscando equipe...</p>";
-        try {
-            const data = await api(`/api/users?company_id=${user.company_id}`);
-            if (!data.ok) throw new Error(data.error || "Erro ao carregar usuários");
-            list.innerHTML = data.users.map(u => `
-                <div style="display: flex; justify-content: space-between; align-items: center; padding: 12px; border-bottom: 1px solid var(--border-color); gap: 10px;">
-                    <div>
-                        <strong>${u.name}</strong> <br>
-                        <small>${u.email}</small> 
-                        <span style="font-size: 0.7rem; background: var(--bg-main); padding: 2px 6px; border-radius: 4px; color: var(--color-blue); margin-left: 5px;">${u.role}</span>
-                    </div>
-                    ${u.role !== "admin" ? `<button class="btn cancel" onclick="prepararExclusao(${u.id})">🗑️</button>` : `<small style="color:var(--color-amber);">Admin</small>`}
-                </div>
-            `).join("");
-        } catch (err) { 
-            showToast(err.message, 'erro');
-        }
-    }
-
-    // --- ADICIONAR USUÁRIO ---
-    async function addUser() {
-        const name = document.getElementById("name").value.trim();
-        const email = document.getElementById("email").value.trim();
-        const senha = document.getElementById("senha").value.trim();
-        const role = document.getElementById("role").value;
-
-        if (!name || !email || !senha) {
-            showToast("⚠️ Preencha todos os campos.", "erro");
-            return;
-        }
-        try {
-            const data = await api("/api/users", {
-                method: "POST",
-                body: JSON.stringify({ company_id: user.company_id, name, email, senha, role }),
-            });
-            if (!data.ok) throw new Error(data.error || "Erro ao adicionar.");
-            
-            showToast("Sucesso! ✅");
-            document.getElementById("name").value = "";
-            document.getElementById("email").value = "";
-            document.getElementById("senha").value = "";
-            carregarUsuarios();
-        } catch (err) { 
-            showToast(err.message, "erro");
-        }
-    }
-
-    // --- MODAL DE EXCLUSÃO ---
-    window.prepararExclusao = (id) => {
-        idUsuarioParaExcluir = id;
-        document.getElementById('confirmModal').style.display = 'flex';
-    };
-
-    window.fecharConfirm = () => {
-        document.getElementById('confirmModal').style.display = 'none';
-        idUsuarioParaExcluir = null;
-    };
-
-    // --- CARD DE PLANO ---
+    // --- RENDERIZAR CARD DE PLANO ---
     function renderizarCardPlano(userData) {
         if (!userData || !userData.trial_expires_at) return;
 
@@ -171,9 +342,9 @@
         const pEmoji = document.getElementById("plano-emoji");
 
         if (userData.plano === 'vitalicio' || diffDias > 5000) {
-            pNome.textContent = "Plano Vitalício 👑";
+            pNome.textContent = "Plano Vitalício";
             pDias.textContent = "∞";
-            pCard.style.borderLeftColor = "#fcc419";
+            pCard.style.borderLeftColor = "var(--color-amber)";
             pEmoji.textContent = "👑";
             return;
         }
@@ -181,128 +352,112 @@
         pNome.textContent = userData.plano === 'trial' ? "Período de Teste" : "Plano Profissional";
         pEmoji.textContent = userData.plano === 'trial' ? "⏳" : "💎";
         pDias.textContent = diffDias > 0 ? diffDias : 0;
-        pCard.style.borderLeftColor = diffDias <= 3 ? "var(--color-red)" : (userData.plano === 'trial' ? "var(--color-amber)" : "var(--color-green)");
+        
+        if (diffDias <= 3) {
+            pCard.style.borderLeftColor = "var(--color-red)";
+            pDias.style.color = "var(--color-red)";
+        } else if (userData.plano === 'trial') {
+            pCard.style.borderLeftColor = "var(--color-amber)";
+            pDias.style.color = "var(--color-amber)";
+        } else {
+            pCard.style.borderLeftColor = "var(--color-green)";
+            pDias.style.color = "var(--color-green)";
+        }
     }
+
+    // --- CARREGAR EQUIPE ---
+    async function carregarUsuarios() {
+        const list = document.getElementById("users-list");
+        if(!list) return;
+        
+        try {
+            const data = await api(`/api/users?company_id=${user.company_id}`);
+            if (!data.ok) throw new Error(data.error || "Erro ao carregar usuários");
+            
+            list.innerHTML = data.users.map(u => `
+                <div class="user-item">
+                    <div class="user-info">
+                        <strong>${u.name} <span class="role-badge">${u.role}</span></strong>
+                        <small>${u.email}</small> 
+                    </div>
+                    ${u.role !== "admin" 
+                        ? `<button class="btn danger" onclick="prepararExclusao(${u.id}, '${u.name}')">Remover</button>` 
+                        : `<span style="color:var(--color-amber); font-weight: bold; font-size: 0.9rem;">Admin</span>`
+                    }
+                </div>
+            `).join("");
+        } catch (err) { 
+            window.showToast(err.message, 'erro');
+        }
+    }
+
+    // --- EXCLUIR USUÁRIO ---
+    window.prepararExclusao = (id, nomeUsuario) => {
+        window.mostrarModal(
+            "Remover Funcionário", 
+            `Tem certeza que deseja remover o acesso de ${nomeUsuario}? Esta ação não pode ser desfeita.`, 
+            "confirm", 
+            async () => {
+                try {
+                    await api(`/api/users/${id}`, { method: "DELETE" });
+                    window.showToast("Funcionário removido com sucesso.", "sucesso");
+                    carregarUsuarios();
+                } catch (err) { 
+                    window.showToast(err.message, "erro"); 
+                }
+            },
+            true // true = isDanger (botão vermelho)
+        );
+    };
+
+    // --- ADICIONAR USUÁRIO ---
+    window.addUser = async () => {
+        const name = document.getElementById("name").value.trim();
+        const email = document.getElementById("email").value.trim();
+        const senha = document.getElementById("senha").value.trim();
+        const role = document.getElementById("role").value;
+
+        if (!name || !email || !senha) {
+            window.showToast("Preencha todos os campos do formulário.", "erro");
+            return;
+        }
+        
+        try {
+            const data = await api("/api/users", {
+                method: "POST",
+                body: JSON.stringify({ company_id: user.company_id, name, email, senha, role }),
+            });
+            if (!data.ok) throw new Error(data.error || "Erro ao adicionar.");
+            
+            window.showToast("Membro da equipe cadastrado com sucesso!");
+            document.getElementById("name").value = "";
+            document.getElementById("email").value = "";
+            document.getElementById("senha").value = "";
+            carregarUsuarios();
+        } catch (err) { 
+            window.showToast(err.message, "erro");
+        }
+    };
 
     // --- INICIALIZAÇÃO ---
     document.addEventListener("DOMContentLoaded", async () => {
-        // Só executa o carregamento se for admin
-        if (user.role === "admin") {
-            carregarUsuarios();
-            renderizarCardPlano(user);
+        carregarUsuarios();
+        renderizarCardPlano(user);
 
-            try {
-                const res = await api(`/api/companies/${user.company_id}`); 
-                if (res.ok) {
-                    const updatedUser = { ...user, ...res.company };
-                    localStorage.setItem("user", JSON.stringify(updatedUser));
-                    renderizarCardPlano(updatedUser);
-                }
-            } catch (err) { console.log("Erro ao atualizar card"); }
-
-            document.getElementById('confirmBtn').onclick = async () => {
-                if (!idUsuarioParaExcluir) return;
-                try {
-                    await api(`/api/users/${idUsuarioParaExcluir}`, { method: "DELETE" });
-                    showToast("Funcionário removido! 🗑️");
-                    fecharConfirm();
-                    carregarUsuarios();
-                } catch (err) { showToast(err.message, "erro"); }
-            };
-
-            const btn = document.getElementById("btn-assinatura");
-            if (btn) {
-                btn.style.display = "inline-block";
+        try {
+            const res = await api(`/api/companies/${user.company_id}`); 
+            if (res.ok) {
+                const updatedUser = { ...user, ...res.company };
+                localStorage.setItem("user", JSON.stringify(updatedUser));
+                renderizarCardPlano(updatedUser);
             }
+        } catch (err) { console.log("Erro ao atualizar card de assinatura."); }
+
+        const btn = document.getElementById("btn-assinatura");
+        if (btn) {
+            btn.style.display = "inline-block";
         }
     });
-
-    window.toggleMenu = () => document.getElementById("menuDropdown").classList.toggle("show");
-    window.logout = () => { localStorage.clear(); window.location.href = "login.html"; };
-    window.addUser = addUser;
-  </script>
-  <script async src="https://www.googletagmanager.com/gtag/js?id=G-2BTBZ5MK63"></script>
-<script>
-  window.dataLayer = window.dataLayer || [];
-  function gtag(){dataLayer.push(arguments);}
-  gtag('js', new Date());
-
-  gtag('config', 'G-2BTBZ5MK63');
 </script>
-</head>
-
-<body>  
-  <header class="main-header" style="display: flex; align-items: center; justify-content: space-between; padding: 10px 15px; background: #212529; min-height: 60px;">
-    <div class="menu-wrapper" style="flex: 1; display: flex; justify-content: flex-start;">
-      <button class="menu-button" onclick="toggleMenu()">⋮</button>
-      <div id="menuDropdown" class="menu-dropdown">
-      <div onclick="location.href='index.html'">Cardapio 📙</div>
-      <div onclick="location.href='meus-pedidos.html'">Meus pedidos 🧾</div>
-      <div onclick="location.href='relatorio.html'">Relatório 📈</div>
-      <div onclick="window.location.href='bar.html'">Bar🍹</div>
-      <div onclick="location.href='cozinha.html'">Cozinha 👨‍🍳</div>
-      <div onclick="location.href='configuracoes.html'">Configurações ⚙️</div>
-      <div onclick="location.href='company-admin.html'">Painel da Empresa 🏢</div>
-      <div onclick="location.href='tutorial.html'">Tutoriais 📚</div>
-      <div onclick="location.href='support.html'">Suporte 🛠️</div>
-      <div onclick="logout()" style="color: var(--color-red);">Sair do Sistema 🚪</div>
-      </div>
-    </div>
-
-    <div class="header-title" style="flex: 1; text-align: center; font-weight: bold; font-size: 1.1rem;">
-      Gestão da Empresa 🏢
-    </div>
-
-    <div class="header-actions" style="flex: 1; display: flex; justify-content: flex-end;">
-        <button id="btn-assinatura" class="btn" style="display: none; background: #845ef7; color: white; border: none; padding: 8px 12px; border-radius: 8px; font-weight: bold;" onclick="window.location.href='assinaturas.html'">
-          Assinatura 💎
-        </button>
-    </div>
-  </header>
-
-  <main style="padding: 10px;">
-    <div class="status-plan-card" id="plano-card">
-      <div class="status-icon" id="plano-emoji">💎</div>
-      <div class="status-details">
-        <p class="status-label">Status da Assinatura</p>
-        <h4 id="plano-nome" style="margin:0;">Carregando...</h4>
-      </div>
-      <div class="status-timer">
-        <span id="plano-dias">--</span>
-        <small>dias restantes</small>
-      </div>
-    </div>
-
-    <div class="box">
-      <h3 style="color: var(--color-blue); margin-bottom: 20px; text-align: center;">➕ Cadastrar Funcionário</h3>
-      <div class="form-row" style="display: flex; flex-direction: column; gap: 10px;">
-        <input id="name" placeholder="Nome Completo">
-        <select id="role" style="padding: 12px; background: var(--bg-main); color: white; border: 1px solid var(--border-color); border-radius: 8px;">
-            <option value="atendente">Atendente 🙋‍♂️</option>
-            <option value="cozinha">Cozinha 👨‍🍳</option>
-            <option value="admin">Admin 🔑</option>
-        </select>
-        <input id="email" placeholder="E-mail" type="email">
-        <input id="senha" placeholder="Senha" type="password">
-      </div>
-      <button class="btn success" onclick="addUser()" style="width: 100%; margin-top: 20px; padding: 15px;">Confirmar Cadastro</button>
-    </div>
-
-    <div class="box" style="margin-top: 25px;">
-      <h3 style="margin-bottom: 20px; text-align: center;">Equipe Atual 👥</h3>
-      <div id="users-list"></div>
-    </div>
-  </main>
-
-  <div id="confirmModal" class="modal" style="display:none; position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.8); z-index:9999; justify-content:center; align-items:center;">
-      <div class="box" style="max-width: 400px; text-align: center; padding: 30px;">
-          <h3>Remover Funcionário? 👤</h3>
-          <p style="color: var(--text-secondary); margin: 15px 0;">O acesso deste usuário será revogado. Deseja continuar?</p>
-          <div style="display: flex; gap: 10px; margin-top: 20px;">
-              <button id="confirmBtn" class="btn success" style="flex:1; background: var(--color-red);">Remover</button>
-              <button onclick="fecharConfirm()" class="btn cancel" style="flex:1;">Cancelar</button>
-          </div>
-      </div>
-  </div>
 </body>
 </html>
