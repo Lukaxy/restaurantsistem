@@ -14,6 +14,7 @@
             --bg-card: #FFFFFF;
             --color-blue: #2B6CB0;
             --color-green: #38A169;
+            --color-orange: #DD6B20;
             --color-red: #E53E3E;
             --text-primary: #1A202C;
             --text-secondary: #718096;
@@ -32,7 +33,6 @@
             overflow: hidden;
         }
 
-        /* HEADER & MENU */
         header {
             background-color: var(--color-blue);
             color: white;
@@ -46,15 +46,9 @@
         
         .header-actions { display: flex; align-items: center; gap: 15px; }
         .btn-voltar { background: transparent; border: 1px solid white; color: white; padding: 8px 15px; border-radius: 6px; cursor: pointer; font-family: inherit; font-weight: bold; transition: 0.2s;}
-        .btn-voltar:hover { background: rgba(255,255,255,0.1); }
 
-        /* DROPDOWN MENU 3 PONTINHOS */
         .menu-dropdown-container { position: relative; display: inline-block; }
-        .btn-dots { 
-            background: transparent; border: none; color: white; font-size: 1.5rem; 
-            letter-spacing: 2px; cursor: pointer; padding: 5px 10px; line-height: 1; transition: 0.2s; border-radius: 6px;
-        }
-        .btn-dots:hover { background: rgba(255,255,255,0.1); }
+        .btn-dots { background: transparent; border: none; color: white; font-size: 1.5rem; letter-spacing: 2px; cursor: pointer; padding: 5px 10px; line-height: 1; transition: 0.2s; border-radius: 6px; }
         
         .dropdown-content { 
             display: none; position: absolute; right: 0; top: 45px; 
@@ -63,38 +57,19 @@
             border-radius: 10px; overflow: hidden; border: 1px solid var(--border-color); 
             animation: popIn 0.2s ease; 
         }
-        .dropdown-content a { 
-            color: var(--text-primary); padding: 12px 16px; text-decoration: none; 
-            display: block; font-size: 0.95rem; font-weight: 600; transition: background 0.2s; 
-        }
+        .dropdown-content a { color: var(--text-primary); padding: 12px 16px; text-decoration: none; display: block; font-size: 0.95rem; font-weight: 600; transition: background 0.2s; }
         .dropdown-content a:hover { background-color: var(--bg-main); color: var(--color-blue); }
         .show-dropdown { display: block; }
 
-        /* LAYOUT PRINCIPAL */
-        .container {
-            display: flex;
-            flex: 1;
-            padding: 20px;
-            gap: 20px;
-            overflow: hidden;
-        }
+        .container { display: flex; flex: 1; padding: 20px; gap: 20px; overflow: hidden; }
 
-        /* COLUNA ESQUERDA: LISTA DE MESAS */
-        .col-mesas {
-            flex: 1;
-            background: var(--bg-card);
-            border-radius: 12px;
-            border: 1px solid var(--border-color);
-            display: flex;
-            flex-direction: column;
-            overflow: hidden;
-            max-width: 400px;
-        }
+        .col-mesas { flex: 1; background: var(--bg-card); border-radius: 12px; border: 1px solid var(--border-color); display: flex; flex-direction: column; overflow: hidden; max-width: 400px; }
         .col-header { padding: 15px 20px; border-bottom: 1px solid var(--border-color); background: #F8FAFC; }
         .col-header h2 { font-size: 1.2rem; color: var(--text-primary); }
         
         .mesas-list { flex: 1; overflow-y: auto; padding: 15px; }
         
+        /* CARD DA MESA COM JOGO DE CORES */
         .card-mesa {
             background: var(--bg-main);
             border: 1px solid var(--border-color);
@@ -106,40 +81,32 @@
             display: flex;
             justify-content: space-between;
             align-items: center;
+            border-left: 6px solid #cbd5e0;
         }
-        .card-mesa:hover { border-color: var(--color-blue); transform: translateY(-2px); }
+        .card-mesa:hover { transform: translateY(-2px); box-shadow: 0 4px 6px rgba(0,0,0,0.05); }
+        
+        /* Mesa Pronta (Verde) */
+        .card-mesa.pronta { border-left-color: var(--color-green); background: #f0fff4; }
+        
+        /* Mesa Pendente (Laranja) */
+        .card-mesa.pendente { border-left-color: var(--color-orange); background: #fffaf0; }
+
+        /* Mesa Selecionada (Azul) */
         .card-mesa.selecionada { border-color: var(--color-blue); border-width: 2px; background: #EBF8FF; }
+
         .mesa-nome { font-weight: bold; font-size: 1.1rem; }
+        .mesa-status-tag { font-size: 0.7rem; font-weight: bold; padding: 2px 8px; border-radius: 4px; margin-top: 4px; display: inline-block; }
+        .tag-preparando { background: #feebc8; color: #7b341e; }
+        .tag-pronto { background: #c6f6d5; color: #22543d; }
         .mesa-total { color: var(--color-blue); font-weight: bold; }
 
-        /* COLUNA DIREITA: DETALHES E FECHAMENTO */
-        .col-detalhes {
-            flex: 2;
-            background: var(--bg-card);
-            border-radius: 12px;
-            border: 1px solid var(--border-color);
-            display: flex;
-            flex-direction: column;
-        }
-        
+        .col-detalhes { flex: 2; background: var(--bg-card); border-radius: 12px; border: 1px solid var(--border-color); display: flex; flex-direction: column; }
         .detalhes-content { flex: 1; padding: 20px; overflow-y: auto; }
         .item-row { display: flex; justify-content: space-between; padding: 10px 0; border-bottom: 1px dashed var(--border-color); }
-        .item-nome { color: var(--text-primary); }
-        .item-preco { font-weight: bold; color: var(--text-secondary); }
-
         .estado-vazio { text-align: center; color: var(--text-secondary); margin-top: 50px; }
 
-        /* PAINEL DE COBRANÇA (RODAPÉ) */
-        .painel-cobranca {
-            padding: 20px;
-            background: #F8FAFC;
-            border-top: 1px solid var(--border-color);
-            border-bottom-left-radius: 12px;
-            border-bottom-right-radius: 12px;
-        }
-        
+        .painel-cobranca { padding: 20px; background: #F8FAFC; border-top: 1px solid var(--border-color); border-bottom-left-radius: 12px; border-bottom-right-radius: 12px; }
         .total-box { display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px; }
-        .total-label { font-size: 1.2rem; font-weight: bold; color: var(--text-secondary); }
         .total-valor { font-size: 2rem; font-weight: bold; color: var(--color-green); }
 
         .acoes { display: flex; gap: 10px; }
@@ -147,55 +114,39 @@
         
         .btn { padding: 12px 20px; border-radius: 8px; font-weight: bold; border: none; cursor: pointer; font-family: inherit; font-size: 1rem; color: white; display: flex; align-items: center; justify-content: center; gap: 8px; transition: 0.2s; }
         .btn-imprimir { background: #4A5568; flex: 1; }
-        .btn-imprimir:hover { background: #2D3748; }
         .btn-fechar { background: var(--color-green); flex: 2; }
-        .btn-fechar:hover { background: #2F855A; }
-        .btn:disabled { opacity: 0.6; cursor: not-allowed; }
+        .btn-fechar:disabled { background: #a0aec0; cursor: not-allowed; }
 
-        /* Loader */
         .loader { border: 4px solid #f3f3f3; border-top: 4px solid var(--color-blue); border-radius: 50%; width: 30px; height: 30px; animation: spin 1s linear infinite; margin: 20px auto; }
         @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
         @keyframes popIn { 0% { transform: scale(0.9); opacity: 0; } 100% { transform: scale(1); opacity: 1; } }
 
-        /* ==================================
-           MODAL CUSTOMIZADO
-        ================================== */
-        .modal-overlay {
-            position: fixed; top: 0; left: 0; width: 100%; height: 100%;
-            background: rgba(0, 0, 0, 0.6); display: none; align-items: center; justify-content: center;
-            z-index: 9999; backdrop-filter: blur(4px);
-        }
-        .modal-box {
-            background: var(--bg-card); padding: 30px; border-radius: 16px; width: 90%; max-width: 420px;
-            box-shadow: 0 10px 25px rgba(0,0,0,0.2); text-align: center; animation: popIn 0.3s ease;
-        }
+        /* MODAL CUSTOMIZADO */
+        .modal-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0, 0, 0, 0.6); display: none; align-items: center; justify-content: center; z-index: 9999; backdrop-filter: blur(4px); }
+        .modal-box { background: var(--bg-card); padding: 30px; border-radius: 16px; width: 90%; max-width: 420px; box-shadow: 0 10px 25px rgba(0,0,0,0.2); text-align: center; animation: popIn 0.3s ease; }
         .modal-title { font-size: 1.4rem; color: var(--text-primary); margin-bottom: 15px; font-weight: bold; }
         .modal-message { color: var(--text-secondary); margin-bottom: 25px; font-size: 1.05rem; line-height: 1.5; }
         .modal-buttons { display: flex; gap: 12px; justify-content: center; }
         .btn-modal { flex: 1; padding: 14px; border-radius: 8px; font-weight: bold; border: none; cursor: pointer; font-family: inherit; font-size: 1rem; transition: 0.2s; }
         .btn-modal-cancel { background: #EDF2F7; color: #4A5568; }
-        .btn-modal-cancel:hover { background: #E2E8F0; }
         .btn-modal-confirm { background: var(--color-blue); color: white; }
-        .btn-modal-confirm:hover { background: #235A91; }
     </style>
 </head>
 <body>
 
     <header>
         <h1>Caixa - Digital Menu 💵</h1>
-        
         <div class="header-actions">
             <button class="btn-voltar" onclick="window.location.href='configuracoes.html'">Config</button>
-            
             <div class="menu-dropdown-container">
                 <button class="btn-dots" onclick="toggleMenu(event)">•••</button>
                 <div id="dropdown-menu" class="dropdown-content">
-          <a href="meus-pedidos.html">🧾 Meus pedidos</a>
-          <a href="relatorio.html">📊 Relatório</a>
-          <a href="bar.html">🍸 Bar</a>
-          <a href="cozinha.html">👨‍🍳 Cozinha</a>
-          <a href="configuracoes.html">⚙️ Configurações</a>
-          <a href="company-admin.html">🏢 Painel da Empresa</a>
+                    <a href="meus-pedidos.html">🧾 Meus pedidos</a>
+                    <a href="relatorio.html">📊 Relatório</a>
+                    <a href="bar.html">🍸 Bar</a>
+                    <a href="cozinha.html">👨‍🍳 Cozinha</a>
+                    <a href="configuracoes.html">⚙️ Configurações</a>
+                    <a href="company-admin.html">🏢 Painel da Empresa</a>
                     <hr style="border: 0; border-top: 1px solid var(--border-color); margin: 5px 0;">
                     <a href="javascript:void(0)" onclick="deslogarSistema()" style="color: var(--color-red);">🚪 Sair</a>
                 </div>
@@ -217,17 +168,17 @@
             <div class="col-header">
                 <h2 id="titulo-detalhes">Selecione uma mesa</h2>
             </div>
-            
             <div class="detalhes-content" id="conteudo-detalhes">
                 <div class="estado-vazio">Nenhuma mesa selecionada.</div>
             </div>
-
             <div class="painel-cobranca" id="painel-cobranca" style="display: none;">
+                <div id="aviso-pendente" style="display:none; background:#fff5f5; color:#c53030; padding:10px; border-radius:8px; margin-bottom:15px; font-size:0.85rem; border:1px solid #feb2b2;">
+                    ⚠️ Esta mesa possui pedidos sendo preparados. Aguarde a Cozinha/Bar finalizar para fechar o caixa.
+                </div>
                 <div class="total-box">
                     <span class="total-label">Total a Receber:</span>
                     <span class="total-valor" id="valor-total">R$ 0,00</span>
                 </div>
-                
                 <div class="acoes">
                     <select id="forma-pagamento">
                         <option value="dinheiro">💵 Dinheiro</option>
@@ -235,7 +186,6 @@
                         <option value="credito">💳 Cartão de Crédito</option>
                         <option value="debito">💳 Cartão de Débito</option>
                     </select>
-                    
                     <button class="btn btn-imprimir" onclick="imprimirConta()">🖨️ Imprimir</button>
                     <button class="btn btn-fechar" id="btn-finalizar" onclick="finalizarConta()">Baixar Conta</button>
                 </div>
@@ -256,30 +206,21 @@
 
 <script>
     const user = JSON.parse(localStorage.getItem("user") || "null");
-    if (!user || !user.company_id) {
-        window.location.href = "login.html";
-    }
+    if (!user || !user.company_id) window.location.href = "login.html";
 
     let mesas = [];
     let mesaSelecionada = null;
 
-    // ==========================================
-    // MENU DROPDOWN (3 PONTINHOS)
-    // ==========================================
     function toggleMenu(event) {
-        event.stopPropagation(); // Evita que o clique feche o menu imediatamente
+        event.stopPropagation();
         document.getElementById("dropdown-menu").classList.toggle("show-dropdown");
     }
 
-    // Fechar o dropdown se o usuário clicar fora dele
     window.onclick = function(event) {
         if (!event.target.matches('.btn-dots')) {
             const dropdowns = document.getElementsByClassName("dropdown-content");
             for (let i = 0; i < dropdowns.length; i++) {
-                const openDropdown = dropdowns[i];
-                if (openDropdown.classList.contains('show-dropdown')) {
-                    openDropdown.classList.remove('show-dropdown');
-                }
+                if (dropdowns[i].classList.contains('show-dropdown')) dropdowns[i].classList.remove('show-dropdown');
             }
         }
     }
@@ -291,154 +232,113 @@
         });
     }
 
-    // ==========================================
-    // FUNÇÃO DE MODAL CUSTOMIZADO
-    // ==========================================
     function mostrarModal(titulo, mensagem, tipo = 'alert', callbackConfirm = null) {
         const modal = document.getElementById('custom-modal');
         document.getElementById('modal-title').innerText = titulo;
         document.getElementById('modal-message').innerText = mensagem;
-        
         const btnCancel = document.getElementById('modal-btn-cancel');
         const btnConfirm = document.getElementById('modal-btn-confirm');
-        
-        // Remove listeners clonando o botão
         const novoBtnConfirm = btnConfirm.cloneNode(true);
         btnConfirm.parentNode.replaceChild(novoBtnConfirm, btnConfirm);
         
-        if (tipo === 'confirm') {
-            btnCancel.style.display = 'block';
-            btnCancel.onclick = () => { modal.style.display = 'none'; };
-        } else {
-            btnCancel.style.display = 'none';
-        }
+        btnCancel.style.display = tipo === 'confirm' ? 'block' : 'none';
+        btnCancel.onclick = () => modal.style.display = 'none';
         
         novoBtnConfirm.onclick = () => {
             modal.style.display = 'none';
             if (callbackConfirm) callbackConfirm();
         };
-        
         modal.style.display = 'flex';
     }
 
-    // ==========================================
-    // 1. CARREGAR E AGRUPAR DADOS
-    // ==========================================
     async function carregarMesas() {
         try {
             const resposta = await fetch(`https://sistemadigitalmenu.com.br/api/orders?company_id=${user.company_id}`);
             const dados = await resposta.json();
             
             if (dados.ok) {
-                const abertas = dados.pedidos.filter(p => {
-                    const statusSeguro = (p.status || 'novo').toLowerCase();
-                    return !['pago', 'finalizado', 'concluido', 'cancelado'].includes(statusSeguro);
-                });
+                const abertas = dados.pedidos.filter(p => !['pago', 'finalizado', 'concluido', 'cancelado'].includes((p.status || 'novo').toLowerCase()));
                 
                 const gruposMesa = {};
                 abertas.forEach(pedido => {
                     const nomeMesa = pedido.table_name || 'Avulso';
-                    
                     if (!gruposMesa[nomeMesa]) {
-                        gruposMesa[nomeMesa] = { 
-                            nome: nomeMesa, 
-                            total: 0, 
-                            ids: [], 
-                            itens: [],
-                            dataAbertura: pedido.created_at || new Date().toISOString()
-                        };
-                    } else {
-                        if (new Date(pedido.created_at) < new Date(gruposMesa[nomeMesa].dataAbertura)) {
-                            gruposMesa[nomeMesa].dataAbertura = pedido.created_at;
-                        }
+                        gruposMesa[nomeMesa] = { nome: nomeMesa, total: 0, ids: [], itens: [], pendente: false, dataAbertura: pedido.created_at };
                     }
                     
+                    // TRAVA LÓGICA: Verifica produção
+                    if ((pedido.status_cozinha || 'novo') !== 'pronto' || (pedido.status_bar || 'novo') !== 'pronto') {
+                        gruposMesa[nomeMesa].pendente = true;
+                    }
+
                     gruposMesa[nomeMesa].total += Number(pedido.total || 0);
                     gruposMesa[nomeMesa].ids.push(pedido.id);
-                    
-                    if (Array.isArray(pedido.items)) {
-                        gruposMesa[nomeMesa].itens.push(...pedido.items);
-                    }
+                    if (Array.isArray(pedido.items)) gruposMesa[nomeMesa].itens.push(...pedido.items);
                 });
 
                 mesas = Object.values(gruposMesa);
                 renderizarMesas();
-
                 if (mesaSelecionada) {
-                    const mesaAtualizada = mesas.find(m => m.nome === mesaSelecionada.nome);
-                    if (mesaAtualizada) {
-                        selecionarMesa(mesaAtualizada, false); 
-                    } else {
-                        limparSelecao();
-                    }
+                    const mesaAtu = mesas.find(m => m.nome === mesaSelecionada.nome);
+                    if (mesaAtu) selecionarMesa(mesaAtu, false); else limparSelecao();
                 }
             }
-        } catch (error) {
-            console.error("Erro ao carregar mesas:", error);
-        }
+        } catch (error) { console.error(error); }
     }
 
-    // ==========================================
-    // 2. RENDERIZAR LISTA DA ESQUERDA
-    // ==========================================
     function renderizarMesas() {
         const lista = document.getElementById('lista-mesas');
-        const loader = document.getElementById('loader-mesas');
-        if (loader) loader.style.display = 'none';
-        
-        if (mesas.length === 0) {
-            lista.innerHTML = '<div class="estado-vazio">Nenhuma mesa aberta no momento.</div>';
-            return;
-        }
+        document.getElementById('loader-mesas').style.display = 'none';
+        if (mesas.length === 0) { lista.innerHTML = '<div class="estado-vazio">Nenhuma mesa aberta.</div>'; return; }
 
         lista.innerHTML = '';
         mesas.forEach((mesa) => {
             const card = document.createElement('div');
-            card.className = `card-mesa ${mesaSelecionada && mesaSelecionada.nome === mesa.nome ? 'selecionada' : ''}`;
+            const isSel = mesaSelecionada && mesaSelecionada.nome === mesa.nome;
+            card.className = `card-mesa ${isSel ? 'selecionada' : ''} ${mesa.pendente ? 'pendente' : 'pronta'}`;
             
             card.onclick = () => selecionarMesa(mesa, true);
-            
             card.innerHTML = `
-                <div class="mesa-nome">${mesa.nome}</div>
+                <div>
+                    <div class="mesa-nome">${mesa.nome}</div>
+                    <span class="mesa-status-tag ${mesa.pendente ? 'tag-preparando' : 'tag-pronto'}">
+                        ${mesa.pendente ? '⏳ Preparando' : '✅ Pronto'}
+                    </span>
+                </div>
                 <div class="mesa-total">R$ ${Number(mesa.total).toFixed(2).replace('.', ',')}</div>
             `;
             lista.appendChild(card);
         });
     }
 
-    // ==========================================
-    // 3. SELECIONAR E RENDERIZAR DETALHES
-    // ==========================================
     function selecionarMesa(mesa, reRenderLista = true) {
         mesaSelecionada = mesa;
-        
         if (reRenderLista) renderizarMesas(); 
 
         document.getElementById('titulo-detalhes').innerText = `Fechamento: ${mesa.nome}`;
         const conteudo = document.getElementById('conteudo-detalhes');
-        
-        let htmlItens = '';
-        
-        if (mesa.itens && mesa.itens.length > 0) {
-            mesa.itens.forEach(item => {
-                const precoSeguro = Number(item.price || 0);
-                const qtdSegura = Number(item.qty || 1);
-                const nomeSeguro = item.name || 'Produto';
+        conteudo.innerHTML = mesa.itens.map(item => `
+            <div class="item-row">
+                <span class="item-nome">${item.qty || 1}x ${item.name}</span>
+                <span class="item-preco">R$ ${(Number(item.price || 0) * Number(item.qty || 1)).toFixed(2).replace('.', ',')}</span>
+            </div>
+        `).join("") || '<div class="estado-vazio">Sem itens.</div>';
 
-                htmlItens += `
-                    <div class="item-row">
-                        <span class="item-nome">${qtdSegura}x ${nomeSeguro}</span>
-                        <span class="item-preco">R$ ${(precoSeguro * qtdSegura).toFixed(2).replace('.', ',')}</span>
-                    </div>
-                `;
-            });
-        } else {
-            htmlItens = '<div class="estado-vazio">Nenhum item lançado.</div>';
-        }
-        
-        conteudo.innerHTML = htmlItens;
         document.getElementById('valor-total').innerText = `R$ ${Number(mesa.total).toFixed(2).replace('.', ',')}`;
         document.getElementById('painel-cobranca').style.display = 'block';
+        
+        // Exibe aviso e desabilita botão se pendente
+        const aviso = document.getElementById('aviso-pendente');
+        const btnF = document.getElementById('btn-finalizar');
+        if (mesa.pendente) {
+            aviso.style.display = 'block';
+            btnF.disabled = true;
+            btnF.style.background = "#a0aec0";
+        } else {
+            aviso.style.display = 'none';
+            btnF.disabled = false;
+            btnF.style.background = "var(--color-green)";
+        }
     }
 
     function limparSelecao() {
@@ -448,165 +348,35 @@
         document.getElementById('titulo-detalhes').innerText = 'Selecione uma mesa';
     }
 
-    // ==========================================
-    // 4. IMPRESSÃO VIA NAVEGADOR
-    // ==========================================
+    async function finalizarConta() {
+        if (!mesaSelecionada || mesaSelecionada.pendente) return;
+        const elForma = document.getElementById('forma-pagamento');
+        const valorF = Number(mesaSelecionada.total).toFixed(2).replace('.', ',');
+        
+        mostrarModal("Confirmar", `Baixar R$ ${valorF} via ${elForma.options[elForma.selectedIndex].text}?`, "confirm", async () => {
+            const btn = document.getElementById('btn-finalizar');
+            btn.disabled = true; btn.innerText = "...";
+            try {
+                await Promise.all(mesaSelecionada.ids.map(id => fetch(`https://sistemadigitalmenu.com.br/api/orders/${id}/status`, {
+                    method: 'POST', headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ status: 'pago', payment_method: elForma.value })
+                })));
+                mostrarModal("Sucesso! 🎉", "Conta baixada.", "alert");
+                limparSelecao(); carregarMesas();
+            } catch (e) { mostrarModal("Erro", "Falha ao baixar.", "alert"); }
+            finally { btn.disabled = false; btn.innerText = "Baixar Conta"; }
+        });
+    }
+
     function imprimirConta() {
         if (!mesaSelecionada) return;
-
-        const nomeRestaurante = user.name ? user.name.toUpperCase() : 'RESTAURANTE DIGITAL MENU';
-        const dataHoje = new Date().toLocaleDateString('pt-BR');
-        const horaAbertura = new Date(mesaSelecionada.dataAbertura).toLocaleTimeString('pt-BR', {hour: '2-digit', minute:'2-digit'});
-        const horaFechamento = new Date().toLocaleTimeString('pt-BR', {hour: '2-digit', minute:'2-digit'});
-
-        let conteudo = `
-            <div style="font-family: monospace; width: 100%; max-width: 300px; margin: 0 auto; color: black;">
-                <h2 style="text-align: center; margin-bottom: 5px;">${nomeRestaurante}</h2>
-                <p style="text-align: center; font-size: 12px; margin-top: 0;">CONFERÊNCIA DE CONTA</p>
-                <hr style="border-top: 1px dashed black;">
-                
-                <p style="font-size: 16px; font-weight: bold; margin: 2px 0;">MESA: ${mesaSelecionada.nome}</p>
-                <p style="font-size: 12px; margin: 2px 0;">Data: ${dataHoje}</p>
-                <p style="font-size: 12px; margin: 2px 0;">Abertura: ${horaAbertura} | Fechamento: ${horaFechamento}</p>
-                
-                <hr style="border-top: 1px dashed black;">
-                <table style="width: 100%; font-size: 14px;">
-        `;
-
-        mesaSelecionada.itens.forEach(item => {
-            const preco = Number(item.price || 0);
-            const qtd = Number(item.qty || 1);
-            conteudo += `
-                <tr>
-                    <td style="padding: 4px 0;">${qtd}x ${item.name}</td>
-                    <td style="text-align: right; padding: 4px 0;">R$ ${(preco * qtd).toFixed(2)}</td>
-                </tr>
-            `;
-        });
-
-        conteudo += `
-                </table>
-                <hr style="border-top: 1px dashed black;">
-                <h3 style="text-align: right; font-size: 20px; margin: 10px 0;">TOTAL: R$ ${Number(mesaSelecionada.total).toFixed(2)}</h3>
-                <hr style="border-top: 1px dashed black;">
-                <p style="text-align: center; margin-top: 20px; font-size: 12px;">Obrigado pela preferência!</p>
-                <p style="text-align: center; font-size: 10px;">Sistema Digital Menu</p>
-            </div>
-        `;
-
-        const janelaImpressao = window.open('', '', 'height=600,width=400');
-        janelaImpressao.document.write('<html><head><title>Imprimir Conta</title></head><body style="margin:0; padding: 10px;">');
-        janelaImpressao.document.write(conteudo);
-        janelaImpressao.document.write('</body></html>');
-        
-        janelaImpressao.document.close();
-        janelaImpressao.focus();
-        
-        setTimeout(() => {
-            janelaImpressao.print();
-            janelaImpressao.close();
-        }, 500);
+        const win = window.open('', '', 'height=600,width=400');
+        win.document.write(`<html><body><pre style="font-family:monospace;">${user.name.toUpperCase()}\nMESA: ${mesaSelecionada.nome}\nTOTAL: R$ ${Number(mesaSelecionada.total).toFixed(2)}</pre></body></html>`);
+        win.document.close(); win.print(); win.close();
     }
 
-    // ==========================================
-    // 5. BAIXAR CONTA (PAGAR) COM NOVO MODAL
-    // ==========================================
-    async function finalizarConta() {
-        if (!mesaSelecionada) return;
-
-        const elFormaPgto = document.getElementById('forma-pagamento');
-        const metodoPagamento = elFormaPgto.value;
-        const textoPagamento = elFormaPgto.options[elFormaPgto.selectedIndex].text;
-        
-        const btn = document.getElementById('btn-finalizar');
-        const valorFormatado = Number(mesaSelecionada.total).toFixed(2).replace('.', ',');
-        
-        mostrarModal(
-            "Confirmar Fechamento", 
-            `Deseja baixar a conta no valor de R$ ${valorFormatado}\nvia ${textoPagamento}?`, 
-            "confirm", 
-            async () => {
-                btn.disabled = true;
-                btn.innerText = "Processando...";
-
-                try {
-                    const promessas = mesaSelecionada.ids.map(idPedido => {
-                        return fetch(`https://sistemadigitalmenu.com.br/api/orders/${idPedido}/status`, {
-                            method: 'POST',
-                            headers: { 'Content-Type': 'application/json' },
-                            body: JSON.stringify({ 
-                                status: 'pago', 
-                                payment_method: metodoPagamento 
-                            })
-                        });
-                    });
-
-                    await Promise.all(promessas);
-                    
-                    mostrarModal("Sucesso! 🎉", "Conta baixada com sucesso.", "alert");
-                    limparSelecao();
-                    carregarMesas();
-                } catch (error) {
-                    mostrarModal("Ops!", "Houve um erro ao baixar a conta.", "alert");
-                    console.error(error);
-                } finally {
-                    btn.disabled = false;
-                    btn.innerText = "Baixar Conta";
-                }
-            }
-        );
-    }
-
-    // ==========================================
-    // INICIALIZAÇÃO E AUTO-UPDATE
-    // ==========================================
     carregarMesas();
     setInterval(carregarMesas, 5000);
-
 </script>
-    
-    <script>
-        // Assim que a página carrega, ele tenta conectar com o programa do PC
-        qz.websocket.connect().then(function() {
-            console.log("Conectado ao QZ Tray com sucesso!");
-            
-            // Só pra você ver as impressoras instaladas no console (F12)
-            return qz.printers.find();
-        }).then(function(impressoras) {
-            console.log("Impressoras no seu PC:", impressoras);
-        }).catch(function(err) {
-            console.error("Erro ao conectar no QZ Tray:", err);
-        });
-
-        // A função que o botão chama
-        function imprimirNaCozinha() {
-            // ATENÇÃO: Troque "Nome Da Sua Impressora" pelo nome EXATO que
-            // está lá no Painel de Controle do Windows! (Ex: "EPSON TM-T20")
-            const nomeImpressora = "Microsoft Print to PDF"; 
-            
-            const config = qz.configs.create(nomeImpressora);
-            
-            // O desenho do seu cupom
-            const cupomHTML = `
-                <h2 style="font-family: monospace;">PEDIDO TESTE</h2>
-                <hr>
-                <p style="font-family: monospace; font-size: 18px;">1x Hambúrguer Artesanal</p>
-            `;
-
-            const data = [{
-                type: 'pixel',
-                format: 'html',
-                flavor: 'plain',
-                data: cupomHTML
-            }];
-
-            // Manda imprimir!
-            qz.print(config, data).then(function() {
-                alert("Enviado para a impressora!");
-            }).catch(function(err) {
-                alert("Erro ao imprimir: " + err);
-            });
-        }
-    </script>
 </body>
 </html>
