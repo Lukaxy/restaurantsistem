@@ -188,39 +188,65 @@
     let mesas = [];
     let mesaSelecionada = null;
 
-    // Carrega as mesas abertas a cada 10 segundos
+    // ==========================================
+    // 1. CARREGAR E AGRUPAR DADOS
+    // ==========================================
     async function carregarMesas() {
         try {
             const resposta = await fetch(`https://sistemadigitalmenu.com.br/api/orders?company_id=${user.company_id}`);
             const dados = await resposta.json();
             
             if (dados.ok) {
-                // Filtra para mostrar apenas pedidos que não foram pagos ou cancelados
-                const abertas = dados.pedidos.filter(p => !['pago', 'finalizado', 'concluido', 'cancelado'].includes(p.status.toLowerCase()));
+                // BLINDAGEM 1: Previne erro se o status do pedido vier vazio/null do banco
+                const abertas = dados.pedidos.filter(p => {
+                    const statusSeguro = (p.status || 'novo').toLowerCase();
+                    return !['pago', 'finalizado', 'concluido', 'cancelado'].includes(statusSeguro);
+                });
                 
-                // Agrupa por nome de mesa para o caixa
                 const gruposMesa = {};
                 abertas.forEach(pedido => {
                     const nomeMesa = pedido.table_name || 'Avulso';
+                    
                     if (!gruposMesa[nomeMesa]) {
                         gruposMesa[nomeMesa] = { nome: nomeMesa, total: 0, ids: [], itens: [] };
                     }
-                    gruposMesa[nomeMesa].total += Number(pedido.total);
+                    
+                    // BLINDAGEM 2: Garante que os números sejam calculados corretamente
+                    gruposMesa[nomeMesa].total += Number(pedido.total || 0);
                     gruposMesa[nomeMesa].ids.push(pedido.id);
-                    gruposMesa[nomeMesa].itens.push(...pedido.items); // Junta os itens de todos os pedidos daquela mesa
+                    
+                    // BLINDAGEM 3: Garante que os itens existam antes de agrupar
+                    if (Array.isArray(pedido.items)) {
+                        gruposMesa[nomeMesa].itens.push(...pedido.items);
+                    }
                 });
 
                 mesas = Object.values(gruposMesa);
                 renderizarMesas();
+
+                // SEGREDO DO AUTO-UPDATE: 
+                // Se já tinha uma mesa clicada, atualiza a tela da direita automaticamente!
+                if (mesaSelecionada) {
+                    const mesaAtualizada = mesas.find(m => m.nome === mesaSelecionada.nome);
+                    if (mesaAtualizada) {
+                        selecionarMesa(mesaAtualizada, false); // false = não piscar a lista à toa
+                    } else {
+                        limparSelecao(); // Se a mesa sumiu (alguém pagou por outro PC), limpa a tela.
+                    }
+                }
             }
         } catch (error) {
             console.error("Erro ao carregar mesas:", error);
         }
     }
 
+    // ==========================================
+    // 2. RENDERIZAR LISTA DA ESQUERDA
+    // ==========================================
     function renderizarMesas() {
         const lista = document.getElementById('lista-mesas');
-        document.getElementById('loader-mesas').style.display = 'none';
+        const loader = document.getElementById('loader-mesas');
+        if (loader) loader.style.display = 'none';
         
         if (mesas.length === 0) {
             lista.innerHTML = '<div class="estado-vazio">Nenhuma mesa aberta no momento.</div>';
@@ -228,44 +254,68 @@
         }
 
         lista.innerHTML = '';
-        mesas.forEach((mesa, index) => {
+        mesas.forEach((mesa) => {
             const card = document.createElement('div');
             card.className = `card-mesa ${mesaSelecionada && mesaSelecionada.nome === mesa.nome ? 'selecionada' : ''}`;
-            card.onclick = () => selecionarMesa(mesa);
+            
+            // Atrela o clique de forma segura
+            card.onclick = () => selecionarMesa(mesa, true);
             
             card.innerHTML = `
                 <div class="mesa-nome">${mesa.nome}</div>
-                <div class="mesa-total">R$ ${mesa.total.toFixed(2).replace('.', ',')}</div>
+                <div class="mesa-total">R$ ${Number(mesa.total).toFixed(2).replace('.', ',')}</div>
             `;
             lista.appendChild(card);
         });
     }
 
-    function selecionarMesa(mesa) {
+    // ==========================================
+    // 3. SELECIONAR E RENDERIZAR DETALHES (DIREITA)
+    // ==========================================
+    function selecionarMesa(mesa, reRenderLista = true) {
         mesaSelecionada = mesa;
-        renderizarMesas(); // Atualiza a seleção visual
+        
+        // Só recria a lista da esquerda se o usuário clicou ativamente
+        if (reRenderLista) {
+            renderizarMesas(); 
+        }
 
         document.getElementById('titulo-detalhes').innerText = `Fechamento: ${mesa.nome}`;
         const conteudo = document.getElementById('conteudo-detalhes');
         
         let htmlItens = '';
-        mesa.itens.forEach(item => {
-            htmlItens += `
-                <div class="item-row">
-                    <span class="item-nome">${item.qty}x ${item.name}</span>
-                    <span class="item-preco">R$ ${(item.price * item.qty).toFixed(2).replace('.', ',')}</span>
-                </div>
-            `;
-        });
+        
+        if (mesa.itens && mesa.itens.length > 0) {
+            mesa.itens.forEach(item => {
+                const precoSeguro = Number(item.price || 0);
+                const qtdSegura = Number(item.qty || 1);
+                const nomeSeguro = item.name || 'Produto';
+
+                htmlItens += `
+                    <div class="item-row">
+                        <span class="item-nome">${qtdSegura}x ${nomeSeguro}</span>
+                        <span class="item-preco">R$ ${(precoSeguro * qtdSegura).toFixed(2).replace('.', ',')}</span>
+                    </div>
+                `;
+            });
+        } else {
+            htmlItens = '<div class="estado-vazio">Nenhum item lançado.</div>';
+        }
         
         conteudo.innerHTML = htmlItens;
-        
-        document.getElementById('valor-total').innerText = `R$ ${mesa.total.toFixed(2).replace('.', ',')}`;
+        document.getElementById('valor-total').innerText = `R$ ${Number(mesa.total).toFixed(2).replace('.', ',')}`;
         document.getElementById('painel-cobranca').style.display = 'block';
     }
 
+    function limparSelecao() {
+        mesaSelecionada = null;
+        document.getElementById('conteudo-detalhes').innerHTML = '<div class="estado-vazio">Nenhuma mesa selecionada.</div>';
+        document.getElementById('painel-cobranca').style.display = 'none';
+        document.getElementById('titulo-detalhes').innerText = 'Selecione uma mesa';
+    }
+
     // ==========================================
-    // LÓGICA DE IMPRESSÃO VIA NAVEGADOR
+    // 4. IMPRESSÃO VIA NAVEGADOR
     // ==========================================
     function imprimirConta() {
         if (!mesaSelecionada) return;
@@ -281,10 +331,12 @@
         `;
 
         mesaSelecionada.itens.forEach(item => {
+            const preco = Number(item.price || 0);
+            const qtd = Number(item.qty || 1);
             conteudo += `
                 <tr>
-                    <td style="padding: 2px 0;">${item.qty}x ${item.name}</td>
-                    <td style="text-align: right; padding: 2px 0;">R$ ${(item.price * item.qty).toFixed(2)}</td>
+                    <td style="padding: 2px 0;">${qtd}x ${item.name}</td>
+                    <td style="text-align: right; padding: 2px 0;">R$ ${(preco * qtd).toFixed(2)}</td>
                 </tr>
             `;
         });
@@ -292,7 +344,7 @@
         conteudo += `
                 </table>
                 <hr style="border-top: 1px dashed black;">
-                <h3 style="text-align: right; font-size: 20px; margin: 10px 0;">TOTAL: R$ ${mesaSelecionada.total.toFixed(2)}</h3>
+                <h3 style="text-align: right; font-size: 20px; margin: 10px 0;">TOTAL: R$ ${Number(mesaSelecionada.total).toFixed(2)}</h3>
                 <hr style="border-top: 1px dashed black;">
                 <p style="text-align: center; margin-top: 20px; font-size: 12px;">Obrigado pela preferência!</p>
                 <p style="text-align: center; font-size: 10px;">Sistema Digital Menu</p>
@@ -307,7 +359,6 @@
         janelaImpressao.document.close();
         janelaImpressao.focus();
         
-        // Timeout pequeno para garantir que o navegador renderize o HTML antes de chamar a impressora
         setTimeout(() => {
             janelaImpressao.print();
             janelaImpressao.close();
@@ -315,21 +366,20 @@
     }
 
     // ==========================================
-    // FINALIZAR CONTA
+    // 5. BAIXAR CONTA (PAGAR)
     // ==========================================
     async function finalizarConta() {
         if (!mesaSelecionada) return;
 
         const metodoPagamento = document.getElementById('forma-pagamento').value;
         const btn = document.getElementById('btn-finalizar');
+        const valorFormatado = Number(mesaSelecionada.total).toFixed(2).replace('.', ',');
         
-        if(confirm(`Confirmar recebimento de R$ ${mesaSelecionada.total.toFixed(2)} via ${metodoPagamento.toUpperCase()}?`)) {
+        if(confirm(`Confirmar recebimento de R$ ${valorFormatado} via ${metodoPagamento.toUpperCase()}?`)) {
             btn.disabled = true;
             btn.innerText = "Processando...";
 
             try {
-                // Como uma mesa pode ter vários pedidos separados (o cara pediu cerveja, depois pediu porção),
-                // nós marcamos todos os IDs daquela mesa como PAGO.
                 const promessas = mesaSelecionada.ids.map(idPedido => {
                     return fetch(`https://sistemadigitalmenu.com.br/api/orders/${idPedido}/status`, {
                         method: 'POST',
@@ -344,14 +394,7 @@
                 await Promise.all(promessas);
                 
                 alert('Conta baixada com sucesso! ✅');
-                
-                // Limpa a tela
-                mesaSelecionada = null;
-                document.getElementById('conteudo-detalhes').innerHTML = '<div class="estado-vazio">Nenhuma mesa selecionada.</div>';
-                document.getElementById('painel-cobranca').style.display = 'none';
-                document.getElementById('titulo-detalhes').innerText = 'Selecione uma mesa';
-                
-                // Recarrega as mesas atualizadas
+                limparSelecao();
                 carregarMesas();
             } catch (error) {
                 alert('Erro ao baixar conta.');
@@ -363,11 +406,13 @@
         }
     }
 
-    // Inicia o sistema
+    // ==========================================
+    // INICIALIZAÇÃO E AUTO-UPDATE
+    // ==========================================
     carregarMesas();
     
-    // Atualiza a lista a cada 10 segundos caso venham novos pedidos do salão
-    setInterval(carregarMesas, 10000);
+    // Atualiza tudo de forma limpa a cada 5 segundos
+    setInterval(carregarMesas, 5000);
 
 </script>
 </body>
