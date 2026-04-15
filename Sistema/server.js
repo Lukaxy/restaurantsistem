@@ -7,6 +7,8 @@ const { MercadoPagoConfig, Payment } = require('mercadopago');
 const { createClient } = require("@libsql/client/http");
 const multer = require('multer');
 const fs = require('fs');
+const net = require('net');
+const { EscPosEncoder } = require('esc-pos-encoder');
 
 // =============================================================
 // 🔧 CONFIGURAÇÕES INICIAIS
@@ -86,6 +88,16 @@ async function initDb() {
     try { await db.execute(`ALTER TABLE products ADD COLUMN destination TEXT DEFAULT 'cozinha'`); } catch (e) { }
     try { await db.execute(`ALTER TABLE orders ADD COLUMN status_cozinha TEXT DEFAULT 'novo'`); } catch (e) {}
     try { await db.execute(`ALTER TABLE orders ADD COLUMN status_bar TEXT DEFAULT 'novo'`); } catch (e) {}
+      
+
+      try { 
+  await db.execute(`ALTER TABLE companies ADD COLUMN impressora_cozinha_ip VARCHAR(15)`); 
+} catch (e) { }
+try { 
+  await db.execute(`ALTER TABLE companies ADD COLUMN impressora_cozinha_porta INTEGER DEFAULT 9100`); 
+} catch (e) { }
+
+      
     
     console.log("✅ Tabelas verificadas.");
  
@@ -592,6 +604,25 @@ app.get("/api/companies/:id/status", async (req, res) => {
         else res.status(404).json({ ok: false });
     } catch (err) { res.status(500).json({ ok: false }); }
 });
+
+// =============================================================
+// 🖨️ IMPRESSORA COZINHA
+// =============================================================
+app.post("/api/companies/:id/impressora", verificarEmpresaAtiva, async (req, res) => {
+  const { id } = req.params;
+  const { ip, porta } = req.body;
+  try {
+    await db.execute({
+      sql: `UPDATE companies SET impressora_cozinha_ip = ?, impressora_cozinha_porta = ? WHERE id = ?`,
+      args: [ip, porta || 9100, id]
+    });
+    res.json({ ok: true, msg: "✅ Config impressora salva!" });
+  } catch (err) { res.status(500).json({ ok: false }); }
+});
+
+app.get("/api/companies/:id/impressora", verificarEmpresaAtiva, async (req, res) => {
+  try {
+    const result =
 
 // =============================================================
 // 🚀 INICIALIZAÇÃO
