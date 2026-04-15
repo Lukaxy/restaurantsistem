@@ -13,6 +13,8 @@
     "express": "^4.18.2",
     "mercadopago": "^2.0.0",
     "jsonwebtoken": "^9.0.2",
-    "@libsql/client": "^0.14.0"
+    "@libsql/client": "^0.14.0",
+    "esc-pos-encoder": "^1.0.4",
+    "net": "^1.0.2"
   }
 }
