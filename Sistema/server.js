@@ -466,14 +466,15 @@ app.get("/api/orders/ready", verificarEmpresaAtiva, async (req, res) => {
     }
 });
 
-// 2. O garçom clica em "Retirei", e o pedido muda para "entregue"
+// 2. O garçom clica em "Retirei", e o pedido muda para "retirado"
 app.put("/api/orders/:id/deliver", async (req, res) => {
     const { id } = req.params;
     const agora = getHoraLocalISOString();
 
     try {
+        // AJUSTE: Mudando de 'entregue' para 'retirado'
         await db.execute({
-            sql: `UPDATE orders SET status = 'entregue', status_updated_at = ? WHERE id = ?`,
+            sql: `UPDATE orders SET status = 'retirado', status_updated_at = ? WHERE id = ?`,
             args: [agora, id]
         });
         
@@ -483,7 +484,6 @@ app.put("/api/orders/:id/deliver", async (req, res) => {
         res.status(500).json({ ok: false, error: "Erro ao atualizar status" });
     }
 });
-
 // =============================================================
 // 🧠 ROTA ESPECIAL: Atualiza Setor e Lógica de Cancelamento Parcial
 // =============================================================
