@@ -7,6 +7,8 @@ const { MercadoPagoConfig, Payment } = require('mercadopago');
 const { createClient } = require("@libsql/client/http");
 const multer = require('multer');
 const fs = require('fs');
+const net = require('net');
+const { EscPosEncoder } = require('esc-pos-encoder');
 
 // =============================================================
 // 🔧 CONFIGURAÇÕES INICIAIS
@@ -86,6 +88,8 @@ async function initDb() {
     try { await db.execute(`ALTER TABLE products ADD COLUMN destination TEXT DEFAULT 'cozinha'`); } catch (e) { }
     try { await db.execute(`ALTER TABLE orders ADD COLUMN status_cozinha TEXT DEFAULT 'novo'`); } catch (e) {}
     try { await db.execute(`ALTER TABLE orders ADD COLUMN status_bar TEXT DEFAULT 'novo'`); } catch (e) {}
+    try { await db.execute(`ALTER TABLE companies ADD COLUMN impressora_cozinha_ip VARCHAR(15)`); } catch(e){}
+    try { await db.execute(`ALTER TABLE companies ADD COLUMN impressora_cozinha_porta INTEGER DEFAULT 9100`); } catch(e){}  
     
     console.log("✅ Tabelas verificadas.");
  
@@ -605,5 +609,47 @@ async function startServer() {
         console.log(`🚀 Sistema rodando na porta ${PORT}`);
     });
 }
+// 🖨️ ENDPOINTS IMPRESSORA
+app.post("/api/companies/:id/impressora", verificarEmpresaAtiva, async (req,res)=>{
+  const {id}=req.params,{ip,porta}=req.body;
+  await db.execute({sql:`UPDATE companies SET impressora_cozinha_ip=?,impressora_cozinha_porta=? WHERE id=?`,args:[ip,porta||9100,id]});
+  res.json({ok:true,msg:"✅ Config salva!"});
+});
+
+app.get("/api/companies/:id/impressora", verificarEmpresaAtiva, async (req,res)=>{
+  const result=await db.execute({sql:"SELECT impressora_cozinha_ip,impressora_cozinha_porta FROM companies WHERE id=?",args:[req.params.id]});
+  res.json({ok:true,...result.rows[0]||{impressora_cozinha_ip:'',impressora_cozinha_porta:9100}});
+});
+
+app.post("/api/companies/:id/test-impressora", verificarEmpresaAtiva, async (req,res)=>{
+  const config=await db.execute({sql:"SELECT impressora_cozinha_ip,impressora_cozinha_porta FROM companies WHERE id=?",args:[req.params.id]});
+  if(!config.rows[0]?.impressora_cozinha_ip) return res.json({ok:false,error:"Configure IP primeiro!"});
+  
+  const client=net.connect(config.rows[0].impressora_cozinha_porta||9100,config.rows[0].impressora_cozinha_ip,()=>{
+    const encoder=new EscPosEncoder();
+    encoder.initialize().text('🧪 TESTE COZINHA OK!\nDigital Menu\n\n').cut().close();
+    client.write(encoder.encode());client.destroy();
+    res.json({ok:true,msg:"✅ Teste enviado!"});
+  });
+  client.on('error',err=>{client.destroy();res.json({ok:false,error:err.message});});
+});
+
+app.post("/api/companies/:id/imprimir-comanda", verificarEmpresaAtiva, async (req,res)=>{
+  const {id}=req.params,{comanda}=req.body;
+  const config=await db.execute({sql:"SELECT impressora_cozinha_ip,impressora_cozinha_porta FROM companies WHERE id=?",args:[id]});
+  if(!config.rows[0]?.impressora_cozinha_ip) return res.json({ok:false,error:"Impressora não configurada!"});
+  
+  const client=net.connect(config.rows[0].impressora_cozinha_porta||9100,config.rows[0].impressora_cozinha_ip,()=>{
+    const encoder=new EscPosEncoder();
+    encoder.initialize()
+    .bold(true).text(`COMANDA #${comanda.id}\n`).bold(false)
+    .text(`MESA ${comanda.mesa}\n═`.repeat(32)+'\nQTD  ITEM\n═'.repeat(32)+'\n');
+    comanda.itens?.forEach(i=>encoder.text(`${i.qtd.padEnd(3)}${(i.nome||'').padEnd(20)}\n`));
+    encoder.text(`═`.repeat(32)+`\nTOTAL R$ ${comanda.total?.toFixed(2)||'0'}\n\n`).cut().close();
+    client.write(encoder.encode());client.destroy();
+    res.json({ok:true});
+  });
+  client.on('error',err=>{client.destroy();res.json({ok:false,error:err.message});});
+});
 
 startServer();
