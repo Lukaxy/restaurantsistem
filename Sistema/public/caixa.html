@@ -107,11 +107,11 @@
                 </div>
                 <div class="acoes">
                     <select id="forma-pagamento">
-                        <option value="dinheiro">💵 Dinheiro</option>
-                        <option value="pix">💠 PIX</option>
-                        <option value="cartao">💳 Cartão</option>
+                        <option value="dinheiro">Dinheiro💵</option>
+                        <option value="pix">PIX💠</option>
+                        <option value="cartao">Cartão💳</option>
                     </select>
-                    <button class="btn btn-imprimir" onclick="imprimirConta()">🖨️ Imprimir</button>
+                    <button class="btn btn-imprimir" onclick="imprimirConta()">Imprimir 🖨️</button>
                     <button class="btn btn-fechar" id="btn-finalizar" onclick="finalizarConta()">Baixar Conta</button>
                 </div>
             </div>
@@ -179,7 +179,7 @@
                 <div>
                     <div class="mesa-nome">${m.nome}</div>
                     <span class="mesa-status-tag ${m.pendente ? 'tag-preparando' : 'tag-pronto'}">
-                        ${m.pendente ? '⏳ Preparando' : '✅ Pronto'}
+                        ${m.pendente ? 'Preparando ⏳' : 'Pronto ✅'}
                     </span>
                 </div>
                 <div class="mesa-total">R$ ${m.total.toFixed(2).replace('.', ',')}</div>
