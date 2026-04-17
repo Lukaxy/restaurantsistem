@@ -3,8 +3,8 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
-    <meta name="description" content="Comanda digital inteligente para restaurantes. Cardápio QR Code, Painel de Cozinha (KDS), gestão de caixa. Teste grátis 7 dias sem cartão.">
-    <meta name="keywords" content="comanda digital, cardápio qr code, sistema restaurante, kds, painel cozinha">
+    <meta name="description" content="Comanda digital inteligente para restaurantes. Cardápio QR Code, Painel de Cozinha (KDS), gestão de caixa. Teste grátis 7 dias sem cartão. Baixe o app!">
+    <meta name="keywords" content="comanda digital, cardápio qr code, sistema restaurante, kds, painel cozinha, app restaurante">
     <meta name="author" content="Digital Menu">
     <meta property="og:title" content="Digital Menu | Sistema para Restaurantes">
     <meta property="og:description" content="Sua cozinha em outro nível. Organize pedidos, otimize a cozinha e aumente o faturamento.">
@@ -81,6 +81,19 @@
         }
         .btn-cta:hover { transform: translateY(-2px); box-shadow: 0 6px 15px rgba(56, 161, 105, 0.4); }
 
+        /* Botão de download do app */
+        .btn-download {
+            background: var(--color-orange) !important;
+            color: white !important;
+            padding: 8px 16px;
+            border-radius: 30px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+        .btn-download i { font-size: 1rem; }
+        .btn-download:hover { background: #c0561f !important; transform: translateY(-2px); }
+
         /* Menu hambúrguer */
         .menu-toggle {
             display: none;
@@ -107,7 +120,7 @@
         .hero-content h1 span { color: var(--color-blue); }
         .hero-content p { font-size: 1.2rem; color: var(--text-muted); margin-bottom: 35px; }
 
-        .hero-btns { display: flex; gap: 15px; }
+        .hero-btns { display: flex; gap: 15px; flex-wrap: wrap; }
         .btn-primary { 
             background: var(--color-blue); color: white; padding: 15px 30px; 
             border-radius: 8px; font-weight: bold; font-size: 1.1rem; text-decoration: none;
@@ -245,7 +258,7 @@
                 text-align: center;
             }
             .nav-links.show { display: flex; }
-            .btn-cta { display: inline-block; width: auto; }
+            .btn-cta, .btn-download { display: inline-block; width: auto; }
         }
     </style>
 </head>
@@ -259,6 +272,10 @@
             <a href="#funcionalidades">Funcionalidades</a>
             <a href="#duvidas">Dúvidas?</a>
             <a href="login.html" class="btn-login">Entrar</a>
+            <!-- BOTÃO DE DOWNLOAD DO APP - ALTERE O CAMINHO DO ARQUIVO .APK -->
+            <a href="/app/digitalmenu.apk" download class="btn-download">
+                <i class="fas fa-download"></i> Baixar App
+            </a>
             <a href="#cadastro" class="btn-cta">Começar Grátis</a>
         </div>
     </nav>
@@ -513,7 +530,7 @@
             // Fecha se clicar no fundo ou no X
             if (event.target === lightbox || event.target.className === 'fechar-lightbox') {
                 lightbox.classList.remove('ativo');
-                document.getElementById('imgLightbox').src = ""; // limpa para não ficar imagem antiga
+                document.getElementById('imgLightbox').src = "";
             }
         }
 
