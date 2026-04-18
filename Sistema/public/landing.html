@@ -81,7 +81,6 @@
         }
         .btn-cta:hover { transform: translateY(-2px); box-shadow: 0 6px 15px rgba(56, 161, 105, 0.4); }
 
-        /* Botão de download do app */
         .btn-download {
             background: var(--color-orange) !important;
             color: white !important;
@@ -94,7 +93,6 @@
         .btn-download i { font-size: 1rem; }
         .btn-download:hover { background: #c0561f !important; transform: translateY(-2px); }
 
-        /* Menu hambúrguer */
         .menu-toggle {
             display: none;
             font-size: 1.8rem;
@@ -135,15 +133,39 @@
         }
         .btn-secondary:hover { background: #F0FFF4; }
 
-        .hero-image { position: relative; max-width: 500px; width: 100%; text-align: center; }
+        /* HERO IMAGE - EFEITO 3D E MAIOR */
+        .hero-image { 
+            position: relative; 
+            max-width: 700px; /* Bem maior no PC */
+            width: 100%; 
+            text-align: center; 
+            perspective: 1200px; /* Dá a profundidade do 3D */
+            margin-right: 20px;
+        }
+        
         .mockup-circle { 
             position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%);
-            width: 450px; height: 450px; background: var(--color-blue-light); 
+            width: 600px; height: 600px; 
+            background: radial-gradient(circle, var(--color-blue-light) 0%, transparent 70%); 
             border-radius: 50%; z-index: 1;
         }
-        .floating-img { position: relative; z-index: 2; width: 100%; animation: float 6s ease-in-out infinite; border-radius: 20px; box-shadow: var(--shadow-lg);}
+        
+        .floating-img { 
+            position: relative; 
+            z-index: 2; 
+            width: 100%; 
+            border-radius: 20px; 
+            box-shadow: -20px 25px 50px rgba(0,0,0,0.2); /* Sombra direcionada para o 3D */
+            transform-style: preserve-3d;
+            animation: float3d 7s ease-in-out infinite; 
+        }
 
-        @keyframes float { 0% { transform: translateY(0px); } 50% { transform: translateY(-15px); } 100% { transform: translateY(0px); } }
+        /* Animação que mexe nos eixos X, Y e Z */
+        @keyframes float3d { 
+            0% { transform: translateY(0px) rotateY(-15deg) rotateX(8deg); } 
+            50% { transform: translateY(-20px) rotateY(-10deg) rotateX(12deg); } 
+            100% { transform: translateY(0px) rotateY(-15deg) rotateX(8deg); } 
+        }
 
         /* ================== FUNCIONALIDADES ================== */
         .features { display: flex; justify-content: center; gap: 30px; padding: 80px 5%; background: var(--bg-main); flex-wrap: wrap; }
@@ -194,7 +216,6 @@
         .btn-submit:hover { background: #276749; transform: translateY(-2px); box-shadow: 0 10px 20px rgba(56, 161, 105, 0.3); }
         .btn-submit:disabled { background: var(--text-muted); cursor: not-allowed; transform: none; box-shadow: none;}
 
-        /* Spinner */
         .spinner { display: inline-block; width: 20px; height: 20px; border: 2px solid rgba(255,255,255,0.3); border-radius: 50%; border-top-color: white; animation: spin 0.8s linear infinite; }
         @keyframes spin { to { transform: rotate(360deg); } }
 
@@ -233,14 +254,15 @@
         .fechar-lightbox:hover { color: var(--color-blue); }
         @keyframes zoomIn { from { transform: scale(0.8); opacity: 0; } to { transform: scale(1); opacity: 1; } }
 
-        /* Scroll offset para links âncora */
         #cadastro, #funcionalidades, #duvidas { scroll-margin-top: 80px; }
 
-        /* RESPONSIVO */
+        /* ================== RESPONSIVO ================== */
         @media (max-width: 900px) {
-            .hero { flex-direction: column; text-align: center; padding-top: 120px; }
+            .hero { flex-direction: column; text-align: center; padding-top: 120px; min-height: auto; }
             .hero-btns { justify-content: center; flex-direction: column; align-items: center; }
-            .mockup-circle { width: 300px; height: 300px; }
+            
+            /* ESCONDENDO A IMAGEM NO CELULAR COMO SOLICITADO */
+            .hero-image { display: none; } 
             
             .menu-toggle { display: block; }
             .nav-links {
@@ -272,8 +294,7 @@
             <a href="#funcionalidades">Funcionalidades</a>
             <a href="#duvidas">Dúvidas?</a>
             <a href="login.html" class="btn-login">Entrar</a>
-            <!-- BOTÃO DE DOWNLOAD DO APP - ALTERE O CAMINHO DO ARQUIVO .APK -->
-           <a href="https://drive.google.com/uc?export=download&id=1vwIk_JPAe9EFb22qr2N-bcFqpOI8wP19" class="btn-download">
+            <a href="https://drive.google.com/uc?export=download&id=1vwIk_JPAe9EFb22qr2N-bcFqpOI8wP19" class="btn-download">
     <i class="fas fa-download"></i> Baixar App
 </a>
             <a href="#cadastro" class="btn-cta">Começar Grátis</a>
@@ -286,14 +307,14 @@
             <p>Abandone o papel e a caneta. Organize seus pedidos, otimize sua cozinha, atenda mais rápido e veja seu faturamento crescer com a comanda digital inteligente.</p>
             <div class="hero-btns">
                 <a href="#cadastro" class="btn-primary">Testar Sistema 7 Dias Grátis</a>
-                <a href="https://wa.me/5567992545735" target="_blank" rel="noopener noreferrer" class="btn-secondary">
+                <a href="https://wa.me/5567992545735?text=Ol%C3%A1!%20Estou%20no%20site%20do%20Digital%20Menu%20e%20gostaria%20de%20falar%20com%20um%20especialista." target="_blank" rel="noopener noreferrer" class="btn-secondary">
                     <i class="fab fa-whatsapp"></i> Falar com Especialista
                 </a>
             </div>
         </div>
         <div class="hero-image">
             <div class="mockup-circle"></div>
-            <img src="img/tela1.png" alt="Painel do Digital Menu mostrando gestão de pedidos e comanda digital" class="floating-img" loading="lazy" onerror="this.src='https://via.placeholder.com/500x500?text=Painel+Digital+Menu'">
+            <img src="img/tela1.png" alt="Painel do Digital Menu mostrando gestão de pedidos e comanda digital" class="floating-img" loading="lazy" onerror="this.src='https://via.placeholder.com/600x600?text=Painel+Digital+Menu'">
         </div>
     </header>
 
@@ -320,16 +341,16 @@
         <p class="section-subtitle">Junte-se aos estabelecimentos que já modernizaram seu atendimento.</p>
         
         <div class="depoimentos-container">
-            <div class="depoimento-card" onclick="abrirLightbox('img/prova1.jpeg')">
-                <img src="img/prova1.jpeg" alt="Depoimento de cliente satisfeito com o Digital Menu" loading="lazy" onerror="this.src='https://via.placeholder.com/320x500?text=Depoimento+1'">
+            <div class="depoimento-card" onclick="abrirLightbox('img/prova1.jpg')">
+                <img src="img/prova1.jpg" alt="Depoimento de cliente satisfeito com o Digital Menu" loading="lazy" onerror="this.src='https://via.placeholder.com/320x500?text=Depoimento+1'">
             </div>
             
-            <div class="depoimento-card" onclick="abrirLightbox('img/prova2.jpeg')">
-                <img src="img/prova2.jpeg" alt="Depoimento de restaurante usando o sistema" loading="lazy" onerror="this.src='https://via.placeholder.com/320x500?text=Depoimento+2'">
+            <div class="depoimento-card" onclick="abrirLightbox('img/prova2.jpg')">
+                <img src="img/prova2.jpg" alt="Depoimento de restaurante usando o sistema" loading="lazy" onerror="this.src='https://via.placeholder.com/320x500?text=Depoimento+2'">
             </div>
             
-            <div class="depoimento-card" onclick="abrirLightbox('img/prova3.jpeg')">
-                <img src="img/prova3.jpeg" alt="Depoimento de proprietário sobre resultados" loading="lazy" onerror="this.src='https://via.placeholder.com/320x500?text=Depoimento+3'">
+            <div class="depoimento-card" onclick="abrirLightbox('img/prova3.jpg')">
+                <img src="img/prova3.jpg" alt="Depoimento de proprietário sobre resultados" loading="lazy" onerror="this.src='https://via.placeholder.com/320x500?text=Depoimento+3'">
             </div>
         </div>
     </section>
@@ -418,7 +439,6 @@
                 navLinks.classList.toggle('show');
             });
 
-            // Fecha o menu ao clicar em um link (opcional)
             document.querySelectorAll('.nav-links a').forEach(link => {
                 link.addEventListener('click', () => {
                     navLinks.classList.remove('show');
@@ -427,7 +447,7 @@
         }
 
         // ==========================================
-        // REGISTRO DE NOVA EMPRESA (MELHORADO)
+        // REGISTRO DE NOVA EMPRESA
         // ==========================================
         async function registrarEmpresa(e) {
             e.preventDefault();
@@ -439,7 +459,6 @@
             const whatsapp = document.getElementById('regWhatsapp').value.trim();
             const senha = document.getElementById('regSenha').value.trim();
 
-            // Validações extras
             if (!nomeEmpresa || !email || !whatsapp || !senha) {
                 msg.style.color = "var(--color-red)";
                 msg.innerText = "❌ Preencha todos os campos.";
@@ -488,7 +507,6 @@
                 btn.innerHTML = "Sucesso! 🎉";
                 btn.style.background = "var(--color-blue)";
                 
-                // Salva o login automático e manda pro dashboard
                 if (data.user) {
                     localStorage.setItem('user', JSON.stringify(data.user)); 
                     setTimeout(() => window.location.href = 'caixa.html', 1500);
@@ -503,7 +521,6 @@
                 btn.disabled = false;
                 btn.innerHTML = textOriginal;
                 
-                // Animação de erro
                 btn.style.transform = "translateX(-5px)";
                 setTimeout(() => btn.style.transform = "translateX(5px)", 100);
                 setTimeout(() => btn.style.transform = "translateX(0)", 200);
@@ -511,7 +528,7 @@
         }
 
         // ==========================================
-        // LIGHTBOX DE DEPOIMENTOS (melhorada)
+        // LIGHTBOX DE DEPOIMENTOS
         // ==========================================
         function abrirLightbox(src) {
             const lightbox = document.getElementById('meuLightbox');
@@ -527,14 +544,12 @@
 
         function fecharLightbox(event) {
             const lightbox = document.getElementById('meuLightbox');
-            // Fecha se clicar no fundo ou no X
             if (event.target === lightbox || event.target.className === 'fechar-lightbox') {
                 lightbox.classList.remove('ativo');
                 document.getElementById('imgLightbox').src = "";
             }
         }
 
-        // Fechar lightbox com tecla ESC
         document.addEventListener('keydown', function(e) {
             if (e.key === 'Escape') {
                 const lightbox = document.getElementById('meuLightbox');
