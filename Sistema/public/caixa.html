@@ -26,6 +26,11 @@
 
         header { background-color: var(--color-blue); color: white; padding: 15px 30px; display: flex; justify-content: space-between; align-items: center; box-shadow: 0 2px 4px rgba(0,0,0,0.1); }
         header h1 { font-size: 1.5rem; }
+
+        .header-actions { 
+    display: flex; 
+    gap: 15px; /* Controla a distância entre os botões */
+}
         
         .container { display: flex; flex: 1; padding: 20px; gap: 20px; overflow: hidden; }
 
@@ -81,10 +86,13 @@
 <body>
 
     <header>
-        <h1>Caixa - Digital Menu 💵</h1>
+    <h1>Caixa - Digital Menu 💵</h1>
+    
+    <div class="header-actions">
         <button class="btn" style="background:rgba(255,255,255,0.2); border:1px solid white;" onclick="window.location.href='configuracoes.html'">Configurações</button>
         <button class="btn" style="background:rgba(255,255,255,0.2); border:1px solid white;" onclick="window.location.href='https://drive.google.com/uc?export=download&id=1vwIk_JPAe9EFb22qr2N-bcFqpOI8wP19'">Baixar app para android</button>
-    </header>
+    </div>
+</header>
 
     <div class="container">
         <div class="col-mesas">
