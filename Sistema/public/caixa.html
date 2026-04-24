@@ -166,33 +166,38 @@
     const user = JSON.parse(localStorage.getItem("user") || "null");
     let mesas = [];
     let mesaSelecionada = null;
-    let intervaloBusca; // Variável para controlar o loop de requisições
+    let intervaloBusca;
+
+    // Se o cara nem logado tiver, chuta ele pro login (ajuste o nome do seu arquivo de login se não for index.html)
+    if (!user || !user.company_id) {
+        window.location.href = 'index.html';
+    }
 
     function ativarBloqueio() {
-        // Esconde o painel principal e mostra a tela de bloqueio
         document.getElementById('main-container').style.display = 'none';
         document.getElementById('tela-bloqueio').style.display = 'flex';
-        // Para de fazer requisições pro servidor pra não gastar banda à toa
         clearInterval(intervaloBusca);
+    }
+
+    // TRAVA IMEDIATA: Se o localStorage já souber que tá expirado pelo login, bloqueia na hora!
+    if (user && user.planoExpirado === true) {
+        ativarBloqueio();
     }
 
     async function carregarMesas() {
         try {
             const res = await fetch(`https://sistemadigitalmenu.com.br/api/orders?company_id=${user.company_id}`);
             
-            // VERIFICAÇÃO DE BLOQUEIO (Captura o erro 403 do servidor)
-            if (res.status === 403) {
-                const errorData = await res.json();
-                if (errorData.expirado) {
-                    ativarBloqueio();
-                    return; // Para a execução da função aqui
-                }
+            // 🔥 A CORREÇÃO ESTÁ AQUI: Captura tanto o 401 (bloqueado) quanto o 403 (vencido)
+            if (res.status === 401 || res.status === 403) {
+                console.log("Servidor bloqueou o acesso! Ativando tela...");
+                ativarBloqueio();
+                return; // Para tudo e não deixa renderizar
             }
 
             const data = await res.json();
             if (!data.ok) return;
 
-            // Filtra o que não está pago
             const abertas = data.pedidos.filter(p => !['pago', 'finalizado', 'cancelado'].includes(p.status));
             
             const grupos = {};
@@ -202,7 +207,6 @@
                     grupos[nome] = { nome, total: 0, ids: [], itens: [], pendente: false, dataAbertura: p.created_at };
                 }
                 
-                // Lógica de Trava: Se o setor existe e não está pronto, a mesa fica pendente
                 const temBar = p.items.some(i => i.destination === 'bar');
                 const temCozinha = p.items.some(i => i.destination !== 'bar');
                 if ((temBar && p.status_bar !== 'pronto') || (temCozinha && p.status_cozinha !== 'pronto')) {
@@ -279,7 +283,6 @@
         document.getElementById('conteudo-detalhes').innerHTML = '<div class="estado-vazio">Selecione uma mesa para ver os itens.</div>';
     }
 
-    // FUNÇÃO DE IMPRESSÃO RESTAURADA
     function imprimirConta() {
         if (!mesaSelecionada) return;
         const win = window.open('', '', 'height=600,width=400');
@@ -326,7 +329,7 @@
         document.getElementById('btn-cancel').onclick = () => modal.style.display = 'none';
     }
 
-    // Controle do loop de atualizações (agora associado à variável intervaloBusca)
+    // Inicialização
     carregarMesas();
     intervaloBusca = setInterval(carregarMesas, 3000);
 </script>
