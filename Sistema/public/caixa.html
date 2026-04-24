@@ -32,6 +32,36 @@
             gap: 15px; 
         }
         
+        /* BANNER DE AVISO (NOVO) */
+        .banner-aviso {
+            background-color: #FEFCBF; /* Fundo amarelo suave */
+            color: #975A16; /* Texto em tom de alerta elegante */
+            text-align: center;
+            padding: 10px 20px;
+            font-weight: 600;
+            font-size: 0.95rem;
+            border-bottom: 1px solid #F6E05E;
+            display: none; /* Escondido por padrão */
+            justify-content: center;
+            align-items: center;
+            gap: 20px;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.05);
+            z-index: 100;
+        }
+        .banner-aviso a {
+            background: var(--color-orange);
+            color: white;
+            padding: 6px 15px;
+            border-radius: 6px;
+            text-decoration: none;
+            font-size: 0.85rem;
+            transition: 0.2s;
+            white-space: nowrap;
+        }
+        .banner-aviso a:hover {
+            background: #C05621;
+        }
+
         .container { display: flex; flex: 1; padding: 20px; gap: 20px; overflow: hidden; }
 
         /* LISTA DE MESAS */
@@ -110,6 +140,11 @@
     </div>
 </header>
 
+    <div id="banner-aviso" class="banner-aviso">
+        <span id="texto-aviso">⚠️ Atenção: Faltam X dias para sua assinatura vencer.</span>
+        <a href="company-admin.html">Renovar Agora 🚀</a>
+    </div>
+
     <div class="container" id="main-container">
         <div class="col-mesas">
             <div class="col-header"><h2>Mesas Abertas</h2></div>
@@ -168,31 +203,61 @@
     let mesaSelecionada = null;
     let intervaloBusca;
 
-    // Se o cara nem logado tiver, chuta ele pro login (ajuste o nome do seu arquivo de login se não for index.html)
     if (!user || !user.company_id) {
         window.location.href = 'index.html';
     }
 
     function ativarBloqueio() {
         document.getElementById('main-container').style.display = 'none';
+        document.getElementById('banner-aviso').style.display = 'none'; // Some com o aviso se já bloqueou
         document.getElementById('tela-bloqueio').style.display = 'flex';
         clearInterval(intervaloBusca);
     }
 
-    // TRAVA IMEDIATA: Se o localStorage já souber que tá expirado pelo login, bloqueia na hora!
     if (user && user.planoExpirado === true) {
         ativarBloqueio();
+    }
+
+    // NOVA FUNÇÃO: Verifica os dias restantes buscando a info fresca no servidor
+    async function verificarAvisoVencimento() {
+        try {
+            const res = await fetch(`https://sistemadigitalmenu.com.br/api/companies/${user.company_id}/status`);
+            const data = await res.json();
+            
+            if (data.ok && data.expires_at) {
+                const dataVencimento = new Date(data.expires_at);
+                const hoje = new Date();
+                
+                // Calcula a diferença em dias (arredondando para cima)
+                const diffTime = dataVencimento - hoje;
+                const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+
+                // Se faltar entre 0 e 5 dias, mostramos o banner!
+                if (diffDays <= 5 && diffDays > 0) {
+                    const banner = document.getElementById('banner-aviso');
+                    const texto = document.getElementById('texto-aviso');
+                    texto.innerText = `⚠️ Opa! Faltam apenas ${diffDays} ${(diffDays === 1) ? 'dia' : 'dias'} para sua assinatura vencer.`;
+                    banner.style.display = 'flex';
+                } else if (diffDays === 0) {
+                    const banner = document.getElementById('banner-aviso');
+                    const texto = document.getElementById('texto-aviso');
+                    texto.innerText = `⚠️ Atenção! Sua assinatura vence HOJE. Não deixe o sistema parar.`;
+                    banner.style.display = 'flex';
+                }
+            }
+        } catch (e) {
+            console.log("Erro ao verificar status para o banner:", e);
+        }
     }
 
     async function carregarMesas() {
         try {
             const res = await fetch(`https://sistemadigitalmenu.com.br/api/orders?company_id=${user.company_id}`);
             
-            // 🔥 A CORREÇÃO ESTÁ AQUI: Captura tanto o 401 (bloqueado) quanto o 403 (vencido)
             if (res.status === 401 || res.status === 403) {
                 console.log("Servidor bloqueou o acesso! Ativando tela...");
                 ativarBloqueio();
-                return; // Para tudo e não deixa renderizar
+                return; 
             }
 
             const data = await res.json();
@@ -330,6 +395,7 @@
     }
 
     // Inicialização
+    verificarAvisoVencimento(); // Chama a verificação do banner 1x ao carregar a página
     carregarMesas();
     intervaloBusca = setInterval(carregarMesas, 3000);
 </script>
