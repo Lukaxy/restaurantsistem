@@ -132,11 +132,23 @@
 <body>
 
     <header>
-    <h1>Caixa - Digital Menu 💵</h1>
+    <h1>Caixa 💵</h1>
     
     <div class="header-actions">
-        <button class="btn" style="background:rgba(255,255,255,0.2); border:1px solid white;" onclick="window.location.href='configuracoes.html'">Configurações</button>
-        <button class="btn" style="background:rgba(255,255,255,0.2); border:1px solid white;" onclick="window.location.href='https://drive.google.com/file/d/1_wNhVcj25llVfB7caEL2st579S1Tafmq/view'">Baixar app para android</button>
+        <button class="btn-voltar" onclick="window.location.href='caixa.html'">Voltar</button>
+        
+        <div class="menu-dropdown-container">
+            <button class="btn-dots" onclick="toggleMenu(event)">•••</button>
+            <div id="dropdown-menu" class="dropdown-content">
+          <a href="meus-pedidos.html">🧾 Meus pedidos</a>
+          <a href="relatorio.html">📊 Relatório</a>
+          <a href="bar.html">🍸 Bar</a>
+          <a href="cozinha.html">👨‍🍳 Cozinha</a>
+          <a href="company-admin.html">🏢 Painel da Empresa</a>
+                <hr style="border: 0; border-top: 1px solid var(--border-color); margin: 5px 0;">
+                <a href="javascript:void(0)" onclick="deslogarSistema()" style="color: var(--color-red);">🚪 Sair</a>
+            </div>
+        </div>
     </div>
 </header>
 
