@@ -246,6 +246,25 @@
     </div>
 
 <script>
+
+        // ==========================================
+    // MENU DROPDOWN
+    // ==========================================
+    function toggleMenu(event) {
+        event.stopPropagation();
+        document.getElementById("dropdown-menu").classList.toggle("show-dropdown");
+    }
+
+    window.onclick = function(event) {
+        if (!event.target.matches('.btn-dots')) {
+            const dropdowns = document.getElementsByClassName("dropdown-content");
+            for (let i = 0; i < dropdowns.length; i++) {
+                if (dropdowns[i].classList.contains('show-dropdown')) {
+                    dropdowns[i].classList.remove('show-dropdown');
+                }
+            }
+        }
+    }
     const user = JSON.parse(localStorage.getItem("user") || "null");
     let mesas = [];
     let mesaSelecionada = null;
