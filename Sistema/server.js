@@ -46,8 +46,7 @@ const upload = multer({ storage: storage });
 // =============================================================
 const db = createClient({
   url: "https://restaurant-system-lukaxy.aws-us-east-1.turso.io", 
-  token: "eyJhbGciOiJFZERTQSIsInR5cCI6IkpXVCJ9.eyJhIjoicnciLCJpYXQiOjE3ODQyMjg3OTEsImlkIjoiNzI5NDZlMTEtZDM1OC00OTExLTg2MTAtNDFiOTQ0MTJhMjMzIiwia2lkIjoiTS1UZ2xFNG1NOWNBeFJieTY2M1ByUGxGaUVEc2ZONjMtRHB4Mm9FMzFhTSIsInJpZCI6ImIzYTMxMDhiLTJjNzgtNDAyMC05ZTJmLThlOGJiNmViZjE5ZSJ9.w-WHTzZNaUN_0psd4RXWhZlOhCp37XsBxKSWm1C-LljuQPSA3D1wfWEehDGB9SqsUXEWLenHx5dypf17Yu6kCA",  
-
+  authToken: process.env.TURSO_TOKEN,
 });
 
 const client = new MercadoPagoConfig({ 
